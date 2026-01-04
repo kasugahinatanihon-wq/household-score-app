@@ -654,7 +654,8 @@ function renderPublicCompareTable(rates){
   );
 
   return `
-    <div class="compareTable">
+    <div class="compareTableWrap">
+      <div class="compareTable">
       <div class="compareHead">項目</div>
       <div class="compareHead">あなた</div>
       <div class="compareHead">目安（中央値）</div>
@@ -673,6 +674,7 @@ function renderPublicCompareTable(rates){
           ${barHTML(r.kind, r.you, r.bench)}
         `;
       }).join("")}
+      </div>
     </div>
     <div class="small compareLegend">● あなた / ▲ 目安（スケール上限50%）・緑=良い / 赤=改善</div>
     <div class="small" style="margin-top:8px;">住居は国土交通省 住宅情報データ（都内）目安28%（暫定）</div>

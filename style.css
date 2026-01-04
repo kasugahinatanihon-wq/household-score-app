@@ -219,6 +219,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:var(--muted);
   text-align:right;
   white-space:nowrap;
+  line-height:1.1;
 }
 .calBadge{
   position:absolute; right:10px; top:10px;
@@ -226,6 +227,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:transparent;
 }
 .calCell[data-has="true"] .calBadge{ background: var(--primary-55); }
+@media (max-width:480px){
+  .calCell{ min-height:86px; padding:8px 8px 6px; }
+  .calSum{ font-size:11px; }
+}
 
 /* Weekly card */
 .weeklyCard{
@@ -292,6 +297,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   max-height: calc(100vh - 36px - var(--safeBottom));
   max-height: calc(100svh - 36px - var(--safeBottom));
   max-height: calc(100dvh - 36px - var(--safeBottom));
+  overflow:auto;
 }
 
 .entryTop{
@@ -322,7 +328,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-weight:1000;
 }
 
-.entryMid{ padding:16px; }
+.entryMid{
+  padding:16px;
+  padding-bottom: calc(16px + 64px + var(--safeBottom));
+}
 .catTitle{ font-weight:1000; margin:6px 0 10px; }
 .catGridApp{
   display:grid;
@@ -588,12 +597,17 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   margin-top:6px;
 }
 
+.compareTableWrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling: touch;
+}
 .compareTable{
   display:grid;
   grid-template-columns: 1.2fr 0.7fr 0.7fr 0.7fr 1.2fr;
   gap:8px 10px;
   align-items:center;
   font-size:13px;
+  min-width:560px;
 }
 .compareHead{
   color:var(--muted);
@@ -654,13 +668,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .compareDiff.neutral{ color:var(--muted); }
 .compareLegend{
   margin-top:8px;
-}
-@media (max-width:720px){
-  .compareTable{ grid-template-columns: 1fr 0.7fr 0.7fr; }
-  .compareTable .compareHead:nth-child(4),
-  .compareTable .compareHead:nth-child(5){ display:none; }
-  .compareTable > :nth-child(5n+4),
-  .compareTable > :nth-child(5n){ display:none; }
 }
 
 /* List table */
