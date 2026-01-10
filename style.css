@@ -294,10 +294,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .calCell[data-has="true"] .calBadge{ background: var(--primary-55); }
 @media (max-width:480px){
   .calendarBox{ padding:8px; }
-  .calGrid{ gap:6px; }
-  .calCell{ min-height:56px; padding:6px 6px 4px; border-radius:10px; }
+  .calGrid{ gap:4px; }
+  .calCell{ min-height:52px; padding:5px 5px 4px; border-radius:10px; aspect-ratio:auto; }
   .calDayNum{ font-size:11px; }
-  .calSum{ font-size:10px; margin-top:6px; }
+  .calSum{ font-size:9px; margin-top:4px; overflow:hidden; text-overflow:ellipsis; }
   .calBadge{ right:6px; top:6px; width:6px; height:6px; }
   .calHeader .pill{ font-size:12px; padding:4px 8px; }
   .calHeader .ghost{ padding:6px; }
