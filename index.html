@@ -88,7 +88,54 @@
           あなたの<strong>「いつものお金の使い方」</strong>が<br>
           このアプリの診断材料になります。
         </p>
-        <button class="primary" style="width:100%; padding:14px;" onclick="finishOnboarding()">はじめる</button>
+        <button class="primary" style="width:100%; padding:14px;" onclick="openSurvey()">はじめる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Onboarding Survey -->
+<div class="modalOverlay hidden" id="surveyModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">はじめに教えてください</div>
+      <button class="ghost" onclick="closeModal('surveyModal')">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="small" style="margin-bottom:12px;">わからない項目は空欄でも大丈夫です（後から変更できます）</div>
+      <div class="row">
+        <label>世帯人数
+          <select id="surveyHousehold">
+            <option value="unknown">未設定</option>
+            <option value="single">1人暮らし</option>
+            <option value="twoPlus">2人以上</option>
+          </select>
+        </label>
+        <label>年齢層
+          <select id="surveyAgeBand">
+            <option value="unknown">未設定</option>
+            <option value="u29">〜29歳</option>
+            <option value="30s">30代</option>
+            <option value="40s">40代</option>
+            <option value="50s">50代</option>
+            <option value="60p">60歳以上</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <label>手取り月収 (円) <input type="number" id="surveyIncome" placeholder="例：300000"></label>
+        <label>住居費 (円) <input type="number" id="surveyHousing" placeholder="家賃など"></label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>光熱費 (円) <input type="number" id="surveyUtility" placeholder="電気ガス水道"></label>
+        <label>通信費 (円) <input type="number" id="surveyNet" placeholder="スマホ・Net"></label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>サブスク (円) <input type="number" id="surveySub" placeholder="定期支払"></label>
+      </div>
+      <div style="margin-top:16px;">
+        <button class="primary" style="width:100%;" onclick="finishSurvey()">入力を保存して始める</button>
       </div>
     </div>
   </div>
@@ -311,13 +358,6 @@
     <div class="box boxSafeBottom">
       <h2>⚙️ 設定・プロフィール</h2>
       <div class="small">属性（世帯人数・年齢階級）は、将来の比較機能の土台になります</div>
-      <div class="sectionCard" style="margin-top:12px;">
-        <div class="sectionHead">
-          <div><div class="sectionName">はじめに入力してほしい項目</div><div class="sectionHint">わからない数値は後でもOKです</div></div>
-        </div>
-        <div class="small">世帯人数・年齢階級・月収（手取り）・固定費は、診断の精度に影響します。</div>
-      </div>
-
       <div class="row" style="margin-top:16px;">
         <label>設定する月
           <input type="month" id="settingsMonth">
@@ -332,7 +372,7 @@
             <option value="twoPlus">2人以上</option>
           </select>
         </label>
-        <label>年齢階級
+        <label>年齢層
           <select id="profileAgeBand">
             <option value="unknown">未設定</option>
             <option value="u29">〜29歳</option>
@@ -350,7 +390,6 @@
 
       <div class="box" style="margin:16px 0 0;">
         <h3>月収（手取り）</h3>
-        <div class="small">月次スコアの基準に使います</div>
         <div class="row" style="margin-top:12px;">
           <label>手取り月収 (円) <input type="number" id="incomeYen" placeholder="例：300000"></label>
         </div>

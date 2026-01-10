@@ -888,9 +888,9 @@ function renderPublicCompareTable(rates){
       }).join("")}
       </div>
     </div>
-    <div class="small compareLegend">● あなた / ▲ 目安（スケール上限50%）・緑=軽め / 赤=重め</div>
-    <div class="small" style="margin-top:8px;">住居は国土交通省 住宅情報データ（都内）目安28%（暫定）</div>
-    <div class="small" style="margin-top:6px;">出典：総務省 家計調査（家計収支編）2024年 二人以上世帯・月次中央値</div>
+    <div class="small compareLegend">● あなた / ◾️ 目安（スケール上限50%）・緑=参考値より少なめ / 赤=参考値より多め</div>
+    <div class="small" style="margin-top:6px;">出典：総務省 家計調査（家計収支編）2024年 二人以上世帯・月次平均値を参考値中央値算出</div>
+    <div class="small" style="margin-top:6px;">住居は国土交通省 住宅情報データ（都内）目安28%（暫定）</div>
   `;
 }
 
@@ -1661,11 +1661,45 @@ function nextSlide(n){
 }
 window.nextSlide = nextSlide;
 
-function finishOnboarding(){
+function openSurvey(){
+  const prof = loadJSON(LS_PROFILE, {household:"unknown", ageBand:"unknown"});
+  $("surveyHousehold") && ($("surveyHousehold").value = prof.household || "unknown");
+  $("surveyAgeBand") && ($("surveyAgeBand").value = prof.ageBand || "unknown");
+  closeModal("onboardingModal");
+  openModal("surveyModal");
+}
+window.openSurvey = openSurvey;
+
+function finishSurvey(){
+  const prof = {
+    household: $("surveyHousehold")?.value || "unknown",
+    ageBand: $("surveyAgeBand")?.value || "unknown"
+  };
+  saveJSON(LS_PROFILE, prof);
+
+  const m = ym(new Date());
+  const income = Number($("surveyIncome")?.value || 0);
+  if($("surveyIncome")?.value.trim() !== "") setIncomeForMonth(m, income);
+
+  const fixedAll = loadJSON(LS_FIXED, {});
+  fixedAll[m] = {
+    housingYen: Number($("surveyHousing")?.value || 0),
+    utilityYen: Number($("surveyUtility")?.value || 0),
+    netYen: Number($("surveyNet")?.value || 0),
+    subYen: Number($("surveySub")?.value || 0),
+  };
+  saveJSON(LS_FIXED, fixedAll);
+
+  loadProfileToUI();
+  $("settingsMonth") && ($("settingsMonth").value = m);
+  $("scoreMonth") && ($("scoreMonth").value = m);
+  loadMonthlySettings(m);
+  refreshSavingLabel();
   localStorage.setItem(LS_ONBOARD, "1");
+  closeModal("surveyModal");
   closeModal("onboardingModal");
 }
-window.finishOnboarding = finishOnboarding;
+window.finishSurvey = finishSurvey;
 
 function resetOnboarding(){
   localStorage.removeItem(LS_ONBOARD);
@@ -1706,7 +1740,7 @@ function init(){
   $("entryPrimaryBtn")?.addEventListener("click", handleEntryPrimary);
   $("entryCloseBtn")?.addEventListener("click", closeEntryModal);
 
-  ["entryModal","dayDetailModal","resultModal","savingModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{ if(e.target === ov) closeModal(id); });
