@@ -561,6 +561,8 @@ function openEntryModal(dt, opts = {}){
   $("txDate") && ($("txDate").value = dt);
   $("entryDateText") && ($("entryDateText").textContent = dt);
 
+  const prevCat = opts.keepCategory ? $("entryCategoryHidden")?.value : "";
+
   // reset
   $("entryMsg").textContent = "";
   $("entryAmount").value = "";
@@ -584,7 +586,7 @@ function openEntryModal(dt, opts = {}){
     });
   }
 
-  const preset = opts.presetCategory || $("entryCategoryHidden").value;
+  const preset = opts.presetCategory || prevCat || $("entryCategoryHidden").value;
   if(preset){
     $("entryCategoryHidden").value = preset;
     document.querySelectorAll("#entryCatArea .catCard").forEach(c=>{
@@ -1734,8 +1736,8 @@ function init(){
     if(entryStep === "quality") showEntryStep("memo");
   });
 
-  $("entryPrevDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, -1)));
-  $("entryNextDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, +1)));
+  $("entryPrevDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, -1), { keepCategory:true }));
+  $("entryNextDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, +1), { keepCategory:true }));
 
   $("entryPrimaryBtn")?.addEventListener("click", handleEntryPrimary);
   $("entryCloseBtn")?.addEventListener("click", closeEntryModal);
