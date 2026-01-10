@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#F7F9FC" />
   <title>家計診断アプリ</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='24' fill='%230D1B2A'/%3E%3Ccircle cx='50' cy='22' r='6' fill='white'/%3E%3Ccircle cx='44' cy='44' r='4' fill='%23F59E0B'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='18' fill='%23A78BFA' fill-opacity='0.45'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%2322D3EE'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 
@@ -13,11 +14,7 @@
   <div class="wrap">
     <h1 class="brandTitle">
       <span class="logoMark" aria-hidden="true">
-        <svg viewBox="0 0 64 64" role="img">
-          <circle cx="32" cy="32" r="24" fill="#0D1B2A"></circle>
-          <circle cx="50" cy="22" r="6" fill="#FFFFFF"></circle>
-          <circle cx="44" cy="44" r="4" fill="#F59E0B"></circle>
-        </svg>
+        <span class="logoDot"></span>
       </span>
       家計診断アプリ
     </h1>
@@ -26,25 +23,27 @@
 </header>
 
 <!-- Onboarding -->
-<div class="modalOverlay" id="onboardingModal" style="background:rgba(13,27,42,0.95); z-index:9999;">
+<div class="modalOverlay" id="onboardingModal" style="background:rgba(15,23,42,0.55); z-index:9999;">
   <div class="modal">
     <div class="modalBody" style="padding:32px 24px; text-align:center;">
       <div id="slide1" class="onboardSlide">
         <div style="font-size:60px; margin-bottom:16px;">🩺</div>
-        <h2 style="color:var(--primary); margin-bottom:12px;">記録から、診断へ。</h2>
-        <p class="muted" style="line-height:1.8; text-align:left; font-size:14px; margin-bottom:32px;">
-          家計簿は「記録」だけだと判断がむずい。<br>
-          このアプリは、あなたの家計を<b>「診断」</b>して、<b>点数</b>で現在地を出します。
+        <h2 style="color:var(--primary); margin-bottom:12px;">このアプリは、節約アプリではありません</h2>
+        <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
+          お金を「減らさない」ためではなく、<br>
+          納得して使えるようになるためのアプリです。
         </p>
         <button class="primary" style="width:100%; padding:14px;" onclick="nextSlide(2)">次へ</button>
       </div>
 
       <div id="slide2" class="onboardSlide" style="display:none;">
         <div style="font-size:60px; margin-bottom:16px;">🧾</div>
-        <h2 style="color:var(--primary); margin-bottom:12px;">カテゴリ→金額→（必要なら）納得</h2>
-        <p class="muted" style="line-height:1.8; text-align:left; font-size:14px; margin-bottom:32px;">
-          入力は「カテゴリ → 金額 →（質カテゴリなら）納得度・きっかけ」。<br>
-          迷わない導線にしています。
+        <h2 style="color:var(--primary); margin-bottom:12px;">ちゃんと管理してるのに、不安は消えない</h2>
+        <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
+          家計簿もつけてる。<br>
+          貯金もしている。<br>
+          それでも「この使い方でいいのか」<br>
+          わからなくなること、ありませんか？
         </p>
         <div style="display:flex; gap:12px;">
           <button class="ghost" style="flex:1;" onclick="nextSlide(1)">戻る</button>
@@ -54,15 +53,42 @@
 
       <div id="slide3" class="onboardSlide" style="display:none;">
         <div style="font-size:60px; margin-bottom:16px;">📈</div>
-        <h2 style="color:var(--primary); margin-bottom:12px;">週次と月次で改善。</h2>
-        <p class="muted" style="line-height:1.8; text-align:left; font-size:14px; margin-bottom:32px;">
-          週次は「先週（日〜土）」の簡易スコア。<br>
-          月次は「総合スコア＋各項目」をレポートで出します。
+        <h2 style="color:var(--primary); margin-bottom:12px;">足りないのは、数字じゃなく“判断軸”</h2>
+        <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
+          多くの家計管理は「いくら使ったか」しか見ていません。<br>
+          でも本当に必要なのは<br>
+          なぜ使ったか／納得できたかです。
         </p>
         <div style="display:flex; gap:12px;">
           <button class="ghost" style="flex:1;" onclick="nextSlide(2)">戻る</button>
-          <button class="primary" style="flex:2;" onclick="finishOnboarding()">始める</button>
+          <button class="primary" style="flex:2;" onclick="nextSlide(4)">次へ</button>
         </div>
+      </div>
+
+      <div id="slide4" class="onboardSlide" style="display:none;">
+        <div style="font-size:60px; margin-bottom:16px;">🧠</div>
+        <h2 style="color:var(--primary); margin-bottom:12px;">お金の使い方を、行動と感情で見える化</h2>
+        <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
+          金額だけでなく「納得度」で支出を評価<br>
+          公的データで、今の立ち位置がわかる<br>
+          我慢ではなく、質を上げる改善ができる
+        </p>
+        <div style="display:flex; gap:12px;">
+          <button class="ghost" style="flex:1;" onclick="nextSlide(3)">戻る</button>
+          <button class="primary" style="flex:2;" onclick="nextSlide(5)">次へ</button>
+        </div>
+      </div>
+
+      <div id="slide5" class="onboardSlide" style="display:none;">
+        <div style="font-size:60px; margin-bottom:16px;">✨</div>
+        <h2 style="color:var(--primary); margin-bottom:12px;">まずは、いつも通り使ってみてください</h2>
+        <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
+          完璧につけなくて大丈夫。<br>
+          正解を探さなくて大丈夫。<br><br>
+          あなたの<strong>「いつものお金の使い方」</strong>が<br>
+          このアプリの診断材料になります。
+        </p>
+        <button class="primary" style="width:100%; padding:14px;" onclick="finishOnboarding()">はじめる</button>
       </div>
     </div>
   </div>
@@ -99,11 +125,13 @@
     </div>
 
     <div class="entryMid" id="entryMid">
-      <div class="catTitle">カテゴリー</div>
-      <div class="catGridApp" id="entryCatArea"></div>
+      <div class="entryStep" id="step-category">
+        <div class="catTitle">カテゴリー</div>
+        <div class="catGridApp" id="entryCatArea"></div>
+      </div>
 
-      <!-- ✅ B案：カテゴリの“下”に金額/メモ（最初は非表示） -->
-      <div class="entryFields" id="entryFields" style="display:none;">
+      <div class="entryStep" id="step-amount" style="display:none;">
+        <div class="catTitle">支出金額</div>
         <div class="amountRow" id="amountRow">
           <div class="amountLabel">支出</div>
           <div class="amountInputWrap">
@@ -111,16 +139,10 @@
             <div class="yenSuffix">円</div>
           </div>
         </div>
-
-        <div class="memoRow">
-          <div class="memoLabel">メモ</div>
-          <input id="entryMemoTop" type="text" placeholder="未入力" />
-        </div>
       </div>
 
-      <!-- 質カテゴリ：金額確定後に表示 -->
-      <div id="entrySatWrap" class="qualityBox" style="display:none;">
-        <div class="small" style="margin-bottom:6px;">納得度・きっかけは任意です</div>
+      <div class="entryStep" id="step-quality" style="display:none;">
+        <div class="catTitle">納得度・きっかけ（任意）</div>
         <div class="qualityRow">
           <div class="qualityLabel">納得度</div>
           <select id="entrySat">
@@ -131,7 +153,6 @@
             <option value="4">4（最高だった）</option>
           </select>
         </div>
-
         <div class="qualityRow">
           <div class="qualityLabel">きっかけ</div>
           <select id="entryTrigger">
@@ -145,10 +166,16 @@
             <option value="bored">なんとなく</option>
           </select>
         </div>
+        <div style="margin-top:8px;">
+          <button class="ghost" id="qualitySkipBtn" type="button">メモへスキップ</button>
+        </div>
+      </div>
 
-        <div class="qualityRow">
-          <div class="qualityLabel">詳細</div>
-          <input type="text" id="entryNote" placeholder="例：疲れてコンビニで…" />
+      <div class="entryStep" id="step-memo" style="display:none;">
+        <div class="catTitle">メモ（任意）</div>
+        <div class="memoRow">
+          <div class="memoLabel">メモ</div>
+          <input id="entryMemoTop" type="text" placeholder="未入力" />
         </div>
       </div>
 
@@ -159,14 +186,6 @@
     <div class="entryActionBar">
       <button class="ghost" type="button" id="entryCloseBtn">閉じる</button>
       <button class="primary" type="button" id="entryPrimaryBtn">次へ</button>
-    </div>
-
-    <div class="entryDayBox">
-      <div class="bar entryDayBar">
-        <div style="font-weight:1000;" id="entryDaySumPill">本日合計：0円</div>
-        <div class="small" id="entryDayCountPill">0件</div>
-      </div>
-      <div id="entryDayList" class="entryDayList"></div>
     </div>
 
     <input type="hidden" id="entryCategoryHidden">
@@ -192,25 +211,42 @@
   </div>
 </div>
 
+<!-- Saving/Invest Modal -->
+<div class="modalOverlay" id="savingModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">貯蓄・投資の入力</div>
+      <button class="ghost" onclick="closeModal('savingModal')">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="row">
+        <label>貯蓄（円）<input type="number" id="savingInput" placeholder="例：30000"></label>
+        <label>投資（円）<input type="number" id="investInput" placeholder="例：20000"></label>
+      </div>
+      <div class="small" style="margin-top:8px;">初回だけ入力すればOK。必要なら後から編集できます。</div>
+      <div style="margin-top:16px;">
+        <button class="primary" style="width:100%;" onclick="saveSavingModal()">保存して結果を見る</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
   <section class="screen active" id="screen-input">
     <div class="box">
       <h2 style="display:flex; align-items:center; gap:8px;">
         <span style="font-size:20px;">📝</span> 行動ログ
       </h2>
+      <div class="small" style="margin-top:6px;">カテゴリを選ぶと入力が始まります</div>
+      <div class="catTitle" style="margin-top:12px;">カテゴリー</div>
+      <div class="catGridApp" id="quickCatArea"></div>
+    </div>
+  </section>
 
-      <div class="weeklyCard">
-        <div>
-          <div class="weeklyTitle">先週の診断</div>
-          <div class="small" id="weeklyHintText">先週（日〜土）の簡易スコア</div>
-        </div>
-        <div class="bar">
-          <span class="weeklyBadge" id="weeklyBadge">未開封</span>
-          <button class="primary" style="padding:8px 12px; font-size:12px;" onclick="openWeeklyReport()">開封</button>
-        </div>
-      </div>
-
-      <div class="calendarBox" id="calendarBox">
+  <section class="screen" id="screen-list">
+    <div class="box">
+      <h2>📅 カレンダー</h2>
+      <div class="calendarBox" id="calendarBox" style="margin-top:12px;">
         <div class="calHeader">
           <span class="pill" id="calMonthPill" style="font-size:14px; padding:6px 12px;">----</span>
           <div class="bar" style="gap:4px;">
@@ -222,21 +258,6 @@
         <div class="calGrid" id="calGrid"></div>
       </div>
       <p style="text-align:center; margin-top:10px; font-size:12px; color:#888;">日付タップで入力 / 長押しで履歴</p>
-    </div>
-  </section>
-
-  <section class="screen" id="screen-list">
-    <div class="box">
-      <h2>📊 行動データ</h2>
-      <div class="row">
-        <label>
-          対象月
-          <div class="bar" style="gap:8px;">
-            <input type="month" id="viewMonth">
-            <button class="primary" style="padding:12px;" onclick="renderList()">更新</button>
-          </div>
-        </label>
-      </div>
       <div class="bar" style="margin-top:12px; justify-content:flex-end;">
          <button class="danger" style="font-size:12px; padding:8px 12px;" onclick="clearMonthTx()">月データ削除</button>
       </div>
@@ -248,32 +269,40 @@
     <div class="box boxSafeBottom">
       <div class="bar" style="justify-content:space-between;">
         <div>
-          <h2 style="font-size:20px; margin:0;">🩺 定期健康診断（月次）</h2>
-          <div class="small">総合スコア＋各項目（表示はすべて100点満点）</div>
+          <h2 style="font-size:20px; margin:0;">📊 診断</h2>
+          <div class="small">週次・月次の結果をここで切り替え</div>
         </div>
         <div><span class="pill" id="profileMiniPill">目安：未設定</span></div>
       </div>
 
-      <div class="row" style="margin-top:18px;">
-        <label>診断する月 <input type="month" id="scoreMonth"></label>
-        <label>手取り月収 (円) <input type="number" id="incomeYen" placeholder="例：300000"></label>
+      <div class="scoreTabs" style="margin-top:16px;">
+        <button class="scoreTabBtn active" id="scoreTab-weekly" onclick="switchScoreView('weekly')">週次</button>
+        <button class="scoreTabBtn" id="scoreTab-monthly" onclick="switchScoreView('monthly')">月次</button>
       </div>
 
-      <h3>固定費 (月1回)</h3>
-      <div class="row">
-        <label>住居費<input type="number" id="housingYen" placeholder="家賃など"></label>
-        <label>光熱費<input type="number" id="utilityYen" placeholder="電気ガス水道"></label>
-        <label>通信費<input type="number" id="netYen" placeholder="スマホ・Net"></label>
-        <label>サブスク<input type="number" id="subYen" placeholder="定期支払"></label>
+      <div id="score-weekly" style="margin-top:16px;">
+        <div id="weeklyInline"></div>
       </div>
 
-      <h3>貯蓄・投資</h3>
-      <div class="row">
-        <label>今月の貯蓄額<input type="number" id="savingYen" placeholder="貯金+投資"></label>
-      </div>
+      <div id="score-monthly" style="margin-top:16px; display:none;">
+        <div class="row">
+          <label>診断する月 <input type="month" id="scoreMonth"></label>
+        </div>
 
-      <div style="margin-top:22px;">
-        <button class="primary" style="width:100%; padding:16px; font-size:16px;" onclick="showMonthlyScore()">診断結果を見る</button>
+        <h3>貯蓄・投資（初回入力）</h3>
+        <div class="bar" style="justify-content:space-between; margin-top:8px;">
+          <div>
+            <div class="small">今月の貯蓄＋投資</div>
+            <div id="savingInvestLabel" style="font-weight:1100;">—</div>
+          </div>
+          <button class="ghost" onclick="openSavingModal()">入力/編集</button>
+        </div>
+        <input type="hidden" id="savingYen">
+        <input type="hidden" id="investYen">
+
+        <div style="margin-top:22px;">
+          <button class="primary" style="width:100%; padding:16px; font-size:16px;" onclick="showMonthlyScore()">診断結果を見る</button>
+        </div>
       </div>
     </div>
   </section>
@@ -282,6 +311,12 @@
     <div class="box boxSafeBottom">
       <h2>⚙️ 設定・プロフィール</h2>
       <div class="small">属性（世帯人数・年齢階級）は、将来の比較機能の土台になります</div>
+
+      <div class="row" style="margin-top:16px;">
+        <label>設定する月
+          <input type="month" id="settingsMonth">
+        </label>
+      </div>
 
       <div class="row" style="margin-top:16px;">
         <label>世帯人数
@@ -308,6 +343,25 @@
       </div>
 
       <div class="box" style="margin:16px 0 0;">
+        <h3>月収（手取り）</h3>
+        <div class="small">月次スコアの基準に使います</div>
+        <div class="row" style="margin-top:12px;">
+          <label>手取り月収 (円) <input type="number" id="incomeYen" placeholder="例：300000"></label>
+        </div>
+      </div>
+
+      <div class="box" style="margin:16px 0 0;">
+        <h3>固定費（月次）</h3>
+        <div class="small">診断する月の固定費をここで入力します</div>
+        <div class="row" style="margin-top:12px;">
+          <label>住居費<input type="number" id="housingYen" placeholder="家賃など"></label>
+          <label>光熱費<input type="number" id="utilityYen" placeholder="電気ガス水道"></label>
+          <label>通信費<input type="number" id="netYen" placeholder="スマホ・Net"></label>
+          <label>サブスク<input type="number" id="subYen" placeholder="定期支払"></label>
+        </div>
+      </div>
+
+      <div class="box" style="margin:16px 0 0;">
         <h3>📕 チュートリアル</h3>
         <button class="ghost" style="width:100%;" onclick="resetOnboarding()">最初の説明をもう一度見る</button>
       </div>
@@ -331,10 +385,10 @@
       <span class="icon">✏️</span><span>ログ</span>
     </button>
     <button class="tabBtn" id="tab-list" onclick="switchScreen('list')">
-      <span class="icon">📊</span><span>データ</span>
+      <span class="icon">📅</span><span>カレンダー</span>
     </button>
     <button class="tabBtn" id="tab-score" onclick="switchScreen('score')">
-      <span class="icon">🩺</span><span>診断</span>
+      <span class="icon">📊</span><span>スコア</span>
     </button>
     <button class="tabBtn" id="tab-profile" onclick="switchScreen('profile')">
       <span class="icon">⚙️</span><span>設定</span>

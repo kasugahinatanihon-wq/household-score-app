@@ -1,7 +1,9 @@
 const LS_TX = "tx";
 const LS_FIXED = "fixed_month";
+const LS_INCOME = "income_month";
 const LS_PROFILE = "user_profile";
 const LS_ONBOARD = "onboarding_done";
+const LS_SAVING = "saving_month";
 
 const CATEGORIES = [
   "食費","外食費","日用品","衣服","美容","交際費","医療費","教育費",
@@ -32,8 +34,8 @@ const BENCH_PUBLIC_2024 = {
 };
 
 const APP_AVG_PLACEHOLDER = {
-  weekly: { qualitySpend: 9000, qualityScore: 58 },
-  monthly: { qualitySpend: 35000, qualityScore: 60 },
+  weekly: { spendControl: 70, satisfactionEfficiency: 60 },
+  monthly: { spendControl: 70, satisfactionEfficiency: 62 },
 };
 
 const CATEGORY_TO_PUBLIC = {
@@ -118,57 +120,155 @@ function niceMax(value){
   return step * pow;
 }
 
-function renderHappinessScatter({ title, youX, youY, avgX, avgY }){
+function renderHappinessScatterContent({ youX, youY, avgX, avgY, xMid=50, yMid=70 }){
   const hasYou = Number.isFinite(youX) && Number.isFinite(youY);
   const hasAvg = Number.isFinite(avgX) && Number.isFinite(avgY);
-  const xMax = niceMax(Math.max(youX||0, avgX||0, 1));
+  const xMax = 100;
   const yMax = 100;
 
   const w = 320;
-  const h = 200;
-  const pad = { left:44, right:16, top:14, bottom:36 };
+  const h = 170;
+  const pad = { left:38, right:12, top:12, bottom:30 };
   const plotW = w - pad.left - pad.right;
   const plotH = h - pad.top - pad.bottom;
 
   const xTo = (x)=> pad.left + (x / xMax) * plotW;
   const yTo = (y)=> pad.top + (1 - (y / yMax)) * plotH;
 
-  const xMid = xMax / 2;
-  const yMid = 50;
-
   const youPoint = hasYou ? `<circle class="scatterPoint you" cx="${xTo(youX)}" cy="${yTo(youY)}" r="5"></circle>` : "";
   const avgPoint = hasAvg ? `<rect class="scatterPoint avg" x="${xTo(avgX)-5}" y="${yTo(avgY)-5}" width="10" height="10" rx="2"></rect>` : "";
 
   return `
+    <div class="scatterWrap compact">
+      <svg class="scatterSvg compact" viewBox="0 0 ${w} ${h}" role="img" aria-label="行動マップの比較">
+        <line class="scatterAxis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + plotH}"></line>
+        <line class="scatterAxis" x1="${pad.left}" y1="${pad.top + plotH}" x2="${pad.left + plotW}" y2="${pad.top + plotH}"></line>
+
+        <rect class="scatterZone" x="${xTo(xMid)}" y="${pad.top}" width="${pad.left + plotW - xTo(xMid)}" height="${yTo(yMid) - pad.top}"></rect>
+        <line class="scatterGrid" x1="${pad.left}" y1="${yTo(yMid)}" x2="${pad.left + plotW}" y2="${yTo(yMid)}"></line>
+        <line class="scatterGrid" x1="${xTo(xMid)}" y1="${pad.top}" x2="${xTo(xMid)}" y2="${pad.top + plotH}"></line>
+
+        <text class="scatterTick" x="${pad.left}" y="${pad.top + plotH + 18}" text-anchor="middle">0</text>
+        <text class="scatterTick" x="${xTo(xMid)}" y="${pad.top + plotH + 18}" text-anchor="middle">${Math.round(xMid)}</text>
+        <text class="scatterTick" x="${pad.left + plotW}" y="${pad.top + plotH + 18}" text-anchor="middle">100</text>
+
+        <text class="scatterTick" x="${pad.left - 8}" y="${pad.top + plotH}" text-anchor="end">0</text>
+        <text class="scatterTick" x="${pad.left - 8}" y="${yTo(yMid)+4}" text-anchor="end">${Math.round(yMid)}</text>
+        <text class="scatterTick" x="${pad.left - 8}" y="${pad.top + 4}" text-anchor="end">100</text>
+
+        ${avgPoint}
+        ${youPoint}
+      </svg>
+      <div class="scatterLegend">● あなた / ■ アプリ内平均（仮）</div>
+    </div>
+    ${!hasYou ? `<div class="small" style="margin-top:6px;">データが少ないため、次の月に精度が上がります（まずは記録と★でOK）</div>` : ""}
+    <div class="small muted guideLine">納得して使えていて、かつ家計への負担が軽いほど右上に近づきます</div>
+  `;
+}
+
+function renderHappinessScatter({ title, youX, youY, avgX, avgY, xMid=50, yMid=70, xLabel, yLabel }){
+  return `
     <div class="sectionCard">
       <div class="sectionHead">
-        <div><div class="sectionName">${escapeHtml(title)}</div><div class="sectionHint">横軸：質カテゴリ支出 / 縦軸：質スコア</div></div>
+        <div><div class="sectionName">${escapeHtml(title)}</div><div class="sectionHint">${escapeHtml(xLabel)} / ${escapeHtml(yLabel)}</div></div>
         <div class="sectionScore">比較</div>
       </div>
-      <div class="scatterWrap">
-        <svg class="scatterSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="幸福度の比較分布">
-          <line class="scatterAxis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top + plotH}"></line>
-          <line class="scatterAxis" x1="${pad.left}" y1="${pad.top + plotH}" x2="${pad.left + plotW}" y2="${pad.top + plotH}"></line>
-
-          <line class="scatterGrid" x1="${pad.left}" y1="${yTo(yMid)}" x2="${pad.left + plotW}" y2="${yTo(yMid)}"></line>
-          <line class="scatterGrid" x1="${xTo(xMid)}" y1="${pad.top}" x2="${xTo(xMid)}" y2="${pad.top + plotH}"></line>
-
-          <text class="scatterTick" x="${pad.left}" y="${pad.top + plotH + 18}" text-anchor="middle">0</text>
-          <text class="scatterTick" x="${xTo(xMid)}" y="${pad.top + plotH + 18}" text-anchor="middle">${Math.round(xMid).toLocaleString("ja-JP")}</text>
-          <text class="scatterTick" x="${pad.left + plotW}" y="${pad.top + plotH + 18}" text-anchor="middle">${Math.round(xMax).toLocaleString("ja-JP")}</text>
-
-          <text class="scatterTick" x="${pad.left - 8}" y="${pad.top + plotH}" text-anchor="end">0</text>
-          <text class="scatterTick" x="${pad.left - 8}" y="${yTo(yMid)+4}" text-anchor="end">50</text>
-          <text class="scatterTick" x="${pad.left - 8}" y="${pad.top + 4}" text-anchor="end">100</text>
-
-          ${avgPoint}
-          ${youPoint}
-        </svg>
-        <div class="scatterLegend">● あなた / ■ アプリ内平均（仮）</div>
-      </div>
-      ${!hasYou ? `<div class="small" style="margin-top:6px;">データが少ないため、あなたの点はまだ表示されません。</div>` : ""}
+      ${renderHappinessScatterContent({ youX, youY, avgX, avgY, xMid, yMid })}
     </div>
   `;
+}
+
+function buildSummaryTextWeekly({ daysWithEntry, qualityScore, regretRate }){
+  let a = "今週はこれからのペースです。";
+  if(Number.isFinite(daysWithEntry) && daysWithEntry >= 4){
+    a = "記録は続けられています。";
+  }else if(Number.isFinite(daysWithEntry) && daysWithEntry >= 1){
+    a = "記録は始められています。";
+  }
+
+  let b = "納得はこれから積み上げられます。";
+  if(Number.isFinite(qualityScore) && qualityScore >= 70){
+    b = "納得も積み上がっています。";
+  }else if(Number.isFinite(qualityScore) && qualityScore < 55){
+    b = "納得は伸びしろです。";
+  }else if(Number.isFinite(qualityScore)){
+    b = "納得は安定しています。";
+  }
+
+  if(Number.isFinite(regretRate) && regretRate > 0.4){
+    b = "納得のばらつきが見えています。";
+  }
+
+  return `${a} ${b}`;
+}
+
+function buildSummaryTextMonthly({ savingsScore, fixedScore, varScore, qualityScore }){
+  const parts = [
+    { key:"貯蓄", score: savingsScore },
+    { key:"固定費", score: fixedScore },
+    { key:"変動費", score: varScore },
+    { key:"納得（質）", score: Number.isFinite(qualityScore) ? qualityScore : null },
+  ].filter(p=>Number.isFinite(p.score));
+
+  if(parts.length === 0){
+    return "今月の特徴は、これから見えてきます。";
+  }
+
+  const sorted = [...parts].sort((a,b)=>b.score - a.score);
+  const topA = sorted[0]?.key;
+  const topB = sorted[1]?.key;
+  const bottom = sorted[sorted.length - 1]?.key;
+
+  if(topA && topB && bottom){
+    return `${topA}と${topB}は安定しています。${bottom}は伸びしろです。`;
+  }
+  return `${topA}に特徴が出ています。`;
+}
+
+function buildNextActionWeekly({ daysWithEntry, coveragePct, qualityScore }){
+  let text = "今の入力リズムを続ける";
+  if(Number.isFinite(daysWithEntry) && daysWithEntry <= 2){
+    text = "3日だけ記録する";
+  }else if(Number.isFinite(coveragePct) && coveragePct < 50){
+    text = "★（納得度）を2回つける";
+  }else if(Number.isFinite(qualityScore) && qualityScore < 55){
+    text = "★3〜4になりやすい支出を1回増やす";
+  }
+  return `次は「${text}」を1つだけ試してみましょう`;
+}
+
+function buildNextActionMonthly({ coveragePct, qualityScore, varRate, savingRate, fixedRate }){
+  let text = "同じ入力リズムを続ける";
+  if(Number.isFinite(coveragePct) && Number.isFinite(qualityScore) && coveragePct < 70){
+    text = "★（納得度）を週3回つける";
+  }else if(Number.isFinite(qualityScore) && qualityScore < 55){
+    text = "★3〜4が付く支出を1つ増やす";
+  }else if(Number.isFinite(varRate) && varRate > 0.40){
+    text = "★1〜2の支出を1つ見直す";
+  }else if(Number.isFinite(fixedRate) && fixedRate > 0.33){
+    text = "通信 or サブスクを1つ棚卸しする";
+  }else if(Number.isFinite(savingRate) && savingRate < 0.15){
+    text = "先取り貯蓄を1万円だけ上乗せする";
+  }
+  return `次は「${text}」を1つだけ試してみましょう`;
+}
+
+function calcSatisfactionEfficiency(qualityScore, qSpend, varSpend){
+  if(!Number.isFinite(qualityScore) || !Number.isFinite(qSpend) || !Number.isFinite(varSpend) || varSpend <= 0){
+    return null;
+  }
+  const spendPressure = qSpend / varSpend;
+  const penalty = clamp((spendPressure - 0.30) * 100, 0, 30);
+  return clamp(Math.round(qualityScore - penalty), 0, 100);
+}
+
+function calcWeeklySatisfactionEfficiency(qualityScore, qSpend, spend){
+  if(!Number.isFinite(qualityScore) || !Number.isFinite(qSpend) || !Number.isFinite(spend) || spend <= 0){
+    return null;
+  }
+  const weeklySpendPressure = qSpend / spend;
+  const weeklyPenalty = clamp((weeklySpendPressure - 0.50) * 40, 0, 20);
+  return clamp(Math.round(qualityScore - weeklyPenalty), 0, 100);
 }
 
 function loadJSON(key, fallback){
@@ -181,15 +281,95 @@ function saveJSON(key, obj){
 function loadTx(){ return loadJSON(LS_TX, []); }
 function saveTx(list){ saveJSON(LS_TX, list); }
 
+function loadSavingMap(){ return loadJSON(LS_SAVING, {}); }
+function saveSavingMap(map){ saveJSON(LS_SAVING, map); }
+function getSavingForMonth(m){ return loadSavingMap()[m] || null; }
+function setSavingForMonth(m, saving, invest){
+  const map = loadSavingMap();
+  map[m] = { saving:Number(saving||0), invest:Number(invest||0) };
+  saveSavingMap(map);
+}
+
+function loadIncomeMap(){ return loadJSON(LS_INCOME, {}); }
+function saveIncomeMap(map){ saveJSON(LS_INCOME, map); }
+function getIncomeForMonth(m){ return loadIncomeMap()[m] ?? null; }
+function setIncomeForMonth(m, income){
+  const map = loadIncomeMap();
+  map[m] = Number(income||0);
+  saveIncomeMap(map);
+}
+
+function prevMonthStr(m){
+  if(!m || !/^\d{4}-\d{2}$/.test(m)) return null;
+  const [y, mo] = m.split("-").map(Number);
+  const d = new Date(y, mo - 1, 1);
+  d.setMonth(d.getMonth() - 1);
+  return ym(d);
+}
+
+function loadMonthlySettings(m){
+  if(!m) return;
+  const fixedAll = loadJSON(LS_FIXED, {});
+  const incomeAll = loadIncomeMap();
+  const prev = prevMonthStr(m);
+
+  const fixed = fixedAll[m] || (prev ? fixedAll[prev] : null) || { housingYen:0, utilityYen:0, netYen:0, subYen:0 };
+  $("housingYen") && ($("housingYen").value = fixed.housingYen ? String(fixed.housingYen) : "");
+  $("utilityYen") && ($("utilityYen").value = fixed.utilityYen ? String(fixed.utilityYen) : "");
+  $("netYen") && ($("netYen").value = fixed.netYen ? String(fixed.netYen) : "");
+  $("subYen") && ($("subYen").value = fixed.subYen ? String(fixed.subYen) : "");
+
+  const income = incomeAll[m] ?? (prev ? incomeAll[prev] : null);
+  $("incomeYen") && ($("incomeYen").value = income ? String(income) : "");
+}
+
+function saveMonthlySettings(m){
+  if(!m) return;
+  const fixedAll = loadJSON(LS_FIXED, {});
+  const prev = prevMonthStr(m);
+  const base = fixedAll[m] || (prev ? fixedAll[prev] : null) || {};
+
+  const getVal = (id, fallback)=> {
+    const raw = $(id)?.value.trim();
+    if(raw === "") return fallback ?? 0;
+    return Number(raw || 0);
+  };
+
+  fixedAll[m] = {
+    housingYen: getVal("housingYen", base.housingYen),
+    utilityYen: getVal("utilityYen", base.utilityYen),
+    netYen: getVal("netYen", base.netYen),
+    subYen: getVal("subYen", base.subYen),
+  };
+  saveJSON(LS_FIXED, fixedAll);
+
+  const incomeRaw = $("incomeYen")?.value.trim();
+  if(incomeRaw !== ""){
+    setIncomeForMonth(m, Number(incomeRaw || 0));
+  }
+}
+
 let CAL_ANCHOR = monthStart(new Date());
 let SELECTED_DATE = ymd(new Date());
-let entryStep = "category"; // category -> amount -> details
+let entryStep = "category"; // category -> amount -> satisfaction -> trigger -> memo
+
+const ENTRY_STEPS = ["category","amount","quality","memo"];
+let PENDING_MONTHLY = false;
 
 function setEntryStep(step){
   entryStep = step;
   const btn = $("entryPrimaryBtn");
   if(!btn) return;
-  btn.textContent = (step === "details") ? "保存" : "次へ";
+  btn.style.display = (step === "quality") ? "none" : "";
+  btn.textContent = (step === "memo") ? "保存" : "次へ";
+}
+
+function showEntryStep(step){
+  ENTRY_STEPS.forEach(s=>{
+    const el = $("step-" + s);
+    if(el) el.style.display = (s === step) ? "" : "none";
+  });
+  setEntryStep(step);
 }
 
 /* ===== Modal helpers ===== */
@@ -198,10 +378,12 @@ function openModal(id){
   if(!el) return;
   el.style.display = "flex";
   el.classList.remove("hidden");
+  requestAnimationFrame(()=>{ el.classList.add("isOpen"); });
 }
 function closeModal(id){
   const el = $(id);
   if(!el) return;
+  el.classList.remove("isOpen");
   el.style.display = "none";
   el.classList.add("hidden");
 }
@@ -219,17 +401,31 @@ function switchScreen(name){
     if(b) b.classList.toggle("active", t===name);
   });
 
-  if(name === "input") renderCalendar();
-  if(name === "list") renderList();
+  if(name === "list"){
+    renderCalendar();
+    renderList();
+  }
   if(name === "score") syncScoreMonthDefault();
   if(name === "profile") loadProfileToUI();
 }
 window.switchScreen = switchScreen;
 
+function switchScoreView(view){
+  const weekly = $("score-weekly");
+  const monthly = $("score-monthly");
+  if(weekly) weekly.style.display = (view === "weekly") ? "" : "none";
+  if(monthly) monthly.style.display = (view === "monthly") ? "" : "none";
+  $("scoreTab-weekly")?.classList.toggle("active", view === "weekly");
+  $("scoreTab-monthly")?.classList.toggle("active", view === "monthly");
+  if(view === "weekly") renderWeeklyInline();
+}
+window.switchScoreView = switchScoreView;
+
 /* ===== Calendar ===== */
 function calMove(delta){
   CAL_ANCHOR.setMonth(CAL_ANCHOR.getMonth() + delta);
   renderCalendar();
+  renderList();
 }
 window.calMove = calMove;
 
@@ -322,25 +518,26 @@ function renderCalendar(){
 
 /* ===== Entry Modal ===== */
 function buildCatCards(){
-  const wrap = $("entryCatArea");
-  if(!wrap) return;
-
   const ICON = {
     食費:"🍚", 外食費:"🍜", 日用品:"🧻", 衣服:"👕", 美容:"💄", 交際費:"🍻",
     医療費:"🏥", 教育費:"📚", 交通費:"🚃", コンビニ:"🏪", カフェ:"☕",
     デート:"💑", 趣味:"🎮", 仕事:"💼"
   };
+  const renderCards = (wrap, onSelect)=>{
+    if(!wrap) return;
+    wrap.innerHTML = CATEGORIES.map(c=>`
+      <div class="catCard" data-cat="${escapeHtml(c)}">
+        <div class="icon">${ICON[c] || "🧾"}</div>
+        <div class="label">${escapeHtml(c)}</div>
+      </div>
+    `).join("");
+    wrap.querySelectorAll(".catCard").forEach(card=>{
+      card.addEventListener("click", ()=> onSelect(card.dataset.cat));
+    });
+  };
 
-  wrap.innerHTML = CATEGORIES.map(c=>`
-    <div class="catCard" data-cat="${escapeHtml(c)}">
-      <div class="icon">${ICON[c] || "🧾"}</div>
-      <div class="label">${escapeHtml(c)}</div>
-    </div>
-  `).join("");
-
-  wrap.querySelectorAll(".catCard").forEach(card=>{
-    card.addEventListener("click", ()=> selectCategory(card.dataset.cat));
-  });
+  renderCards($("entryCatArea"), (cat)=> selectCategory(cat));
+  renderCards($("quickCatArea"), (cat)=> startQuickEntry(cat));
 }
 
 function selectCategory(cat){
@@ -348,33 +545,28 @@ function selectCategory(cat){
   document.querySelectorAll("#entryCatArea .catCard").forEach(c=>{
     c.classList.toggle("active", c.dataset.cat === cat);
   });
-
-  // ✅ カテゴリ選択で“下”の入力欄を出す（カテゴリの下にある）
-  $("entryFields").style.display = "";
-  $("entrySatWrap").style.display = "none";
   $("entryMsg").textContent = "";
-
-  setEntryStep("amount");
-
-  // ✅ 自然に「金額欄」へスクロール＆フォーカス
-  $("amountRow").scrollIntoView({behavior:"smooth", block:"center"});
-  setTimeout(()=> $("entryAmount").focus(), 250);
+  showEntryStep("amount");
+  setTimeout(()=> $("entryAmount").focus(), 100);
 }
 
-function openEntryModal(dt){
+function startQuickEntry(cat){
+  const today = ymd(new Date());
+  openEntryModal(today, { presetCategory: cat });
+}
+window.startQuickEntry = startQuickEntry;
+
+function openEntryModal(dt, opts = {}){
   SELECTED_DATE = dt;
   $("txDate") && ($("txDate").value = dt);
   $("entryDateText") && ($("entryDateText").textContent = dt);
 
   // reset
   $("entryMsg").textContent = "";
-  $("entryFields").style.display = "none";
   $("entryAmount").value = "";
   $("entryMemoTop").value = "";
   $("entrySat").value = "";
   $("entryTrigger").value = "";
-  $("entryNote").value = "";
-  $("entrySatWrap").style.display = "none";
 
   $("entryCategoryHidden").value = "";
   document.querySelectorAll("#entryCatArea .catCard").forEach(c=> c.classList.remove("active"));
@@ -392,8 +584,17 @@ function openEntryModal(dt){
     });
   }
 
-  setEntryStep("category");
-  renderEntryDayBox(dt);
+  const preset = opts.presetCategory;
+  if(preset){
+    $("entryCategoryHidden").value = preset;
+    document.querySelectorAll("#entryCatArea .catCard").forEach(c=>{
+      c.classList.toggle("active", c.dataset.cat === preset);
+    });
+    showEntryStep("amount");
+    setTimeout(()=> $("entryAmount").focus(), 100);
+  }else{
+    showEntryStep("category");
+  }
   openModal("entryModal");
 
   const card = $("entryModalCard");
@@ -408,6 +609,7 @@ function addDays(dtStr, delta){
 }
 
 function renderEntryDayBox(dt){
+  if(!$("entryDaySumPill") || !$("entryDayList")) return;
   const tx = loadTx().filter(t=>t.date === dt).sort((a,b)=> (b.id).localeCompare(a.id));
   const sum = tx.reduce((a,b)=>a+Number(b.amount||0),0);
 
@@ -463,12 +665,14 @@ function saveEntry(){
   const isQ = QUALITY_TARGET.has(cat);
   const sat = isQ && $("entrySat").value ? Number($("entrySat").value) : null;
   const trig = isQ && $("entryTrigger").value ? $("entryTrigger").value : null;
-  const note = isQ ? ($("entryNote").value||"").trim() : "";
   const memoTop = ($("entryMemoTop").value||"").trim();
+  const note = isQ ? memoTop : "";
 
   const id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+  const now = new Date();
+  const time = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
   const tx = loadTx();
-  tx.push({ id, date: dt, category: cat, amount: amt, satisfaction: sat, trigger: trig, trigMemo: note, memo: memoTop });
+  tx.push({ id, date: dt, category: cat, amount: amt, satisfaction: sat, trigger: trig, trigMemo: note, memo: memoTop, time });
   saveTx(tx);
   localStorage.setItem("last_cat", cat);
   return true;
@@ -476,7 +680,12 @@ function saveEntry(){
 
 function handleEntryPrimary(){
   if(entryStep === "category"){
-    toast("カテゴリを選んでね");
+    const cat = $("entryCategoryHidden").value;
+    if(!cat){
+      toast("カテゴリを選んでね");
+      return;
+    }
+    showEntryStep("amount");
     return;
   }
 
@@ -490,13 +699,16 @@ function handleEntryPrimary(){
     }
 
     if(isQ){
-      $("entrySatWrap").style.display = "";
-      setEntryStep("details");
-      $("entrySatWrap").scrollIntoView({behavior:"smooth", block:"start"});
+      showEntryStep("quality");
       return;
     }
 
-    if(saveEntry()) afterEntrySaved();
+    showEntryStep("memo");
+    return;
+  }
+
+  if(entryStep === "quality"){
+    showEntryStep("memo");
     return;
   }
 
@@ -603,7 +815,7 @@ function sumByPublicCategory(txList){
   return sums;
 }
 
-function calcPublicRates(txListForMonth, fixed){
+function calcPublicRates(txListForMonth, fixed, income){
   const baseTxTotal = txListForMonth.reduce((a,b)=>a+Number(b.amount||0),0);
   const sums = sumByPublicCategory(txListForMonth);
 
@@ -612,7 +824,7 @@ function calcPublicRates(txListForMonth, fixed){
   const fixedComm = Number(fixed?.netYen||0);
   const fixedSub = Number(fixed?.subYen||0);
 
-  sums.HOUSING += fixedHousing;
+  sums.HOUSING = fixedHousing;
   sums.UTILITIES += fixedUtilities;
   sums.TRANS_COMM += fixedComm;
   sums.OTHER += fixedSub;
@@ -630,7 +842,7 @@ function calcPublicRates(txListForMonth, fixed){
   };
 
   const userRates = {
-    HOUSING: userTotal>0 ? sums.HOUSING / userTotal : null,
+    HOUSING: income>0 ? sums.HOUSING / income : null,
     FOOD: userTotal>0 ? sums.FOOD / userTotal : null,
     UTILITIES: userTotal>0 ? sums.UTILITIES / userTotal : null,
     TRANS_COMM: userTotal>0 ? sums.TRANS_COMM / userTotal : null,
@@ -676,37 +888,131 @@ function renderPublicCompareTable(rates){
       }).join("")}
       </div>
     </div>
-    <div class="small compareLegend">● あなた / ▲ 目安（スケール上限50%）・緑=良い / 赤=改善</div>
+    <div class="small compareLegend">● あなた / ▲ 目安（スケール上限50%）・緑=軽め / 赤=重め</div>
     <div class="small" style="margin-top:8px;">住居は国土交通省 住宅情報データ（都内）目安28%（暫定）</div>
     <div class="small" style="margin-top:6px;">出典：総務省 家計調査（家計収支編）2024年 二人以上世帯・月次中央値</div>
   `;
 }
 
 /* ===== Weekly / Monthly ===== */
-function donutHTML(score){
+function getScoreState(score){
+  if(score < 50) return "bad";
+  if(score < 75) return "mid";
+  return "good";
+}
+function getStateColorVar(state){
+  const map = {
+    bad: "var(--state-bad)",
+    mid: "var(--state-mid)",
+    good: "var(--state-good)",
+  };
+  return map[state] || "var(--state-mid)";
+}
+function donutHTML(score, opts = {}){
   const p = clamp(Math.round(score), 0, 100);
+  const sizeClass = opts.size === "xxl"
+    ? "xxl"
+    : (opts.size === "xl" ? "xl" : (opts.size === "lg" ? "lg" : ""));
+  const state = opts.state || getScoreState(p);
+  const color = opts.stateColor || getStateColorVar(state);
   return `
-    <div class="donutWrap">
-      <div class="donut" style="--p:${p};"></div>
-      <div class="donutValue"><span>${p}</span><span>/100</span></div>
+    <div class="donutWrap ${sizeClass}">
+      <div class="donut ${sizeClass}" data-state="${state}" data-p="${p}" style="--p:0; --donut-color:${color};"></div>
+      <div class="donutValue ${sizeClass}"><span>${p}</span><span>/100</span></div>
     </div>
   `;
 }
 
-function getLastWeekRange(){
+/* ===== Time Insights ===== */
+function bucketFromTime(timeStr){
+  if(!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return "不明";
+  const h = Number(timeStr.split(":")[0]);
+  if(Number.isNaN(h)) return "不明";
+  if(h >= 5 && h < 10) return "朝";
+  if(h >= 10 && h < 14) return "昼";
+  if(h >= 14 && h < 18) return "夕";
+  if(h >= 18 && h < 22) return "夜";
+  if(h >= 22 || h < 2) return "深夜";
+  if(h >= 2 && h < 5) return "明け方";
+  return "不明";
+}
+
+function buildTimeInsights(txList){
+  const spendBy = {};
+  const regretBy = {};
+  const triggerBy = {};
+
+  for(const t of txList){
+    const bucket = bucketFromTime(t.time);
+    if(!spendBy[bucket]) spendBy[bucket] = 0;
+    spendBy[bucket] += Number(t.amount||0);
+
+    const isRegret = QUALITY_TARGET.has(t.category)
+      && Number.isFinite(Number(t.satisfaction))
+      && Number(t.satisfaction) <= 2;
+    if(isRegret){
+      if(!regretBy[bucket]) regretBy[bucket] = 0;
+      regretBy[bucket] += Number(t.amount||0);
+      if(t.trigger){
+        if(!triggerBy[t.trigger]) triggerBy[t.trigger] = 0;
+        triggerBy[t.trigger] += 1;
+      }
+    }
+  }
+
+  const topN = (obj, n)=>{
+    const entries = Object.entries(obj).sort((a,b)=> b[1]-a[1]).slice(0, n);
+    return entries.map(([k,v])=>({ key:k, value:v }));
+  };
+
+  const topSpend = topN(spendBy, 3);
+  const topRegret = topN(regretBy, 3);
+  const topTrigger = topN(triggerBy, 1);
+
+  return {
+    spendTop: topSpend.length ? topSpend : [{ key:"—", value:null }],
+    regretTop: topRegret.length ? topRegret : [{ key:"—", value:null }],
+    regretTrigger: topTrigger.length && topTrigger[0].key ? (TRIGGER_LABEL[topTrigger[0].key] || topTrigger[0].key) : "—",
+  };
+}
+
+function renderTimeRank(items){
+  return items.map((it, idx)=>{
+    const amt = (it.value == null || !Number.isFinite(it.value)) ? "—" : `${Math.round(it.value).toLocaleString("ja-JP")}円`;
+    return `${idx+1}. ${it.key} ${amt}`;
+  }).join(" / ");
+}
+
+function renderTimeRankLines(items){
+  const out = [];
+  for(let i=0;i<3;i++){
+    const it = items[i];
+    if(!it){
+      out.push(`—`);
+      continue;
+    }
+    const amt = (it.value == null || !Number.isFinite(it.value)) ? "—" : `${Math.round(it.value).toLocaleString("ja-JP")}円`;
+    out.push(`${it.key} ${amt}`);
+  }
+  return out;
+}
+
+function animateDonuts(scope){
+  const root = scope || document;
+  root.querySelectorAll(".donut[data-p]").forEach(el=>{
+    const p = el.dataset.p;
+    if(p == null) return;
+    requestAnimationFrame(()=>{ el.style.setProperty("--p", String(p)); });
+  });
+}
+
+function getRecentWeekRange(){
   const now = new Date();
-  const day = now.getDay();
-  const thisWeekSun = new Date(now);
-  thisWeekSun.setHours(0,0,0,0);
-  thisWeekSun.setDate(now.getDate() - day);
-
-  const lastWeekSun = new Date(thisWeekSun);
-  lastWeekSun.setDate(thisWeekSun.getDate() - 7);
-
-  const lastWeekSat = new Date(thisWeekSun);
-  lastWeekSat.setDate(thisWeekSun.getDate() - 1);
-
-  return { start:lastWeekSun, end:lastWeekSat };
+  const end = new Date(now);
+  end.setHours(0,0,0,0);
+  const start = new Date(end);
+  start.setDate(end.getDate() - 6);
+  return { start, end };
 }
 function daysBetweenInclusive(a,b){
   const out = [];
@@ -718,11 +1024,12 @@ function daysBetweenInclusive(a,b){
   return out;
 }
 
-function openWeeklyReport(){
-  const { start, end } = getLastWeekRange();
+function buildWeeklyResult(){
+  const { start, end } = getRecentWeekRange();
   const days = daysBetweenInclusive(start, end);
 
-  const allTx = loadTx().filter(t => days.includes(t.date));
+  const allTxRaw = loadTx();
+  const allTx = allTxRaw.filter(t => days.includes(t.date));
   const spend = allTx.reduce((a,t)=>a+Number(t.amount||0),0);
 
   const qx = calcQualityMetrics(allTx);
@@ -741,56 +1048,130 @@ function openWeeklyReport(){
   if(regretRate != null) weeklyScore -= regretRate * 25;
   weeklyScore = clamp(Math.round(weeklyScore), 0, 100);
 
-  const period = `${ymd(start)}（日）〜${ymd(end)}（土）`;
+  const dow = ["日","月","火","水","木","金","土"][end.getDay()];
+  const period = `${ymd(start)}（日）〜${ymd(end)}（${dow}）`;
 
-  const view = $("modalResultView");
-  const txt = $("modalResultText");
+  const weeklyEff = calcWeeklySatisfactionEfficiency(qualityScore, qx.qSpend, spend);
+  const income = Number($("incomeYen")?.value||0);
+  const weeklySpendControl = income > 0
+    ? clamp(Math.round((1 - (spend / (income / 4))) * 100), 0, 100)
+    : null;
 
-  view.innerHTML = `
+  const summaryWeekly = buildSummaryTextWeekly({ daysWithEntry, qualityScore, regretRate });
+  const timeInsights = buildTimeInsights(allTx);
+  const weeklyState = getScoreState(weeklyScore);
+
+  const spendLines = renderTimeRankLines(timeInsights.spendTop);
+  const regretLines = renderTimeRankLines(timeInsights.regretTop);
+
+  const html = `
     <div class="resultWrap">
-      <div class="pill" style="margin-bottom:10px;">週次（先週：日〜土）</div>
-      <div class="small" style="margin-bottom:12px;">期間：${escapeHtml(period)}</div>
-
-      <div class="scoreCard">
-        <div class="scoreTop">
-          ${donutHTML(weeklyScore)}
-          <div>
-            <div class="bigTitle">週次スコア：<span class="scoreValue">${weeklyScore}<span class="scoreUnit">/100</span></span></div>
-            <div class="scoreSub">記録習慣＋質（納得）＋後悔の少なさをまとめた簡易スコア</div>
+      <div class="insightRow twoCol animIn a1">
+        <div class="summaryCard weeklySummary score--${weeklyState}">
+          <div class="summaryGrid">
+            <div>
+              <div class="summaryTitle">週次スコア</div>
+              <div class="summaryLead">${escapeHtml(summaryWeekly)}</div>
+              <div class="summaryMeta">期間：${escapeHtml(period)}</div>
+            </div>
+            <div class="summaryRight">
+              ${donutHTML(weeklyScore, { size:"xxl" })}
+            </div>
           </div>
         </div>
 
-        <div class="kpiGrid">
-          <div class="kpiBox"><div class="kpiT">総支出</div><div class="kpiV">${Math.round(spend).toLocaleString("ja-JP")}円</div></div>
-          <div class="kpiBox"><div class="kpiT">記録日数</div><div class="kpiV">${daysWithEntry}日</div></div>
-          <div class="kpiBox"><div class="kpiT">質スコア（納得）</div><div class="kpiV">${qualityScore==null?"—":`${qualityScore}/100`}</div></div>
-          <div class="kpiBox"><div class="kpiT">納得入力カバー</div><div class="kpiV">${coveragePct}%</div></div>
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div><div class="sectionName">行動の質（納得）</div><div class="sectionHint">選んだ支出の納得度を可視化</div></div>
+            <div class="sectionScore">今週</div>
+          </div>
+          <div>
+            <div class="metricBlock">
+              <div class="metricLabel">質スコア（今週のお金の使い方は、どれくらい納得できていたか）</div>
+              <div class="small" style="margin-bottom:6px;">${qualityScore==null?"—":`${qualityScore}/100`}</div>
+              <div class="miniBar"><div style="--w:${qualityScore==null?0:qualityScore}%;"></div></div>
+            </div>
+            <div class="metricBlock" style="margin-top:8px;">
+              <div class="metricLabel">納得効率（使ったお金のうち、どれくらいが“後悔の少ないお金”だったか）</div>
+              <div class="small" style="margin-bottom:6px;">${weeklyEff==null?"—":`${weeklyEff}/100`}</div>
+              <div class="miniBar"><div style="--w:${weeklyEff==null?0:weeklyEff}%;"></div></div>
+            </div>
+            <div class="metricBlock" style="margin-top:8px;">
+              <div class="metricLabel">納得度入力率</div>
+              <div class="small" style="margin-bottom:6px;">${coveragePct}%</div>
+              <div class="miniBar"><div style="--w:${coveragePct}%;"></div></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      ${renderHappinessScatter({
-        title:"幸福度分布（週次）",
-        youX: qx.qSpend,
-        youY: qualityScore,
-        avgX: APP_AVG_PLACEHOLDER.weekly.qualitySpend,
-        avgY: APP_AVG_PLACEHOLDER.weekly.qualityScore
-      })}
+      <div class="insightRow twoCol animIn a2">
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div><div class="sectionName">他者比較マップ（週次）</div><div class="sectionHint">横軸：支出コントロール / 縦軸：納得効率</div></div>
+            <div class="sectionScore">比較</div>
+          </div>
+          ${renderHappinessScatterContent({
+            youX: weeklySpendControl,
+            youY: weeklyEff,
+            avgX: APP_AVG_PLACEHOLDER.weekly.spendControl,
+            avgY: APP_AVG_PLACEHOLDER.weekly.satisfactionEfficiency
+            ,xMid:70
+            ,yMid:70
+          })}
+        </div>
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div><div class="sectionName">行動分析（時間帯）</div><div class="sectionHint">記録時刻を朝/昼/夕/夜/深夜/明け方で集計</div></div>
+            <div class="sectionScore">上位3</div>
+          </div>
+          <div class="insightCard">
+            <div style="font-weight:900; color:var(--ink);">支出が多い時間帯</div>
+            ${spendLines.map((line, idx)=> `<div>${idx+1}. ${escapeHtml(line)}</div>`).join("")}
+          </div>
+          <div class="insightCard" style="margin-top:8px;">
+            <div style="font-weight:900; color:var(--ink);">後悔が多い時間帯</div>
+            ${regretLines.map((line, idx)=> `<div>${idx+1}. ${escapeHtml(line)}</div>`).join("")}
+            <div class="small" style="margin-top:4px;">きっかけ：${escapeHtml(timeInsights.regretTrigger)}</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   `;
 
-  txt.textContent =
-`週次（先週：日〜土）
+  const text =
+`今週のふりかえり
 期間：${period}
 週次スコア：${weeklyScore}/100
-総支出：${Math.round(spend)}円
-記録日数：${daysWithEntry}日
-質スコア（納得）：${qualityScore==null?"—":qualityScore+"/100"}
-納得入力カバー率：${coveragePct}%`;
+納得効率：${weeklyEff==null?"—":weeklyEff+"/100"}
+質スコア：${qualityScore==null?"—":qualityScore+"/100"}
+納得入力カバー率：${coveragePct}%
+質カテゴリ合計：${Math.round(qx.qSpend)}円`;
 
+  return { html, text, weeklyScore };
+}
+
+function openWeeklyReport(){
+  const result = buildWeeklyResult();
+  const view = $("modalResultView");
+  const txt = $("modalResultText");
+  if(view) view.innerHTML = result.html;
+  if(txt) txt.textContent = result.text;
+  if(view) animateDonuts(view);
   $("weeklyBadge") && ($("weeklyBadge").textContent = "開封済");
   openModal("resultModal");
 }
 window.openWeeklyReport = openWeeklyReport;
+
+function renderWeeklyInline(){
+  const wrap = $("weeklyInline");
+  if(!wrap) return;
+  const result = buildWeeklyResult();
+  wrap.innerHTML = result.html;
+  animateDonuts(wrap);
+}
+window.renderWeeklyInline = renderWeeklyInline;
 
 function copyResult(){
   const txt = $("modalResultText");
@@ -805,10 +1186,84 @@ function syncScoreMonthDefault(){
   if(el && !el.value) el.value = ym(new Date());
 }
 
+function refreshSavingLabel(){
+  const m = $("scoreMonth")?.value;
+  if(!m) return;
+  const saved = getSavingForMonth(m);
+  const label = $("savingInvestLabel");
+  if(!label) return;
+  if(!saved){
+    label.textContent = "—";
+    return;
+  }
+  const total = Number(saved.saving||0) + Number(saved.invest||0);
+  label.textContent = `${Math.round(total).toLocaleString("ja-JP")}円`;
+  $("savingYen") && ($("savingYen").value = String(total));
+  $("investYen") && ($("investYen").value = String(saved.invest||0));
+}
+
+function openSavingModal(){
+  const m = $("scoreMonth")?.value || ym(new Date());
+  const saved = getSavingForMonth(m);
+  $("savingInput") && ($("savingInput").value = saved ? String(saved.saving||0) : "");
+  $("investInput") && ($("investInput").value = saved ? String(saved.invest||0) : "");
+  openModal("savingModal");
+}
+window.openSavingModal = openSavingModal;
+
+function saveSavingModal(){
+  const m = $("scoreMonth")?.value || ym(new Date());
+  const savingRaw = ($("savingInput")?.value || "").trim();
+  const investRaw = ($("investInput")?.value || "").trim();
+  if(!savingRaw && !investRaw){
+    toast("貯蓄か投資の金額を入力してね");
+    return;
+  }
+  const saving = Number(savingRaw || 0);
+  const invest = Number(investRaw || 0);
+  setSavingForMonth(m, saving, invest);
+  refreshSavingLabel();
+  closeModal("savingModal");
+  if(PENDING_MONTHLY){
+    PENDING_MONTHLY = false;
+    showMonthlyScore();
+  }
+}
+window.saveSavingModal = saveSavingModal;
+
 function showMonthlyScore(){
+  const result = buildMonthlyResult();
+  if(result.missingSaving){
+    PENDING_MONTHLY = true;
+    openSavingModal();
+    return;
+  }
+  const view = $("modalResultView");
+  const txt = $("modalResultText");
+  if(view) view.innerHTML = result.html;
+  if(txt) txt.textContent = result.text;
+  if(view) animateDonuts(view);
+  openModal("resultModal");
+}
+window.showMonthlyScore = showMonthlyScore;
+
+function buildMonthlyResult(){
   const m = $("scoreMonth").value;
-  const income = Number($("incomeYen").value||0);
-  const saving = Number($("savingYen").value||0);
+  const saved = getSavingForMonth(m);
+  if(!saved){
+    return { missingSaving:true, html:"", text:"" };
+  }
+  const missing = getMonthlyMissingFields();
+  if(missing.length){
+    return {
+      missingSaving:false,
+      html: buildMonthlyMissingHtml(missing),
+      text: ""
+    };
+  }
+  const incomeStored = getIncomeForMonth(m);
+  const income = (incomeStored != null) ? Number(incomeStored||0) : Number($("incomeYen").value||0);
+  const saving = Number(saved.saving||0) + Number(saved.invest||0);
 
   const fixed = {
     housingYen: Number($("housingYen").value||0),
@@ -839,7 +1294,7 @@ function showMonthlyScore(){
   const fixedRate = income>0 ? (fixedSum/income) : null;
   const varRate = income>0 ? (varSpend/income) : null;
 
-  if(fixedRate!=null) score -= clamp((fixedRate-0.30)*80, 0, 20);
+  if(fixedRate!=null) score -= clamp((fixedRate-0.25)*80, 0, 25);
   if(varRate!=null) score -= clamp((varRate-0.35)*80, 0, 25);
   if(regretRate!=null) score -= clamp(regretRate*30, 0, 30);
   if(savingRate!=null) score += clamp((savingRate-0.15)*80, -10, 20);
@@ -852,108 +1307,149 @@ function showMonthlyScore(){
   const vr = varRate==null ? "—" : `${Math.round(varRate*100)}%`;
 
   const savingsScore = savingRate==null ? 50 : clamp(Math.round(50 + (savingRate-0.15)*200), 0, 100);
-  const fixedScore   = fixedRate==null ? 50 : clamp(Math.round(100 - Math.max(0, (fixedRate-0.30))*220), 0, 100);
+  const fixedScore   = fixedRate==null ? 50 : clamp(Math.round(100 - Math.max(0, (fixedRate-0.25))*220), 0, 100);
   const varScore     = varRate==null   ? 50 : clamp(Math.round(100 - Math.max(0, (varRate-0.35))*220), 0, 100);
   const qualityShow  = qualityScore==null ? 0 : qualityScore;
   const qualityLabel = qualityScore==null ? "対象なし" : `${qualityShow}/100`;
+  const totalSpend = fixedSum + varSpend;
+  const satisfactionEfficiency = calcSatisfactionEfficiency(qualityScore, qx.qSpend, varSpend);
+  const spendControl = income > 0 ? clamp(Math.round((1 - (totalSpend / income)) * 100), 0, 100) : null;
 
-  const publicRates = calcPublicRates(tx, fixed);
+  const publicRates = calcPublicRates(tx, fixed, income);
 
-  const view = $("modalResultView");
-  const txt = $("modalResultText");
+  const summaryMonthly = buildSummaryTextMonthly({ savingsScore, fixedScore, varScore, qualityScore });
+  const timeInsights = buildTimeInsights(tx);
+  const monthlyState = getScoreState(score);
+  const spendLines = renderTimeRankLines(timeInsights.spendTop);
+  const regretLines = renderTimeRankLines(timeInsights.regretTop);
 
-  view.innerHTML = `
+  const html = `
     <div class="resultWrap">
-      <div class="pill" style="margin-bottom:10px;">月次診断：${escapeHtml(m)}</div>
-
-      <div class="scoreCard">
-        <div class="scoreTop">
-          ${donutHTML(score)}
+      <div class="summaryCard animIn a1 score--${monthlyState}">
+        <div class="summaryGrid">
           <div>
-            <div class="bigTitle">総合スコア：<span class="scoreValue">${score}<span class="scoreUnit">/100</span></span></div>
-            <div class="scoreSub">貯蓄・固定・変動・質（後悔率）をまとめた総合診断</div>
+            <div class="summaryTitle">月次レポート：${escapeHtml(m)}</div>
+            <div class="summaryLead">${escapeHtml(summaryMonthly)}</div>
+            <div class="summaryMeta">総合スコアは現在地。良し悪しではなく、状態を知るための指標です</div>
+          </div>
+          <div class="summaryRight">
+            ${donutHTML(score, { size:"lg" })}
           </div>
         </div>
+      </div>
 
-        <div class="kpiGrid">
-          <div class="kpiBox"><div class="kpiT">貯蓄率</div><div class="kpiV">${sr}</div></div>
-          <div class="kpiBox"><div class="kpiT">固定費率</div><div class="kpiV">${fr}</div></div>
-          <div class="kpiBox"><div class="kpiT">変動費率</div><div class="kpiV">${vr}</div></div>
-          <div class="kpiBox"><div class="kpiT">後悔率（質）</div><div class="kpiV">${rr}</div></div>
+      <div class="structureCard animIn a2">
+        <div class="summaryTitle">家計の構造</div>
+        <div class="structureGrid">
+          <div class="metricCard">
+            <div class="metricName">貯蓄</div>
+            <div class="metricValue numEmph">${savingsScore}/100</div>
+            <div class="metricSub">貯蓄率：${sr}</div>
+            <div class="miniProgress"><div style="--w:${savingsScore}%;"></div></div>
+          </div>
+          <div class="metricCard">
+            <div class="metricName">固定費</div>
+            <div class="metricValue numEmph">${fixedScore}/100</div>
+            <div class="metricSub">固定費率：${fr}</div>
+            <div class="miniProgress"><div style="--w:${fixedScore}%;"></div></div>
+          </div>
+          <div class="metricCard">
+            <div class="metricName">変動費</div>
+            <div class="metricValue numEmph">${varScore}/100</div>
+            <div class="metricSub">変動費率：${vr}</div>
+            <div class="miniProgress"><div style="--w:${varScore}%;"></div></div>
+          </div>
         </div>
       </div>
 
-      <div class="sectionCard">
-        <div class="sectionHead">
-          <div><div class="sectionName">貯蓄</div><div class="sectionHint">貯蓄率が高いほど良い</div></div>
-          <div class="sectionScore">${savingsScore}/100</div>
+      <div class="insightRow twoCol animIn a3">
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div><div class="sectionName">行動の質（納得）</div><div class="sectionHint">選んだ支出の納得度を可視化</div></div>
+            <div class="sectionScore">今月</div>
+          </div>
+          <div>
+            <div class="metricBlock">
+              <div class="metricLabel">質スコア（今月のお金の使い方は、どれくらい納得できていたか）</div>
+              <div class="small" style="margin-bottom:6px;">${qualityLabel}</div>
+              <div class="miniBar"><div style="--w:${qualityShow}%;"></div></div>
+            </div>
+            <div class="metricBlock" style="margin-top:8px;">
+              <div class="metricLabel">納得効率（使ったお金のうち、どれくらいが“後悔の少ないお金”だったか）</div>
+              <div class="small" style="margin-bottom:6px;">${satisfactionEfficiency==null?"—":`${satisfactionEfficiency}/100`}</div>
+              <div class="miniBar"><div style="--w:${satisfactionEfficiency==null?0:satisfactionEfficiency}%;"></div></div>
+            </div>
+            <div class="metricBlock" style="margin-top:8px;">
+              <div class="metricLabel">納得度入力率</div>
+              <div class="small" style="margin-bottom:6px;">${coveragePct}%</div>
+              <div class="miniBar"><div style="--w:${coveragePct}%;"></div></div>
+            </div>
+          </div>
         </div>
-        <div class="progress"><div style="width:${savingsScore}%;"></div></div>
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div><div class="sectionName">行動マップ（月次）</div><div class="sectionHint">横軸：支出コントロール / 縦軸：納得効率</div></div>
+            <div class="sectionScore">比較</div>
+          </div>
+          ${renderHappinessScatterContent({
+            youX: spendControl,
+            youY: satisfactionEfficiency,
+            avgX: APP_AVG_PLACEHOLDER.monthly.spendControl,
+            avgY: APP_AVG_PLACEHOLDER.monthly.satisfactionEfficiency
+            ,xMid:70
+            ,yMid:70
+          })}
+        </div>
       </div>
 
-      <div class="sectionCard">
+      <div class="sectionCard animIn a4">
         <div class="sectionHead">
-          <div><div class="sectionName">固定費</div><div class="sectionHint">固定費率が低いほど良い</div></div>
-          <div class="sectionScore">${fixedScore}/100</div>
+          <div><div class="sectionName">支出配分の比較（中央値）</div><div class="sectionHint">参考情報として見てください</div></div>
+          <div class="sectionScore">比較</div>
         </div>
-        <div class="progress"><div style="width:${fixedScore}%;"></div></div>
-      </div>
-
-      <div class="sectionCard">
-        <div class="sectionHead">
-          <div><div class="sectionName">変動費</div><div class="sectionHint">変動費率が低いほど良い</div></div>
-          <div class="sectionScore">${varScore}/100</div>
-        </div>
-        <div class="progress"><div style="width:${varScore}%;"></div></div>
-      </div>
-
-      <div class="sectionCard">
-        <div class="sectionHead">
-          <div><div class="sectionName">質（納得）</div><div class="sectionHint">未入力が多いと最大-20点</div></div>
-          <div class="sectionScore">${qualityLabel}</div>
-        </div>
-        <div class="progress"><div style="width:${qualityShow}%;"></div></div>
-        <div class="small" style="margin-top:10px;">
-          質カテゴリ合計：${Math.round(qx.qSpend).toLocaleString("ja-JP")}円 / 納得入力カバー率：${coveragePct}%
-        </div>
-      </div>
-
-      <div class="sectionCard">
-        <div class="sectionHead">
-          <div><div class="sectionName">比較（公的ベンチマーク）</div><div class="sectionHint">中央値ベースで比較</div></div>
-          <div class="sectionScore">率（%）</div>
-        </div>
+        <div class="small muted">この比較は、良し悪しを判断するものではありません</div>
+        <div class="small muted">世の中の傾向との違いを知るための参考情報です</div>
+        <div class="small muted">中央値より低くても、納得して使えているなら問題ありません</div>
+        <div style="height:8px;"></div>
         ${renderPublicCompareTable(publicRates)}
       </div>
 
-      ${renderHappinessScatter({
-        title:"幸福度分布（月次）",
-        youX: qx.qSpend,
-        youY: qualityScore,
-        avgX: APP_AVG_PLACEHOLDER.monthly.qualitySpend,
-        avgY: APP_AVG_PLACEHOLDER.monthly.qualityScore
-      })}
-
-      <!-- ✅ 月次の内訳：モーダルがスクロール対応なので必ず見れる -->
-      <div class="sectionCard">
+      <div class="sectionCard animIn a5">
         <div class="sectionHead">
-          <div><div class="sectionName">金額（円）</div><div class="sectionHint">内訳</div></div>
+          <div><div class="sectionName">行動分析（時間帯）</div><div class="sectionHint">記録時刻を朝/昼/夕/夜/深夜/明け方で集計</div></div>
+          <div class="sectionScore">上位3</div>
+        </div>
+        <div class="insightCard">
+          <div style="font-weight:900; color:var(--ink);">支出が多い時間帯</div>
+          ${spendLines.map((line, idx)=> `<div>${idx+1}. ${escapeHtml(line)}</div>`).join("")}
+        </div>
+        <div class="insightCard" style="margin-top:8px;">
+          <div style="font-weight:900; color:var(--ink);">後悔が多い時間帯</div>
+          ${regretLines.map((line, idx)=> `<div>${idx+1}. ${escapeHtml(line)}</div>`).join("")}
+          <div class="small" style="margin-top:4px;">きっかけ：${escapeHtml(timeInsights.regretTrigger)}</div>
+        </div>
+      </div>
+
+      <div class="sectionCard animIn a6">
+        <div class="sectionHead">
+          <div><div class="sectionName">金額内訳（円）</div><div class="sectionHint">月次の内訳</div></div>
           <div class="sectionScore"></div>
         </div>
         <div class="bar" style="justify-content:space-between;"><div>手取り</div><div style="font-weight:1100;">${income.toLocaleString("ja-JP")}</div></div>
         <div class="bar" style="justify-content:space-between;"><div>貯蓄</div><div style="font-weight:1100;">${saving.toLocaleString("ja-JP")}</div></div>
         <div class="bar" style="justify-content:space-between;"><div>固定費</div><div style="font-weight:1100;">${fixedSum.toLocaleString("ja-JP")}</div></div>
         <div class="bar" style="justify-content:space-between;"><div>変動費</div><div style="font-weight:1100;">${varSpend.toLocaleString("ja-JP")}</div></div>
-        <div class="bar" style="justify-content:space-between;"><div>質カテゴリ合計</div><div style="font-weight:1100;">${Math.round(qx.qSpend).toLocaleString("ja-JP")}</div></div>
+        <div class="bar" style="justify-content:space-between;"><div>質カテゴリ合計</div><div style="font-weight:1100;">${Math.round(qx.qSpend).toLocaleString("ja-JP")}円</div></div>
       </div>
 
       <div style="height:10px;"></div>
     </div>
   `;
 
-  txt.textContent =
-`月次診断：${m}
+  const text =
+`月次レポート：${m}
 総合スコア：${score}/100
+納得効率：${satisfactionEfficiency==null?"—":satisfactionEfficiency+"/100"}
 
 貯蓄率：${sr}
 固定費率：${fr}
@@ -968,15 +1464,47 @@ function showMonthlyScore(){
 固定費：${fixedSum}円
 変動費：${varSpend}円
 質カテゴリ合計：${Math.round(qx.qSpend)}円`;
-
-  openModal("resultModal");
+  return { html, text, missingSaving:false };
 }
-window.showMonthlyScore = showMonthlyScore;
+
+function getMonthlyMissingFields(){
+  const fields = [
+    { id:"incomeYen", label:"月収（手取り）" },
+    { id:"housingYen", label:"住居費" },
+    { id:"utilityYen", label:"光熱費" },
+    { id:"netYen", label:"通信費" },
+    { id:"subYen", label:"サブスク" },
+  ];
+  const missing = [];
+  for(const f of fields){
+    const raw = $(f.id)?.value;
+    if(raw == null || String(raw).trim() === ""){
+      missing.push(f.label);
+    }
+  }
+  return missing;
+}
+
+function buildMonthlyMissingHtml(missing){
+  return `
+    <div class="resultWrap">
+      <div class="sectionCard">
+        <div class="sectionHead">
+          <div><div class="sectionName">入力が必要な項目</div><div class="sectionHint">設定画面の該当項目を入力してください</div></div>
+        </div>
+        <div class="insightCard">
+          ${missing.map(name=> `<div>・${escapeHtml(name)}</div>`).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 
 /* ===== List ===== */
 function renderList(){
   const input = $("viewMonth");
-  const target = input && input.value ? input.value : ym(new Date());
+  const target = input && input.value ? input.value : ym(CAL_ANCHOR);
   if(input && !input.value) input.value = target;
 
   const tx = loadTx()
@@ -994,6 +1522,7 @@ function renderList(){
   const rows = tx.map(t=>{
     const sat = (t.satisfaction!=null) ? String(t.satisfaction) : "—";
     const trig = t.trigger ? (TRIGGER_LABEL[t.trigger] || t.trigger) : "—";
+    const memo = t.memo ? t.memo : "—";
     return `
       <tr>
         <td>${escapeHtml(t.date)}</td>
@@ -1001,6 +1530,7 @@ function renderList(){
         <td class="num">${Number(t.amount||0).toLocaleString("ja-JP")}</td>
         <td class="center">${escapeHtml(sat)}</td>
         <td>${escapeHtml(trig)}</td>
+        <td>${escapeHtml(memo)}</td>
         <td class="num"><button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button></td>
       </tr>
     `;
@@ -1016,6 +1546,7 @@ function renderList(){
             <th style="text-align:right;">金額</th>
             <th style="text-align:center;">納得</th>
             <th>きっかけ</th>
+            <th>メモ</th>
             <th style="text-align:right;">操作</th>
           </tr>
         </thead>
@@ -1065,6 +1596,8 @@ function loadProfileToUI(){
 function saveProfile(){
   const prof = { household: $("profileHousehold").value, ageBand: $("profileAgeBand").value };
   saveJSON(LS_PROFILE, prof);
+  const m = $("settingsMonth")?.value || ym(new Date());
+  saveMonthlySettings(m);
   toast("保存しました");
   loadProfileToUI();
 }
@@ -1121,7 +1654,7 @@ window.importData = importData;
 
 /* ===== Onboarding ===== */
 function nextSlide(n){
-  [1,2,3].forEach(i=>{
+  [1,2,3,4,5].forEach(i=>{
     const el = $("slide"+i);
     if(el) el.style.display = (i===n) ? "" : "none";
   });
@@ -1155,20 +1688,45 @@ function escapeHtml(str){
 function init(){
   buildCatCards();
 
+  const tryAdvanceQuality = ()=>{
+    if(entryStep !== "quality") return;
+    const sat = ($("entrySat")?.value || "").trim();
+    const trig = ($("entryTrigger")?.value || "").trim();
+    if(sat && trig) showEntryStep("memo");
+  };
+  $("entrySat")?.addEventListener("change", tryAdvanceQuality);
+  $("entryTrigger")?.addEventListener("change", tryAdvanceQuality);
+  $("qualitySkipBtn")?.addEventListener("click", ()=>{
+    if(entryStep === "quality") showEntryStep("memo");
+  });
+
   $("entryPrevDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, -1)));
   $("entryNextDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, +1)));
 
   $("entryPrimaryBtn")?.addEventListener("click", handleEntryPrimary);
   $("entryCloseBtn")?.addEventListener("click", closeEntryModal);
 
-  ["entryModal","dayDetailModal","resultModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{ if(e.target === ov) closeModal(id); });
   });
 
-  if($("viewMonth") && !$("viewMonth").value) $("viewMonth").value = ym(new Date());
+  if($("viewMonth") && !$("viewMonth").value) $("viewMonth").value = ym(CAL_ANCHOR);
   if($("scoreMonth") && !$("scoreMonth").value) $("scoreMonth").value = ym(new Date());
+  if($("settingsMonth") && !$("settingsMonth").value) $("settingsMonth").value = ym(new Date());
+
+  $("scoreMonth")?.addEventListener("change", ()=>{
+    const m = $("scoreMonth")?.value;
+    refreshSavingLabel();
+    if(m && $("settingsMonth")) $("settingsMonth").value = m;
+    if(m) loadMonthlySettings(m);
+  });
+  $("settingsMonth")?.addEventListener("change", ()=>{
+    const m = $("settingsMonth")?.value;
+    if(m) loadMonthlySettings(m);
+  });
+  $("incomeYen")?.addEventListener("input", ()=>{});
 
   loadProfileToUI();
 
@@ -1181,6 +1739,10 @@ function init(){
 
   renderCalendar();
   renderList();
+  refreshSavingLabel();
+  renderWeeklyInline();
+  switchScoreView("weekly");
+  loadMonthlySettings($("settingsMonth")?.value || ym(new Date()));
   switchScreen("input");
 }
 
