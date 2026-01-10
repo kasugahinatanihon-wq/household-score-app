@@ -804,8 +804,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   grid-template-columns: repeat(2, minmax(0,1fr));
   justify-content:center;
 }
-@media (max-width:900px){
+@media (max-width:960px){
   .insightRow{ grid-template-columns:1fr; }
+  .insightRow.twoCol{ grid-template-columns:1fr; }
 }
 .metricBlock{
   background:var(--primary-06);
