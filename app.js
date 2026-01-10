@@ -584,7 +584,7 @@ function openEntryModal(dt, opts = {}){
     });
   }
 
-  const preset = opts.presetCategory;
+  const preset = opts.presetCategory || $("entryCategoryHidden").value;
   if(preset){
     $("entryCategoryHidden").value = preset;
     document.querySelectorAll("#entryCatArea .catCard").forEach(c=>{
