@@ -258,6 +258,58 @@
   </div>
 </div>
 
+<!-- Edit Modal -->
+<div class="modalOverlay" id="editModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">記録を編集</div>
+      <button class="ghost" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="row">
+        <label>日付<input type="date" id="editDate"></label>
+        <label>時刻<input type="time" id="editTime"></label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>カテゴリ
+          <select id="editCategory"></select>
+        </label>
+        <label>金額<input type="number" id="editAmount"></label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>納得度
+          <select id="editSat">
+            <option value="">未入力</option>
+            <option value="1">1（払う必要なかった）</option>
+            <option value="2">2（微妙だった）</option>
+            <option value="3">3（払ってよかった）</option>
+            <option value="4">4（最高だった）</option>
+          </select>
+        </label>
+        <label>きっかけ
+          <select id="editTrigger">
+            <option value="">未入力</option>
+            <option value="tired">疲れ</option>
+            <option value="stress">ストレス</option>
+            <option value="hungry">空腹</option>
+            <option value="reward">ご褒美</option>
+            <option value="social">付き合い</option>
+            <option value="timesave">時短</option>
+            <option value="bored">なんとなく</option>
+          </select>
+        </label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>メモ<input type="text" id="editMemo" placeholder="未入力"></label>
+      </div>
+      <input type="hidden" id="editId">
+      <div style="margin-top:16px;">
+        <button class="primary" style="width:100%;" onclick="saveEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Saving/Invest Modal -->
 <div class="modalOverlay" id="savingModal">
   <div class="modal">

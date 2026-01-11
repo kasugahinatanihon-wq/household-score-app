@@ -1073,6 +1073,28 @@ td.num{ text-align:right; font-variant-numeric: tabular-nums; }
 td.center{ text-align:center; font-variant-numeric: tabular-nums; }
 tr:nth-child(even) td{ background:#F8FAFC; }
 
+@media (max-width:480px){
+  .tableWrap{ overflow:visible; }
+  table, thead, tbody, tr, th, td{ display:block; width:100%; }
+  thead{ display:none; }
+  tr{ padding:10px 8px; border-bottom:1px solid var(--border); }
+  td{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    padding:6px 0;
+    border:none;
+    font-size:12px;
+  }
+  td::before{
+    content:attr(data-label);
+    color:var(--muted);
+    font-size:11px;
+    flex:0 0 auto;
+  }
+  td.num, td.center{ text-align:right; }
+}
+
 /* profile admin */
 .adminBox{
   margin-top:16px;

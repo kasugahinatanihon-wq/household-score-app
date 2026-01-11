@@ -625,6 +625,7 @@ function renderEntryDayBox(dt){
 
   $("entryDayList").innerHTML = tx.map(t=>{
     const meta = [];
+    const time = t.time ? t.time : "—";
     if(t.satisfaction!=null) meta.push(`納得:${t.satisfaction}`);
     if(t.trigger) meta.push(`きっかけ:${TRIGGER_LABEL[t.trigger] || t.trigger}${t.trigMemo?`(${escapeHtml(t.trigMemo)})`:""}`);
     const memo = t.memo ? ` / ${escapeHtml(t.memo)}` : "";
@@ -632,7 +633,7 @@ function renderEntryDayBox(dt){
       <div class="miniRow">
         <div>
           <div class="miniCat">${escapeHtml(t.category)}</div>
-          <div class="miniMeta">${Number(t.amount||0).toLocaleString("ja-JP")}円 ${meta.length?`/ ${meta.join(" / ")}`:""}${memo}</div>
+          <div class="miniMeta">${time} / ${Number(t.amount||0).toLocaleString("ja-JP")}円 ${meta.length?`/ ${meta.join(" / ")}`:""}${memo}</div>
         </div>
         <button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button>
       </div>
@@ -733,6 +734,59 @@ function deleteTx(id){
   saveTx(next);
 }
 
+function openEditModal(id){
+  const tx = loadTx().find(t=>t.id === id);
+  if(!tx) return;
+  $("editId") && ($("editId").value = tx.id);
+  $("editDate") && ($("editDate").value = tx.date || "");
+  $("editTime") && ($("editTime").value = tx.time || "");
+  $("editCategory") && ($("editCategory").value = tx.category || "");
+  $("editAmount") && ($("editAmount").value = tx.amount || "");
+  $("editSat") && ($("editSat").value = (tx.satisfaction!=null ? String(tx.satisfaction) : ""));
+  $("editTrigger") && ($("editTrigger").value = tx.trigger || "");
+  $("editMemo") && ($("editMemo").value = tx.memo || "");
+  openModal("editModal");
+}
+window.openEditModal = openEditModal;
+
+function saveEdit(){
+  const id = $("editId")?.value;
+  if(!id) return;
+  const list = loadTx();
+  const idx = list.findIndex(t=>t.id === id);
+  if(idx === -1) return;
+
+  const amount = Number($("editAmount")?.value || 0);
+  if(!(amount > 0)){
+    toast("金額を入力してね");
+    return;
+  }
+
+  const category = $("editCategory")?.value || list[idx].category;
+  const memo = ($("editMemo")?.value || "").trim();
+  const isQ = QUALITY_TARGET.has(category);
+  const satRaw = ($("editSat")?.value || "").trim();
+  const trigRaw = ($("editTrigger")?.value || "").trim();
+
+  list[idx] = {
+    ...list[idx],
+    date: $("editDate")?.value || list[idx].date,
+    time: $("editTime")?.value || list[idx].time,
+    category,
+    amount,
+    satisfaction: satRaw ? Number(satRaw) : null,
+    trigger: trigRaw || null,
+    memo,
+    trigMemo: isQ ? memo : "",
+  };
+  saveTx(list);
+  closeModal("editModal");
+  toast("更新しました");
+  renderList();
+  renderCalendar();
+}
+window.saveEdit = saveEdit;
+
 /* ===== Day Detail ===== */
 function openDayDetail(dt){
   $("dayDetailDateText").textContent = dt;
@@ -745,29 +799,38 @@ function openDayDetail(dt){
   if(tx.length === 0){
     $("dayDetailList").innerHTML = `<div class="muted small" style="padding:12px;">まだ記録がありません</div>`;
   }else{
-    $("dayDetailList").innerHTML = tx.map(t=>{
-      const meta = [];
-      if(t.satisfaction!=null) meta.push(`納得:${t.satisfaction}`);
-      if(t.trigger) meta.push(`きっかけ:${TRIGGER_LABEL[t.trigger] || t.trigger}${t.trigMemo?`(${escapeHtml(t.trigMemo)})`:""}`);
-      const memo = t.memo ? ` / ${escapeHtml(t.memo)}` : "";
-      return `
-        <div class="miniRow">
-          <div>
-            <div class="miniCat">${escapeHtml(t.category)}</div>
-            <div class="miniMeta">${Number(t.amount||0).toLocaleString("ja-JP")}円 ${meta.length?`/ ${meta.join(" / ")}`:""}${memo}</div>
-          </div>
+  $("dayDetailList").innerHTML = tx.map(t=>{
+    const meta = [];
+    const time = t.time ? t.time : "—";
+    if(t.satisfaction!=null) meta.push(`納得:${t.satisfaction}`);
+    if(t.trigger) meta.push(`きっかけ:${TRIGGER_LABEL[t.trigger] || t.trigger}${t.trigMemo?`(${escapeHtml(t.trigMemo)})`:""}`);
+    const memo = t.memo ? ` / ${escapeHtml(t.memo)}` : "";
+    return `
+      <div class="miniRow">
+        <div>
+          <div class="miniCat">${escapeHtml(t.category)}</div>
+          <div class="miniMeta">${time} / ${Number(t.amount||0).toLocaleString("ja-JP")}円 ${meta.length?`/ ${meta.join(" / ")}`:""}${memo}</div>
+        </div>
+        <div class="bar" style="gap:6px;">
+          <button class="ghost" style="padding:8px 10px; font-size:12px;" type="button" data-edit="${t.id}">編集</button>
           <button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button>
         </div>
-      `;
-    }).join("");
+      </div>
+    `;
+  }).join("");
 
-    $("dayDetailList").querySelectorAll("[data-del]").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        deleteTx(btn.dataset.del);
-        openDayDetail(dt);
-        renderCalendar();
-      });
+  $("dayDetailList").querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      deleteTx(btn.dataset.del);
+      openDayDetail(dt);
+      renderCalendar();
     });
+  });
+  $("dayDetailList").querySelectorAll("[data-edit]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      openEditModal(btn.dataset.edit);
+    });
+  });
   }
 
   openModal("dayDetailModal");
@@ -1525,15 +1588,22 @@ function renderList(){
     const sat = (t.satisfaction!=null) ? String(t.satisfaction) : "—";
     const trig = t.trigger ? (TRIGGER_LABEL[t.trigger] || t.trigger) : "—";
     const memo = t.memo ? t.memo : "—";
+    const time = t.time ? t.time : "—";
     return `
       <tr>
-        <td>${escapeHtml(t.date)}</td>
-        <td>${escapeHtml(t.category)}</td>
-        <td class="num">${Number(t.amount||0).toLocaleString("ja-JP")}</td>
-        <td class="center">${escapeHtml(sat)}</td>
-        <td>${escapeHtml(trig)}</td>
-        <td>${escapeHtml(memo)}</td>
-        <td class="num"><button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button></td>
+        <td data-label="日付">${escapeHtml(t.date)}</td>
+        <td data-label="時刻">${escapeHtml(time)}</td>
+        <td data-label="カテゴリ">${escapeHtml(t.category)}</td>
+        <td class="num" data-label="金額">${Number(t.amount||0).toLocaleString("ja-JP")}</td>
+        <td class="center" data-label="納得">${escapeHtml(sat)}</td>
+        <td data-label="きっかけ">${escapeHtml(trig)}</td>
+        <td data-label="メモ">${escapeHtml(memo)}</td>
+        <td class="num" data-label="操作">
+          <div class="bar" style="justify-content:flex-end; gap:6px;">
+            <button class="ghost" style="padding:8px 10px; font-size:12px;" type="button" data-edit="${t.id}">編集</button>
+            <button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button>
+          </div>
+        </td>
       </tr>
     `;
   }).join("");
@@ -1544,6 +1614,7 @@ function renderList(){
         <thead>
           <tr>
             <th>日付</th>
+            <th>時刻</th>
             <th>カテゴリ</th>
             <th style="text-align:right;">金額</th>
             <th style="text-align:center;">納得</th>
@@ -1565,12 +1636,17 @@ function renderList(){
       renderCalendar();
     });
   });
+  area.querySelectorAll("[data-edit]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      openEditModal(btn.dataset.edit);
+    });
+  });
 }
 window.renderList = renderList;
 
 function clearMonthTx(){
   const input = $("viewMonth");
-  const target = input && input.value ? input.value : ym(new Date());
+  const target = input && input.value ? input.value : ym(CAL_ANCHOR);
   if(!confirm(`${target} のデータを削除しますか？（元に戻せません）`)) return;
 
   const next = loadTx().filter(t=> !(t.date && t.date.startsWith(target)));
@@ -1742,11 +1818,13 @@ function init(){
   $("entryPrimaryBtn")?.addEventListener("click", handleEntryPrimary);
   $("entryCloseBtn")?.addEventListener("click", closeEntryModal);
 
-  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{ if(e.target === ov) closeModal(id); });
   });
+
+  $("editCategory") && ($("editCategory").innerHTML = CATEGORIES.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join(""));
 
   if($("viewMonth") && !$("viewMonth").value) $("viewMonth").value = ym(CAL_ANCHOR);
   if($("scoreMonth") && !$("scoreMonth").value) $("scoreMonth").value = ym(new Date());
