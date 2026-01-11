@@ -295,13 +295,14 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .calCell[data-has="true"] .calBadge{ background: var(--primary-55); }
 @media (max-width:480px){
   .calendarBox{ padding:8px; }
-  .calGrid{ gap:4px; }
-  .calCell{ min-height:46px; padding:4px 4px 3px; border-radius:9px; aspect-ratio:auto; }
-  .calDayNum{ font-size:11px; }
-  .calSum{ font-size:9px; margin-top:4px; overflow:hidden; text-overflow:ellipsis; }
-  .calBadge{ right:6px; top:6px; width:6px; height:6px; }
-  .calHeader .pill{ font-size:12px; padding:4px 8px; }
-  .calHeader .ghost{ padding:6px; }
+  .calendarBox{ padding:6px; }
+  .calGrid{ gap:3px; }
+  .calCell{ min-height:42px; padding:3px 3px 2px; border-radius:8px; aspect-ratio:auto; }
+  .calDayNum{ font-size:10px; }
+  .calSum{ font-size:9px; margin-top:3px; overflow:hidden; text-overflow:ellipsis; }
+  .calBadge{ right:5px; top:5px; width:5px; height:5px; }
+  .calHeader .pill{ font-size:11px; padding:3px 6px; }
+  .calHeader .ghost{ padding:5px; }
 }
 
 /* Weekly card */
@@ -1086,6 +1087,7 @@ tr:nth-child(even) td{ background:#F8FAFC; }
     padding:6px 0;
     border:none;
     font-size:12px;
+    flex-wrap:wrap;
   }
   td::before{
     content:attr(data-label);
@@ -1094,6 +1096,7 @@ tr:nth-child(even) td{ background:#F8FAFC; }
     flex:0 0 auto;
   }
   td.num, td.center{ text-align:right; }
+  td .bar{ flex-wrap:wrap; justify-content:flex-end; }
 }
 
 /* profile admin */
