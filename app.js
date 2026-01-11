@@ -1608,6 +1608,31 @@ function renderList(){
     `;
   }).join("");
 
+  const cards = tx.map(t=>{
+    const sat = (t.satisfaction!=null) ? String(t.satisfaction) : "—";
+    const trig = t.trigger ? (TRIGGER_LABEL[t.trigger] || t.trigger) : "—";
+    const memo = t.memo ? t.memo : "—";
+    const time = t.time ? t.time : "—";
+    return `
+      <div class="listCard">
+        <div class="listTop">${escapeHtml(t.date)} ${escapeHtml(time)}</div>
+        <div class="listMain">
+          <div class="listCat">${escapeHtml(t.category)}</div>
+          <div class="listAmt">${Number(t.amount||0).toLocaleString("ja-JP")}円</div>
+          <div class="listSat">納得 ${escapeHtml(sat)}</div>
+        </div>
+        <div class="listSub">
+          <div class="listTrig">きっかけ ${escapeHtml(trig)}</div>
+          <div class="listMemo">${escapeHtml(memo)}</div>
+        </div>
+        <div class="listActions">
+          <button class="ghost" style="padding:8px 10px; font-size:12px;" type="button" data-edit="${t.id}">編集</button>
+          <button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
   area.innerHTML = `
     <div class="tableWrap">
       <table>
@@ -1626,6 +1651,7 @@ function renderList(){
         <tbody>${rows}</tbody>
       </table>
     </div>
+    <div class="listCards">${cards}</div>
   `;
 
   area.querySelectorAll("[data-del]").forEach(btn=>{

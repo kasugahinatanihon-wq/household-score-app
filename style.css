@@ -1076,27 +1076,55 @@ td.center{ text-align:center; font-variant-numeric: tabular-nums; }
 tr:nth-child(even) td{ background:#F8FAFC; }
 
 @media (max-width:480px){
-  .tableWrap{ overflow:visible; }
-  table, thead, tbody, tr, th, td{ display:block; width:100%; }
-  thead{ display:none; }
-  tr{ padding:10px 8px; border-bottom:1px solid var(--border); }
-  td{
-    display:flex;
-    justify-content:space-between;
-    gap:8px;
-    padding:6px 0;
-    border:none;
-    font-size:12px;
-    flex-wrap:wrap;
-  }
-  td::before{
-    content:attr(data-label);
-    color:var(--muted);
-    font-size:11px;
-    flex:0 0 auto;
-  }
-  td.num, td.center{ text-align:right; }
-  td .bar{ flex-wrap:wrap; justify-content:flex-end; }
+  .tableWrap{ display:none; }
+}
+
+.listCards{
+  display:none;
+}
+.listCard{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#fff;
+  margin-bottom:10px;
+}
+.listTop{
+  font-size:11px;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+.listMain{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.listCat{ font-weight:900; }
+.listAmt{ font-weight:900; }
+.listSat{
+  font-size:12px;
+  color:var(--muted);
+}
+.listSub{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:6px;
+  font-size:12px;
+  color:var(--muted);
+}
+.listTrig{ flex:0 0 auto; }
+.listMemo{ flex:1 1 40%; }
+.listActions{
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;
+  margin-top:8px;
+}
+
+@media (max-width:480px){
+  .listCards{ display:block; }
 }
 
 /* profile admin */
