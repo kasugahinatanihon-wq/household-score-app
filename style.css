@@ -251,6 +251,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:16px;
   padding:12px;
   background:var(--bg-card);
+  overflow:hidden;
 }
 .calHeader{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .calGrid{
@@ -295,7 +296,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 @media (max-width:480px){
   .calendarBox{ padding:8px; }
   .calGrid{ gap:4px; }
-  .calCell{ min-height:52px; padding:5px 5px 4px; border-radius:10px; aspect-ratio:auto; }
+  .calCell{ min-height:46px; padding:4px 4px 3px; border-radius:9px; aspect-ratio:auto; }
   .calDayNum{ font-size:11px; }
   .calSum{ font-size:9px; margin-top:4px; overflow:hidden; text-overflow:ellipsis; }
   .calBadge{ right:6px; top:6px; width:6px; height:6px; }
