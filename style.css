@@ -1075,7 +1075,7 @@ td.num{ text-align:right; font-variant-numeric: tabular-nums; }
 td.center{ text-align:center; font-variant-numeric: tabular-nums; }
 tr:nth-child(even) td{ background:#F8FAFC; }
 
-@media (max-width:480px){
+@media (max-width:768px){
   .tableWrap{ display:none; }
 }
 
@@ -1123,7 +1123,7 @@ tr:nth-child(even) td{ background:#F8FAFC; }
   margin-top:8px;
 }
 
-@media (max-width:480px){
+@media (max-width:768px){
   .listCards{ display:block; }
 }
 
