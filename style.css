@@ -382,9 +382,12 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .reportMonthLabel{
   min-width:0;
   width:100%;
+  flex:1 1 100%;
 }
 .reportMonthLabel input{
   width:100%;
+  max-width:100%;
+  display:block;
 }
 .reportChartWrap{
   display:grid;
@@ -560,6 +563,14 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 @media (max-width:960px){
   .reportGrid{ grid-template-columns:1fr; }
   .reportChartWrap{ grid-template-columns:1fr; }
+}
+@media (max-width:720px){
+  .reportHeader{
+    align-items:flex-start;
+  }
+  .floatingScoreBtn{
+    bottom:calc(var(--safeBottom) + 8px);
+  }
 }
 @media (max-width:560px){
   .weeklyHeroArt{
