@@ -1370,6 +1370,7 @@ function renderMonthlyReport(){
 
   if(total <= 0){
     donut.style.background = "conic-gradient(#e2e8f0 0 100%)";
+    donut.classList.remove("is-anim");
     legend.innerHTML = `<div class="small muted">データがありません</div>`;
     list.innerHTML = `<div class="muted small" style="padding:8px 0;">データがありません</div>`;
     return;
@@ -1385,6 +1386,9 @@ function renderMonthlyReport(){
     return { ...item, pct, color, seg };
   });
   donut.style.background = `conic-gradient(${segments.map(s=>s.seg).join(",")})`;
+  donut.classList.remove("is-anim");
+  void donut.offsetWidth;
+  donut.classList.add("is-anim");
 
   legend.innerHTML = segments.map(item=>{
     const pctText = `${Math.round(item.pct)}%`;
@@ -1585,9 +1589,9 @@ function renderMonthlyGate(){
   $("scoreMonth") && ($("scoreMonth").value = targetMonth);
   const reviewState = loadReviewState();
   const opened = !!(reviewState.monthly && reviewState.monthly[targetMonth]);
-  const statusLabel = readyMonth
-    ? (opened ? "受領済み" : "受け取り待ち")
-    : "準備中";
+  const statusBadge = readyMonth
+    ? (opened ? `<span class="statusBadge status-done">受領済み</span>` : `<span class="statusBadge status-wait">受け取り待ち</span>`)
+    : `<span class="statusBadge status-soon">準備中</span>`;
   const readyHint = opened
     ? "月次レポートは受領済みです。"
     : "ホームのキャラクターをタップして開いてください。";
@@ -1598,10 +1602,10 @@ function renderMonthlyGate(){
 
   if(readyMonth){
     wrap.innerHTML = `
-      <div class="sectionCard monthlyGateCard">
+      <div class="sectionCard monthlyGateCard ${opened ? "" : "isReady"}">
         <div class="sectionHead">
           <div><div class="sectionName">月次レポート</div><div class="sectionHint">${escapeHtml(targetMonth)} 分が届いています</div></div>
-          <div class="sectionScore">${statusLabel}</div>
+          <div class="sectionScore">${statusBadge}</div>
         </div>
         <div class="metricBlock" style="margin-top:10px;">
           <div class="metricLabel">今月の記録進捗</div>
@@ -1630,7 +1634,7 @@ function renderMonthlyGate(){
     <div class="sectionCard">
       <div class="sectionHead">
         <div><div class="sectionName">月次レポート</div><div class="sectionHint">月が切り替わると届きます</div></div>
-        <div class="sectionScore">${statusLabel}</div>
+        <div class="sectionScore">${statusBadge}</div>
       </div>
       <div class="metricBlock" style="margin-top:10px;">
         <div class="metricLabel">今月の記録進捗</div>
