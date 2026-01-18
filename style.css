@@ -216,7 +216,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   position:fixed;
   left:50%;
   transform:translateX(-50%);
-  bottom:calc(var(--navH) + var(--safeBottom) - 16px);
+  bottom:calc(var(--safeBottom) + var(--navH) - 32px);
   z-index:7;
   width:64px;
   height:64px;
@@ -388,6 +388,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   width:100%;
   max-width:100%;
   display:block;
+  padding:6px 10px;
+  font-size:12px;
 }
 .reportChartWrap{
   display:grid;
@@ -568,8 +570,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .reportHeader{
     align-items:flex-start;
   }
-  .floatingScoreBtn{
-    bottom:calc(var(--safeBottom) + 8px);
+  .reportMonthLabel input{
+    padding:6px 8px;
+    font-size:12px;
   }
 }
 @media (max-width:560px){
