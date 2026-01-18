@@ -120,6 +120,11 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   grid-template-columns: repeat(2, minmax(0,1fr));
   gap:12px;
 }
+.row label{ min-width:0; }
+.row input[type="month"]{
+  width:100%;
+  max-width:100%;
+}
 @media (max-width:720px){
   .row{ grid-template-columns:1fr; }
 }
@@ -385,12 +390,12 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   flex:1 1 100%;
 }
 .reportMonthLabel input{
-  width:100%;
+  width:min(120px, 100%);
   max-width:100%;
   display:block;
   padding:4px 8px;
-  font-size:11px;
-  height:28px;
+  font-size:10px;
+  height:26px;
 }
 .reportChartWrap{
   display:grid;
@@ -570,11 +575,15 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 @media (max-width:720px){
   .reportHeader{
     align-items:flex-start;
+    flex-direction:column;
   }
   .reportMonthLabel input{
     padding:4px 8px;
-    font-size:11px;
-    height:28px;
+    font-size:10px;
+    height:26px;
+  }
+  .floatingScoreBtn{
+    bottom:calc(var(--safeBottom) + 6px);
   }
 }
 @media (max-width:560px){
