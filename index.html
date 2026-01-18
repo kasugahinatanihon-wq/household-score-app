@@ -269,7 +269,6 @@
     <div class="modalBody" style="padding:16px;">
       <div class="row">
         <label>日付<input type="date" id="editDate"></label>
-        <label>時刻<input type="time" id="editTime"></label>
       </div>
       <div class="row" style="margin-top:12px;">
         <label>カテゴリ
@@ -335,7 +334,7 @@
   <section class="screen active" id="screen-input">
     <div class="box">
       <h2 style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:20px;">📝</span> 行動ログ
+        <span style="font-size:20px;">📝</span> 記録
       </h2>
       <div class="small" style="margin-top:6px;">カテゴリを選ぶと入力が始まります</div>
       <div class="catTitle" style="margin-top:12px;">カテゴリー</div>
@@ -359,9 +358,43 @@
       </div>
       <p style="text-align:center; margin-top:10px; font-size:12px; color:#888;">日付タップで入力 / 長押しで履歴</p>
       <div class="bar" style="margin-top:12px; justify-content:flex-end;">
+        <button class="dark" style="font-size:12px; padding:8px 12px; margin-right:8px;" onclick="completeMonthFromCalendar()">月の入力完了</button>
          <button class="danger" style="font-size:12px; padding:8px 12px;" onclick="clearMonthTx()">月データ削除</button>
       </div>
       <div id="listArea" style="margin-top:16px;"></div>
+    </div>
+  </section>
+
+  <section class="screen" id="screen-report">
+    <div class="box boxSafeBottom">
+      <div class="bar" style="justify-content:space-between; align-items:flex-end;">
+        <div>
+          <h2 style="font-size:20px; margin:0;">🧾 レポート</h2>
+          <div class="small">使ったお金の内訳を確認</div>
+        </div>
+        <label class="small" style="min-width:140px;">対象月
+          <input type="month" id="reportMonth">
+        </label>
+      </div>
+
+      <div class="reportGrid" style="margin-top:16px;">
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div><div class="sectionName">支出内訳（円）</div><div class="sectionHint">カテゴリ別の合計</div></div>
+            <div class="sectionScore" id="reportTotal">—</div>
+          </div>
+          <div class="reportChartWrap">
+            <div class="reportDonut" id="reportDonut" role="img" aria-label="支出内訳の円グラフ"></div>
+            <div class="reportLegend" id="reportLegend"></div>
+          </div>
+        </div>
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div><div class="sectionName">項目別内訳</div><div class="sectionHint">金額と割合</div></div>
+          </div>
+          <div id="reportList"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -369,41 +402,18 @@
     <div class="box boxSafeBottom">
       <div class="bar" style="justify-content:space-between;">
         <div>
-          <h2 style="font-size:20px; margin:0;">📊 診断</h2>
-          <div class="small">週次・月次の結果をここで切り替え</div>
+          <h2 style="font-size:20px; margin:0;">📊 育成状況</h2>
         </div>
         <div><span class="pill" id="profileMiniPill">目安：未設定</span></div>
-      </div>
-
-      <div class="scoreTabs" style="margin-top:16px;">
-        <button class="scoreTabBtn active" id="scoreTab-weekly" onclick="switchScoreView('weekly')">週次</button>
-        <button class="scoreTabBtn" id="scoreTab-monthly" onclick="switchScoreView('monthly')">月次</button>
       </div>
 
       <div id="score-weekly" style="margin-top:16px;">
         <div id="weeklyInline"></div>
       </div>
-
-      <div id="score-monthly" style="margin-top:16px; display:none;">
-        <div class="row">
-          <label>診断する月 <input type="month" id="scoreMonth"></label>
-        </div>
-
-        <h3>貯蓄・投資（初回入力）</h3>
-        <div class="bar" style="justify-content:space-between; margin-top:8px;">
-          <div>
-            <div class="small">今月の貯蓄＋投資</div>
-            <div id="savingInvestLabel" style="font-weight:1100;">—</div>
-          </div>
-          <button class="ghost" onclick="openSavingModal()">入力/編集</button>
-        </div>
-        <input type="hidden" id="savingYen">
-        <input type="hidden" id="investYen">
-
-        <div style="margin-top:22px;">
-          <button class="primary" style="width:100%; padding:16px; font-size:16px;" onclick="showMonthlyScore()">診断結果を見る</button>
-        </div>
-      </div>
+      <div id="monthlyGate" style="margin-top:16px;"></div>
+      <input type="hidden" id="scoreMonth">
+      <input type="hidden" id="savingYen">
+      <input type="hidden" id="investYen">
     </div>
   </section>
 
@@ -480,19 +490,24 @@
 <nav class="bottomNav">
   <div class="tabs">
     <button class="tabBtn active" id="tab-input" onclick="switchScreen('input')">
-      <span class="icon">✏️</span><span>ログ</span>
+      <span class="icon">✏️</span><span>入力</span>
     </button>
     <button class="tabBtn" id="tab-list" onclick="switchScreen('list')">
       <span class="icon">📅</span><span>カレンダー</span>
     </button>
-    <button class="tabBtn" id="tab-score" onclick="switchScreen('score')">
-      <span class="icon">📊</span><span>スコア</span>
+    <button class="tabBtn" id="tab-report" onclick="switchScreen('report')">
+      <span class="icon">🧾</span><span>レポート</span>
     </button>
     <button class="tabBtn" id="tab-profile" onclick="switchScreen('profile')">
       <span class="icon">⚙️</span><span>設定</span>
     </button>
   </div>
 </nav>
+
+<button class="floatingScoreBtn" id="scoreQuickBtn" onclick="switchScreen('score')" aria-label="ホーム（スコア）">
+  <span class="scoreQuickHome">🏠</span>
+  <span class="scoreQuickChart">📊</span>
+</button>
 
 <script src="./app.js"></script>
 </body>
