@@ -125,6 +125,8 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   width:100%;
   max-width:100%;
   min-width:0;
+  -webkit-appearance:none;
+  appearance:none;
 }
 @media (max-width:720px){
   .row{ grid-template-columns:1fr; }
@@ -141,6 +143,11 @@ input, select{
   outline:none;
   font-size:14px;
   color:var(--ink);
+}
+input[type="month"]{
+  width:100%;
+  max-width:100%;
+  display:block;
 }
 input:focus, select:focus{
   border-color: var(--primary-55);
@@ -222,7 +229,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   position:fixed;
   left:50%;
   transform:translateX(-50%);
-  bottom:calc(var(--safeBottom) + (var(--navH) / 2) - 8px);
+  bottom:calc(var(--safeBottom) + var(--navH) - 32px);
   z-index:7;
   width:64px;
   height:64px;
@@ -601,10 +608,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   .weeklyHeroMascot{
     position:relative;
-    left:46%;
+    left:auto;
     bottom:18px;
-    transform:translateX(-50%);
-    margin-left:0;
+    transform:none;
+    margin:0 auto;
   }
 }
 
