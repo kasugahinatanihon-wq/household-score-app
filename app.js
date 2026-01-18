@@ -1594,7 +1594,7 @@ function renderMonthlyGate(){
     : `<span class="statusBadge status-soon">準備中</span>`;
   const readyHint = opened
     ? "月次レポートは受領済みです。"
-    : "ホームのキャラクターをタップして開いてください。";
+    : "ホームのキャラクターをタップして、貯蓄・投資を入力してから受け取りましょう。";
   const tx = loadTx().filter(t=>t.date && t.date.startsWith(targetMonth));
   const daysInMonth = getDaysInMonth(targetMonth) || 0;
   const daysWithEntry = new Set(tx.map(t=>t.date)).size;
