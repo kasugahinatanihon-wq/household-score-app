@@ -120,7 +120,7 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   grid-template-columns: repeat(2, minmax(0,1fr));
   gap:12px;
 }
-.row label{ min-width:0; }
+.row label{ min-width:0; width:100%; }
 .row input[type="month"]{
   width:100%;
   max-width:100%;
@@ -222,7 +222,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   position:fixed;
   left:50%;
   transform:translateX(-50%);
-  bottom:calc(var(--safeBottom) + var(--navH) - 16px);
+  bottom:calc(var(--safeBottom) + (var(--navH) / 2) - 8px);
   z-index:7;
   width:64px;
   height:64px;
@@ -388,6 +388,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .reportHeader > div{
   width:100%;
+  align-self:flex-start;
 }
 .reportMonthLabel{
   min-width:0;
@@ -583,6 +584,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .reportHeader{
     align-items:flex-start;
     flex-direction:column;
+    align-items:flex-start !important;
   }
   .reportMonthLabel input{
     padding:0 8px;
@@ -599,7 +601,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   .weeklyHeroMascot{
     position:relative;
-    left:50%;
+    left:46%;
     bottom:18px;
     transform:translateX(-50%);
     margin-left:0;
