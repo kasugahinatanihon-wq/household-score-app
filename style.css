@@ -120,7 +120,7 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   grid-template-columns: repeat(2, minmax(0,1fr));
   gap:12px;
 }
-.row label{ min-width:0; width:100%; }
+.row label{ min-width:0; width:100%; max-width:100%; overflow:hidden; }
 .row input[type="month"]{
   width:100%;
   max-width:100%;
@@ -619,6 +619,15 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   0%{ transform:scale(.92) rotate(-6deg); opacity:.5; }
   60%{ transform:scale(1.01) rotate(-1deg); opacity:.9; }
   100%{ transform:scale(1) rotate(0); opacity:1; }
+}
+
+@media (max-width:720px){
+  .weeklyHeroMascot{
+    left:50% !important;
+    bottom:22px !important;
+    transform:translateX(-50%) !important;
+    margin:0 auto !important;
+  }
 }
 
 /* Calendar */
