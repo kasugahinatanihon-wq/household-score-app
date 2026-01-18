@@ -388,8 +388,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   width:100%;
   max-width:100%;
   display:block;
-  padding:6px 10px;
-  font-size:12px;
+  padding:4px 8px;
+  font-size:11px;
+  height:28px;
 }
 .reportChartWrap{
   display:grid;
@@ -407,7 +408,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   margin:0 auto;
 }
 .reportDonut.is-anim{
-  animation:reportDonutPop .5s ease;
+  animation:reportDonutPop 1.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reportDonut::before{
   content:"";
@@ -571,8 +572,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     align-items:flex-start;
   }
   .reportMonthLabel input{
-    padding:6px 8px;
-    font-size:12px;
+    padding:4px 8px;
+    font-size:11px;
+    height:28px;
   }
 }
 @media (max-width:560px){
@@ -586,11 +588,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     left:auto;
     bottom:18px;
     transform:none;
+    margin-left:-12px;
   }
 }
 
 @keyframes reportDonutPop{
-  0%{ transform:scale(.94) rotate(-6deg); opacity:.6; }
+  0%{ transform:scale(.92) rotate(-6deg); opacity:.5; }
+  60%{ transform:scale(1.01) rotate(-1deg); opacity:.9; }
   100%{ transform:scale(1) rotate(0); opacity:1; }
 }
 
