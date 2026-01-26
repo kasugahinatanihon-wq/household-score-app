@@ -1142,7 +1142,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   box-shadow:none;
   z-index:2;
   transform-style:preserve-3d;
-  animation:mascotWander 10s ease-in-out infinite;
+  left:50%;
+  transform:translateX(-50%);
+  animation:mascotWander 12s ease-in-out infinite;
 }
 .weeklyHeroMascot.flip{
   animation:mascotFlip 2.1s cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -1179,26 +1181,26 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   75%{ transform:translateY(-1px) scale(1.01) rotateY(-6deg); }
 }
 @keyframes mascotWander{
-  0%{ transform:translate(0, 0); }
-  25%{ transform:translate(-10px, -4px); }
-  50%{ transform:translate(8px, -8px); }
-  75%{ transform:translate(-6px, 2px); }
-  100%{ transform:translate(0, 0); }
+  0%{ transform:translate(-50%, 0); }
+  25%{ transform:translate(calc(-50% - 10px), -4px); }
+  50%{ transform:translate(calc(-50% + 8px), -8px); }
+  75%{ transform:translate(calc(-50% - 6px), 2px); }
+  100%{ transform:translate(-50%, 0); }
 }
 
 @media (max-width:720px){
   .weeklyHeroMascot{
-    left:0;
-    margin:0 auto;
-    animation:mascotWanderMobile 10s ease-in-out infinite;
+    left:50%;
+    margin:0;
+    animation:mascotWanderMobile 12s ease-in-out infinite;
   }
 }
 @keyframes mascotWanderMobile{
-  0%{ transform:translate(0, 0); }
-  25%{ transform:translate(-6px, -3px); }
-  50%{ transform:translate(6px, -6px); }
-  75%{ transform:translate(-4px, 2px); }
-  100%{ transform:translate(0, 0); }
+  0%{ transform:translate(-50%, 0); }
+  25%{ transform:translate(calc(-50% - 6px), -3px); }
+  50%{ transform:translate(calc(-50% + 6px), -6px); }
+  75%{ transform:translate(calc(-50% - 4px), 2px); }
+  100%{ transform:translate(-50%, 0); }
 }
 @keyframes mascotFlip{
   0%{ transform:translateY(0) rotateX(0deg) rotateY(0deg) scale(1); }
