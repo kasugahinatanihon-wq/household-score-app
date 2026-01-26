@@ -7,6 +7,11 @@ const LS_SAVING = "saving_month";
 const LS_REVIEW = "review_open";
 const LS_MONTHLY_READY = "monthly_ready";
 const LS_MONTHLY_AVG = "monthly_avg_score";
+const LS_TOTAL_XP = "total_xp";
+const LS_XP_MONTHS = "xp_months";
+const LS_DAILY_XP = "daily_xp";
+const MAX_LEVEL = 100;
+const LS_EVOLUTION = "evolution_stage_category";
 
 const CATEGORIES = [
   "食費","外食費","日用品","衣服","美容","交際費","医療費","教育費",
@@ -99,6 +104,22 @@ const CATEGORY_TONE_KEY = {
   "教育費":"learn",
   "趣味":"play",
   "仕事":"work",
+};
+const CATEGORY_LINEAGE_KEY = {
+  "食費":"gourmet",
+  "外食費":"gourmet",
+  "カフェ":"gourmet",
+  "衣服":"selfcare",
+  "美容":"selfcare",
+  "交際費":"social",
+  "デート":"social",
+  "教育費":"learning",
+  "趣味":"learning",
+  "仕事":"learning",
+  "日用品":"lifesupport",
+  "医療費":"lifesupport",
+  "交通費":"mobility",
+  "コンビニ":"convenience",
 };
 const MASCOT_STAGE_COLORS = [
   { body:"#f1f5f9", cheek:"#e2e8f0", accent:"#cbd5f5" },
@@ -387,6 +408,75 @@ function getCumulativeMonthlyAverageScore(){
     sum + (Number.isFinite(value) ? Number(value) : 0)
   ), 0);
 }
+function getTotalXP(){
+  return Number(loadJSON(LS_TOTAL_XP, 0)) || 0;
+}
+function saveTotalXP(value){
+  saveJSON(LS_TOTAL_XP, Number(value || 0));
+}
+function loadXPMonths(){
+  return loadJSON(LS_XP_MONTHS, {});
+}
+function addMonthlyXP(monthStr, amount){
+  if(!monthStr || !Number.isFinite(amount)) return getTotalXP();
+  const log = loadXPMonths();
+  const existing = log[monthStr];
+  if(existing === true) return getTotalXP();
+  if(existing && existing.provisional === false) return getTotalXP();
+  const finalAmount = Math.round(amount);
+  const prevAmount = existing && typeof existing.amount === "number" ? existing.amount : 0;
+  const delta = Math.max(finalAmount - prevAmount, 0);
+  if(delta <= 0){
+    log[monthStr] = { amount: finalAmount, provisional: false };
+    saveJSON(LS_XP_MONTHS, log);
+    return getTotalXP();
+  }
+  const next = getTotalXP() + delta;
+  log[monthStr] = { amount: finalAmount, provisional: false };
+  saveJSON(LS_XP_MONTHS, log);
+  saveTotalXP(next);
+  return next;
+}
+function addMonthlyProvisionalXP(monthStr, amount){
+  if(!monthStr || !Number.isFinite(amount)) return getTotalXP();
+  const log = loadXPMonths();
+  const existing = log[monthStr];
+  if(existing === true) return getTotalXP();
+  if(existing && existing.provisional === false) return getTotalXP();
+  if(existing && existing.provisional === true) return getTotalXP();
+  const provisionalAmount = Math.max(10, Math.round(amount));
+  const next = getTotalXP() + provisionalAmount;
+  log[monthStr] = { amount: provisionalAmount, provisional: true };
+  saveJSON(LS_XP_MONTHS, log);
+  saveTotalXP(next);
+  return next;
+}
+function loadDailyXPLog(){
+  return loadJSON(LS_DAILY_XP, {});
+}
+function addDailyXP(dateStr, amount){
+  if(!dateStr || !Number.isFinite(amount)) return getTotalXP();
+  const log = loadDailyXPLog();
+  if(log[dateStr]) return getTotalXP();
+  const next = getTotalXP() + Math.round(amount);
+  log[dateStr] = true;
+  saveJSON(LS_DAILY_XP, log);
+  saveTotalXP(next);
+  return next;
+}
+function calcStreakDays(dateSet){
+  if(!dateSet || !dateSet.size) return 0;
+  const today = ymd(new Date());
+  let count = 0;
+  let cursor = today;
+  while(dateSet.has(cursor)){
+    count += 1;
+    const d = toDate(cursor);
+    d.setDate(d.getDate() - 1);
+    cursor = ymd(d);
+  }
+  return count;
+}
 function getWeeklyReviewScore(start, end){
   const state = loadReviewState();
   if(!state.weeklyLast) return 0;
@@ -402,6 +492,32 @@ function calcAxisScore(values){
   if(!valid.length) return 50;
   const avg = valid.reduce((a,b)=>a+b,0) / valid.length;
   return clamp(Math.round(avg), 0, 100);
+}
+function loadEvolutionMap(){
+  return loadJSON(LS_EVOLUTION, {});
+}
+function saveEvolutionMap(map){
+  saveJSON(LS_EVOLUTION, map);
+}
+function ensureEvolutionCategory(stage, txList){
+  const map = loadEvolutionMap();
+  const key = String(stage);
+  if(map[key]) return map[key];
+  const topCategory = getTopCategory(txList);
+  if(topCategory){
+    map[key] = topCategory;
+    saveEvolutionMap(map);
+    return topCategory;
+  }
+  return null;
+}
+function getLatestMonthlyAvgScore(){
+  const state = loadJSON(LS_MONTHLY_AVG, {});
+  const months = Object.keys(state || {}).sort();
+  if(!months.length) return null;
+  const last = months[months.length - 1];
+  const val = Number(state[last]);
+  return Number.isFinite(val) ? val : null;
 }
 function calcHabitScore(daysWithEntry, totalDays){
   if(!Number.isFinite(daysWithEntry) || !Number.isFinite(totalDays) || totalDays <= 0){
@@ -880,12 +996,22 @@ function handleEntryPrimary(){
 }
 
 function afterEntrySaved(){
+  const beforeXP = getTotalXP();
+  const afterXP = addDailyXP(SELECTED_DATE, 2);
   toast("入力完了");
   closeModal("entryModal");
   renderCalendar();
   renderList();
   renderWeeklyInline();
   renderMonthlyGate();
+  if(afterXP > beforeXP){
+    const bar = document.querySelector(".growthFill");
+    if(bar){
+      bar.classList.remove("bump");
+      void bar.offsetWidth;
+      bar.classList.add("bump");
+    }
+  }
 }
 
 function closeEntryModal(){
@@ -1234,20 +1360,48 @@ function withEmoji(label, emoji){
   return emoji ? `${emoji} ${label}` : label;
 }
 
-function getGrowthStage(totalScore){
-  if(!Number.isFinite(totalScore) || totalScore <= 0) return 1;
-  const stage = Math.floor(totalScore / 80) + 1;
-  return clamp(stage, 1, 12);
+function xpForLevel(level){
+  const lv = clamp(Math.round(level), 1, MAX_LEVEL);
+  const n = lv - 1;
+  return Math.round((n * n * 2) + (n * 8));
+}
+function levelFromXP(totalXP){
+  if(!Number.isFinite(totalXP) || totalXP <= 0) return 1;
+  let lvl = 1;
+  for(let i=2;i<=MAX_LEVEL;i++){
+    if(totalXP < xpForLevel(i)) break;
+    lvl = i;
+  }
+  return lvl;
+}
+function getXPProgress(totalXP){
+  const level = levelFromXP(totalXP);
+  if(level >= MAX_LEVEL){
+    return { level: MAX_LEVEL, inLevel: 0, next: 0, pct: 100 };
+  }
+  const cur = xpForLevel(level);
+  const next = xpForLevel(level + 1);
+  const span = Math.max(1, next - cur);
+  const inLevel = Math.max(0, totalXP - cur);
+  const pct = clamp(Math.round((inLevel / span) * 100), 0, 100);
+  return { level, inLevel, next: span, pct };
+}
+function getGrowthStage(totalXP){
+  const level = levelFromXP(totalXP);
+  if(level <= 25) return 1;
+  if(level <= 50) return 2;
+  if(level <= 75) return 3;
+  return 4;
 }
 function getGrowthLabel(stage){
   const idx = Number.isFinite(stage) ? stage : 1;
-  return `Lv.${idx}`;
+  return `進化${idx}`;
 }
 function getGrowthComment(stage){
   const idx = Number.isFinite(stage) ? stage : 1;
-  if(idx <= 3) return "これから一緒に育っていこう。";
-  if(idx <= 6) return "少しずつ育ってきたよ。";
-  if(idx <= 9) return "いい感じ！この調子で続けよう。";
+  if(idx === 1) return "これから一緒に育っていこう。";
+  if(idx === 2) return "少しずつ育ってきたよ。";
+  if(idx === 3) return "いい感じ！この調子で続けよう。";
   return "しっかり育ったね。";
 }
 
@@ -1261,6 +1415,61 @@ function getMascotMood(qualityScore){
   if(qualityScore >= 72) return "happy";
   if(qualityScore <= 45) return "sad";
   return "neutral";
+}
+function getLineageFromCategory(category){
+  return CATEGORY_LINEAGE_KEY[category] || null;
+}
+function getCharacterName(level, lineage, monthTopCategory){
+  if(!Number.isFinite(level) || level < 25) return "コゼニィ";
+  const lv = clamp(level, 1, MAX_LEVEL);
+  const bucket = lv >= 100 ? 5 : (lv >= 75 ? 4 : (lv >= 50 ? 3 : 2));
+  const map = {
+    gourmet:{
+      2:"モグリン",
+      3:"コダワリ・モグリン",
+      4:"グルメロード・モグリン",
+      5: (monthTopCategory === "カフェ") ? "ゆるふわバリスタ" : "キング・ゴクミ",
+    },
+    selfcare:{
+      2:"ピカリン",
+      3:"ツヤピカ・ピカリン",
+      4:"グロウ・ピカリン",
+      5: (monthTopCategory === "衣服") ? "トレンド・スター" : "ビューティ・フェアリー",
+    },
+    social:{
+      2:"ニコモン",
+      3:"ハピネス・ニコモン",
+      4:"コネクト・ニコモン",
+      5: (monthTopCategory === "交際費") ? "パーティ・ナイト" : "ロマンス・スワン",
+    },
+    learning:{
+      2:"シャキーン",
+      3:"フォーカス・シャキーン",
+      4:"マスター・シャキーン",
+      5: (monthTopCategory === "趣味") ? "マニア・ドラゴン" : "賢者マスター",
+    },
+    lifesupport:{
+      2:"ホカリン",
+      3:"プロテクト・ホカリン",
+      4:"セーフティ・ホカリン",
+      5:"ガーディアン・ケア",
+    },
+    mobility:{
+      2:"トコトコ",
+      3:"ダッシュ・トコトコ",
+      4:"スピード・トコトコ",
+      5:"ジェット・トラベラー",
+    },
+    convenience:{
+      2:"ベンリィ",
+      3:"スマート・ベンリィ",
+      4:"フレックス・ベンリィ",
+      5:"オールマイティ",
+    },
+  };
+  const list = map[lineage || ""] || null;
+  if(!list) return "コゼニィ";
+  return list[bucket] || "コゼニィ";
 }
 function getTopCategory(txList){
   const sums = {};
@@ -1285,7 +1494,7 @@ function getTriggerComment(txList){
   const key = top[0];
   const map = {
     tired:"疲れ気味みたい。無理せず休もう。",
-    stress:"ストレス多めかも。深呼吸しよう。",
+    stress:null,
     hungry:"空腹での出費が多め。先に軽食で整えよう。",
     reward:"ご褒美が多め。がんばった証拠だね。",
     social:"付き合いが多め。ペース配分を意識しよう。",
@@ -1296,34 +1505,7 @@ function getTriggerComment(txList){
 }
 
 function mascotSvgHTML(stage = 1, opts = {}){
-  const tone = opts.tone || {};
-  const mood = opts.mood || "neutral";
-  const stageIdx = Number.isFinite(stage) ? Math.max(1, Math.min(12, Math.round(stage))) : 1;
-  const stageTone = MASCOT_STAGE_COLORS[stageIdx - 1] || {};
-  const body = tone.body || stageTone.body || "#f3f4f6";
-  const cheek = tone.cheek || stageTone.cheek || "#dbeafe";
-  const accent = tone.accent || stageTone.accent || "#c7d2fe";
-  const mouth = mood === "happy"
-    ? "M48 74 Q60 82 72 74"
-    : mood === "sad"
-      ? "M48 78 Q60 70 72 78"
-      : "M48 75 Q60 77 72 75";
-  return `
-    <svg class="mascotSvg" viewBox="0 0 120 120" role="img" aria-label="家計コンディションのキャラクター">
-      <circle cx="60" cy="64" r="40" fill="${body}"/>
-      <circle cx="75" cy="56" r="16" fill="${cheek}" opacity=".6"/>
-      <circle cx="46" cy="60" r="4" fill="#2b2f38"/>
-      <circle cx="66" cy="60" r="4" fill="#2b2f38"/>
-      <path d="${mouth}" stroke="#2b2f38" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <rect x="36" y="88" width="48" height="18" rx="6" fill="#eef2ff" stroke="${accent}"/>
-      <circle cx="60" cy="97" r="3" fill="${accent}"/>
-      <g class="mascotBird">
-        <circle cx="88" cy="30" r="10" fill="#f8d7aa"/>
-        <circle cx="92" cy="30" r="2" fill="#2b2f38"/>
-        <path d="M98 32 L106 36 L98 38 Z" fill="#f4a261"/>
-      </g>
-    </svg>
-  `;
+  return `<img class="mascotImg" src="assets/characters/kozeni.png" alt="コゼニィ">`;
 }
 
 function buildMonthlyReportItems(monthStr){
@@ -1515,33 +1697,57 @@ function buildWeeklyResult(){
   const weeklyReportHint = readyMonth
     ? `<div class="weeklyHeroHint">📄 月次レポートが届いています</div>`
     : "";
-  const weeklyMascotCTA = readyMonth
+  const weeklyMascotCTA = "";
+  const weeklyReportCTA = readyMonth
     ? `role="button" aria-label="月次レポートを開く" onclick="showMonthlyScore()"`
     : "";
-  const growthTotal = getCumulativeMonthlyAverageScore();
+  const growthTotal = getTotalXP();
+  const xp = getXPProgress(growthTotal);
+  const xpLevel = xp.level;
+  const xpInLevel = xp.inLevel;
+  const xpPct = xp.pct;
+  const xpNext = xp.next;
   const weeklyStage = getGrowthStage(growthTotal);
   const weeklyStageLabel = getGrowthLabel(weeklyStage);
   const characterQuality = calcQualityMetrics(characterTx).qualityScore;
-  const topCategory = getTopCategory(characterTx);
-  const mascotTone = getMascotTone(topCategory);
+  const monthlyTopCategory = getTopCategory(monthTx);
+  const weeklyTopCategory = getTopCategory(allTx);
+  const evoCategory = (xpLevel >= 25) ? ensureEvolutionCategory(weeklyStage, monthTx) : null;
+  const monthLineage = getLineageFromCategory(evoCategory || monthlyTopCategory);
+  const dailyLineage = getLineageFromCategory(weeklyTopCategory);
+  const lineage = (xpLevel < 25) ? dailyLineage : monthLineage;
+  const mascotTone = getMascotTone((xpLevel < 25) ? weeklyTopCategory : (evoCategory || monthlyTopCategory));
   const mascotMood = getMascotMood(characterQuality);
   const triggerComment = getTriggerComment(characterTx);
   const weeklyStageComment = triggerComment || getGrowthComment(weeklyStage);
-
+  const streakDays = calcStreakDays(new Set(allTxRaw.map(t=>t.date)));
+  const latestMonthlyAvg = getLatestMonthlyAvgScore();
+  const reactionText = (latestMonthlyAvg != null && latestMonthlyAvg >= 70)
+    ? "いい流れ。今月もよく向き合えたね。"
+    : "焦らなくて大丈夫。自分のペースで続けよう。";
+  const characterName = getCharacterName(xpLevel, lineage, monthlyTopCategory);
+  const lineageClass = lineage ? `lineage-${lineage}` : "";
   const html = `
     <div class="resultWrap">
-      <div class="weeklyHero" aria-label="今週の家計コンディション">
-          <div class="weeklyHeroArt" aria-hidden="true">
-          <div class="weeklyHeroMascot" ${weeklyMascotCTA}>
+      <div class="weeklyHero ${lineageClass}" aria-label="今週の家計コンディション">
+        <div class="weeklyHeroArt" aria-hidden="true">
+          <div class="weeklyHeroMascot" ${weeklyMascotCTA} onclick="playMascotFlip(event)">
             ${mascotSvgHTML(weeklyStage, { tone: mascotTone, mood: mascotMood })}
-            ${readyMonth ? `<span class="mascotReport">📄</span>` : ""}
           </div>
+          ${readyMonth ? `<span class="mascotReport" ${weeklyReportCTA}>📄</span>` : ""}
         </div>
-        <div class="weeklyHeroMeta">
-          <div class="weeklyHeroState">${weeklyStateLabel}</div>
-          <div class="weeklyHeroSub">育成レベル：${weeklyStageLabel}</div>
-          <div class="small muted" style="margin-top:6px;">${weeklyStageComment}</div>
-          ${weeklyReportHint}
+        <div class="heroGauge">
+          <div class="heroGaugeName">${characterName}</div>
+          <div class="heroGaugeLine">${weeklyStateLabel} / Lv.${xpLevel}</div>
+          <div class="heroGaugeTrack">
+            <div class="heroGaugeFill" style="width:${xpPct}%;"></div>
+          </div>
+          <div class="heroGaugeMeta">次のLvまで ${xpNext ? (xpNext - xpInLevel) : 0}xp</div>
+          <div class="heroGaugeMeta">連続入力：${streakDays}日</div>
+          <div class="heroGaugeMeta">育成レベル：${weeklyStageLabel}</div>
+          <div class="heroGaugeReact">${reactionText}</div>
+          <div class="heroGaugeNote">${weeklyStageComment}</div>
+          ${weeklyReportHint ? `<div class="heroGaugeBadge">${weeklyReportHint}</div>` : ""}
         </div>
       </div>
     </div>
@@ -1577,8 +1783,31 @@ function renderWeeklyInline(){
   const result = buildWeeklyResult();
   wrap.innerHTML = result.html;
   animateDonuts(wrap);
+  animateGrowth(wrap);
 }
 window.renderWeeklyInline = renderWeeklyInline;
+
+function animateGrowth(scope){
+  const root = scope || document;
+  root.querySelectorAll(".growthFill").forEach(el=>{
+    el.classList.remove("pulse");
+    void el.offsetWidth;
+    el.classList.add("pulse");
+  });
+}
+
+function playMascotFlip(e){
+  if(e){
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  const target = e.currentTarget;
+  if(!target) return;
+  target.classList.remove("flip");
+  void target.offsetWidth;
+  target.classList.add("flip");
+}
+window.playMascotFlip = playMascotFlip;
 
 function renderMonthlyGate(){
   const wrap = $("monthlyGate");
@@ -1773,13 +2002,41 @@ window.showMonthlyScore = showMonthlyScore;
 function buildMonthlyResult(){
   const m = $("scoreMonth").value;
   const saved = getSavingForMonth(m);
-  if(!saved){
-    return { missingSaving:true, html:"", text:"" };
-  }
   const missing = getMonthlyMissingFields();
-  if(missing.length){
+  if(!saved || missing.length){
+    const incomeStored = getIncomeForMonth(m);
+    const income = (incomeStored != null) ? Number(incomeStored||0) : Number($("incomeYen").value||0);
+    const fixed = {
+      housingYen: Number($("housingYen").value||0),
+      utilityYen: Number($("utilityYen").value||0),
+      netYen: Number($("netYen").value||0),
+      subYen: Number($("subYen").value||0),
+    };
+    const tx = loadTx().filter(t=>t.date && t.date.startsWith(m));
+    const varSpend = tx.reduce((a,b)=>a+Number(b.amount||0),0);
+    const fixedSum = Object.values(fixed).reduce((a,b)=>a+Number(b||0),0);
+    const qx = calcQualityMetrics(tx);
+    const qualityScore = qx.qualityScore;
+    const daysWithEntry = new Set(tx.map(t=>t.date)).size;
+    const daysInMonth = getDaysInMonth(m) || 0;
+    const habitScore = calcHabitScore(daysWithEntry, daysInMonth);
+    const reflectionScore = getMonthlyReviewScore(m);
+    const satisfactionScore = calcAxisScore([qualityScore, habitScore, reflectionScore]);
+    const saving = saved ? (Number(saved.saving||0) + Number(saved.invest||0)) : null;
+    const savingRate = income>0 && saving!=null ? (saving/income) : null;
+    const fixedRate = income>0 ? (fixedSum/income) : null;
+    const varRate = income>0 ? (varSpend/income) : null;
+    const savingsScore = calcSavingScoreFromRate(savingRate);
+    const publicRates = calcPublicRates(tx, fixed, income);
+    const publicCompareScore = calcPublicCompareScore(publicRates);
+    const balanceScore = calcBalanceScore(fixedRate, varRate);
+    const stabilityScore = calcAxisScore([savingsScore, publicCompareScore, balanceScore]);
+    const provisionalAvg = clamp(Math.round((satisfactionScore + stabilityScore) / 2), 0, 100);
+    const inputRate = daysInMonth > 0 ? (daysWithEntry / daysInMonth) : 0;
+    const provisionalXP = Math.max(10, Math.round(provisionalAvg * inputRate));
+    addMonthlyProvisionalXP(m, provisionalXP);
     return {
-      missingSaving:false,
+      missingSaving: !saved,
       html: buildMonthlyMissingHtml(missing),
       text: ""
     };
@@ -1859,6 +2116,7 @@ function buildMonthlyResult(){
   const stabilityScore = calcAxisScore([savingsScore, publicCompareScore, balanceScore]);
   const monthlyAvgScore = clamp(Math.round((satisfactionScore + stabilityScore) / 2), 0, 100);
   saveMonthlyAverageScore(m, monthlyAvgScore);
+  const totalXP = addMonthlyXP(m, monthlyAvgScore);
   const monthlyState = getScoreState(monthlyAvgScore);
   const monthlyStateLabel = getStateLabel(monthlyState);
 
@@ -1874,7 +2132,6 @@ function buildMonthlyResult(){
           <button class="monthlyAxisBtn" id="monthlyAxis-stable" data-axis="stable" onclick="switchMonthlyAxis('stable')" role="tab" aria-controls="monthlyAxisPanel-stable" aria-selected="false">家計安定度スコア</button>
         </div>
       </div>
-
       <div class="monthlyAxisPane animIn a2" id="monthlyAxisPanel-sat" data-monthly-axis="sat" role="tabpanel" aria-hidden="false">
         <div class="axisCard tone-sat ${getScoreTone(satisfactionScore)} score--${getScoreState(satisfactionScore)}">
           <div class="axisLabel">家計納得度スコア</div>
