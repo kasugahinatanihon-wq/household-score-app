@@ -1806,6 +1806,8 @@ function playMascotFlip(e){
   target.classList.remove("flip");
   void target.offsetWidth;
   target.classList.add("flip");
+  clearTimeout(target._flipTimer);
+  target._flipTimer = setTimeout(()=>{ target.classList.remove("flip"); }, 2300);
 }
 window.playMascotFlip = playMascotFlip;
 
