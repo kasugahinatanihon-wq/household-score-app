@@ -11,14 +11,10 @@
 
 <body>
 <header>
-  <div class="wrap">
-    <h1 class="brandTitle">
-      <span class="logoMark" aria-hidden="true">
-        <span class="logoDot"></span>
-      </span>
-      家計診断アプリ
-    </h1>
-    <p class="muted">日々の記録で家計キャラクターが変化し、月次で詳細な家計レポートを確認できます。</p>
+  <div class="wrap" style="padding:16px 0 8px;">
+    <div class="logoMark" aria-hidden="true" style="width:32px; height:32px;">
+      <span class="logoDot"></span>
+    </div>
   </div>
 </header>
 
@@ -27,7 +23,7 @@
   <div class="modal">
     <div class="modalBody" style="padding:32px 24px; text-align:center;">
       <div id="slide1" class="onboardSlide">
-        <div style="font-size:60px; margin-bottom:16px;">🩺</div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">🩺</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">このアプリは、節約アプリではありません</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           お金を「減らさない」ためではなく、<br>
@@ -38,7 +34,7 @@
       </div>
 
       <div id="slide2" class="onboardSlide" style="display:none;">
-        <div style="font-size:60px; margin-bottom:16px;">🧾</div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">🧾</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">ちゃんと管理してるのに、不安は消えない</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           家計簿もつけてる。<br>
@@ -53,7 +49,7 @@
       </div>
 
       <div id="slide3" class="onboardSlide" style="display:none;">
-        <div style="font-size:60px; margin-bottom:16px;">📈</div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">📈</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">足りないのは、数字じゃなく“判断軸”</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           多くの家計管理は「いくら使ったか」しか見ていません。<br>
@@ -67,7 +63,7 @@
       </div>
 
       <div id="slide4" class="onboardSlide" style="display:none;">
-        <div style="font-size:60px; margin-bottom:16px;">🧠</div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">🧠</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">お金の使い方を、行動と感情で見える化</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           金額だけでなく「納得度」で支出を評価<br>
@@ -81,7 +77,7 @@
       </div>
 
       <div id="slide5" class="onboardSlide" style="display:none;">
-        <div style="font-size:60px; margin-bottom:16px;">✨</div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">✨</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">まずは、いつも通り使ってみてください</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           完璧につけなくて大丈夫。<br>
@@ -336,7 +332,7 @@
   <section class="screen active" id="screen-input">
     <div class="box">
       <h2 style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:20px;">📝</span> 記録
+        <span class="emojiWarm mini">📝</span> 記録
       </h2>
       <div class="small" style="margin-top:6px;">カテゴリを選ぶと入力が始まります</div>
       <div class="catTitle" style="margin-top:12px;">カテゴリー</div>
@@ -346,7 +342,7 @@
 
   <section class="screen" id="screen-list">
     <div class="box">
-      <h2>📅 カレンダー</h2>
+      <h2><span class="emojiWarm mini">📅</span> カレンダー</h2>
       <div class="calendarBox" id="calendarBox" style="margin-top:12px;">
         <div class="calHeader">
           <span class="pill" id="calMonthPill" style="font-size:14px; padding:6px 12px;">----</span>
@@ -371,7 +367,7 @@
     <div class="box boxSafeBottom">
       <div class="bar reportHeader" style="justify-content:space-between; align-items:flex-end;">
         <div>
-          <h2 style="font-size:20px; margin:0;">🧾 レポート</h2>
+          <h2 style="font-size:20px; margin:0;"><span class="emojiWarm mini">🧾</span> レポート</h2>
           <div class="small">使ったお金の内訳を確認</div>
         </div>
         <label class="small reportMonthLabel">対象月
@@ -404,7 +400,7 @@
     <div class="box boxSafeBottom">
       <div class="bar" style="justify-content:space-between;">
         <div>
-          <h2 style="font-size:20px; margin:0;">📊 育成状況</h2>
+          <h2 style="font-size:20px; margin:0;"><span class="emojiWarm mini">📊</span> 育成状況</h2>
         </div>
       </div>
 
@@ -420,7 +416,7 @@
 
   <section class="screen" id="screen-profile">
     <div class="box boxSafeBottom">
-      <h2>⚙️ 設定・プロフィール</h2>
+      <h2><span class="emojiWarm mini">⚙️</span> 設定・プロフィール</h2>
       <div class="small">属性（世帯人数・年齢階級）は、将来の比較機能の土台になります</div>
       <div class="row" style="margin-top:16px;">
         <label>設定する月
@@ -471,12 +467,12 @@
       </div>
 
       <div class="box" style="margin:16px 0 0;">
-        <h3>📕 チュートリアル</h3>
+        <h3><span class="emojiWarm mini">📕</span> チュートリアル</h3>
         <button class="ghost" style="width:100%;" onclick="resetOnboarding()">最初の説明をもう一度見る</button>
       </div>
 
       <div class="adminBox">
-        <h3>📥 データ管理</h3>
+        <h3><span class="emojiWarm mini">📥</span> データ管理</h3>
         <div class="small" style="margin-bottom:12px;">機種変更や分析用に、全データを書き出し・読み込みできます。</div>
         <button class="dark" style="width:100%; margin-bottom:12px;" onclick="downloadData()">全データを書き出し (Export)</button>
         <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(this)">
@@ -491,23 +487,23 @@
 <nav class="bottomNav">
   <div class="tabs">
     <button class="tabBtn active" id="tab-input" onclick="switchScreen('input')">
-      <span class="icon">✏️</span><span>入力</span>
+      <span class="icon emojiWarm">✏️</span><span>入力</span>
     </button>
     <button class="tabBtn" id="tab-list" onclick="switchScreen('list')">
-      <span class="icon">📅</span><span>カレンダー</span>
+      <span class="icon emojiWarm">📅</span><span>カレンダー</span>
     </button>
     <button class="tabBtn" id="tab-report" onclick="switchScreen('report')">
-      <span class="icon">🧾</span><span>レポート</span>
+      <span class="icon emojiWarm">🧾</span><span>レポート</span>
     </button>
     <button class="tabBtn" id="tab-profile" onclick="switchScreen('profile')">
-      <span class="icon">⚙️</span><span>設定</span>
+      <span class="icon emojiWarm">⚙️</span><span>設定</span>
     </button>
   </div>
 </nav>
 
 <button class="floatingScoreBtn" id="scoreQuickBtn" onclick="switchScreen('score')" aria-label="ホーム（スコア）">
-  <span class="scoreQuickHome">🏠</span>
-  <span class="scoreQuickChart">📊</span>
+  <span class="scoreQuickHome emojiWarm mini">🏠</span>
+  <span class="scoreQuickChart emojiWarm mini">📊</span>
 </button>
 
 <script src="./app.js"></script>

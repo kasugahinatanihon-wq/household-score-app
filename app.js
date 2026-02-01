@@ -807,7 +807,7 @@ function buildCatCards(){
     if(!wrap) return;
     wrap.innerHTML = CATEGORIES.map(c=>`
       <div class="catCard" data-cat="${escapeHtml(c)}">
-        <div class="icon">${ICON[c] || "🧾"}</div>
+        <div class="icon">${emojiHTML(ICON[c] || "🧾","icon")}</div>
         <div class="label">${escapeHtml(c)}</div>
       </div>
     `).join("");
@@ -1357,7 +1357,11 @@ function getScoreToneColor(score, flavor = "sat"){
   return `var(${prefix}4)`;
 }
 function withEmoji(label, emoji){
-  return emoji ? `${emoji} ${label}` : label;
+  return emoji ? `${emojiHTML(emoji, "mini")} ${escapeHtml(label)}` : escapeHtml(label);
+}
+function emojiHTML(emoji, sizeClass){
+  const cls = sizeClass ? ` ${sizeClass}` : "";
+  return `<span class="emojiWarm${cls}" aria-hidden="true">${emoji}</span>`;
 }
 
 function xpForLevel(level){
@@ -1695,7 +1699,7 @@ function buildWeeklyResult(){
   const weeklyStateLabel = getStateLabel(weeklyState);
   const readyMonth = getLatestReadyMonth();
   const weeklyReportHint = readyMonth
-    ? `<div class="weeklyHeroHint">📄 月次レポートが届いています</div>`
+    ? `<div class="weeklyHeroHint">${emojiHTML("📄","mini")} 月次レポートが届いています</div>`
     : "";
   const weeklyMascotCTA = "";
   const weeklyReportCTA = readyMonth
@@ -1731,10 +1735,16 @@ function buildWeeklyResult(){
     <div class="resultWrap">
       <div class="weeklyHero ${lineageClass}" aria-label="今週の家計コンディション">
         <div class="weeklyHeroArt" aria-hidden="true">
+          <div class="heroHouse" aria-hidden="true">
+            <div class="heroHouseRoof"></div>
+            <div class="heroHouseBody"></div>
+            <div class="heroHouseDoor"></div>
+            <div class="heroHouseWindow"></div>
+          </div>
           <div class="weeklyHeroMascot" ${weeklyMascotCTA} onclick="playMascotFlip(event)">
             ${mascotSvgHTML(weeklyStage, { tone: mascotTone, mood: mascotMood })}
           </div>
-          ${readyMonth ? `<span class="mascotReport" ${weeklyReportCTA}>📄</span>` : ""}
+          ${readyMonth ? `<span class="mascotReport" ${weeklyReportCTA}>${emojiHTML("📄","mini")}</span>` : ""}
         </div>
         <div class="heroGauge">
           <div class="heroGaugeName">${characterName}</div>
@@ -2101,7 +2111,7 @@ function buildMonthlyResult(){
     const diffText = fmtDiff(item.you, item.bench);
     return `
       <div class="metricBlock ${toneClass}" style="margin-top:8px;">
-        <div class="metricLabel">${escapeHtml(item.label)}</div>
+        <div class="metricLabel">${item.label}</div>
         <div class="small" style="margin-bottom:6px;">${scoreText}</div>
         <div class="small muted" style="margin-bottom:6px;">あなた ${youText} / 中央値 ${benchText} / 差分 ${diffText}</div>
         <div class="miniBar"><div style="--w:${barWidth}%;"></div></div>
@@ -2152,17 +2162,17 @@ function buildMonthlyResult(){
         </div>
           <div>
             <div class="metricBlock ${getScoreTone(qualityScore)}">
-              <div class="metricLabel">💡 納得度（質スコア）</div>
+              <div class="metricLabel">${emojiHTML("💡","mini")} 納得度（質スコア）</div>
               <div class="small" style="margin-bottom:6px;">${qualityLabel}</div>
               <div class="miniBar"><div style="--w:${qualityShow}%;"></div></div>
             </div>
             <div class="metricBlock ${getScoreTone(habitScore)}" style="margin-top:8px;">
-              <div class="metricLabel">🗓️ 記録継続（入力日数・習慣）</div>
+              <div class="metricLabel">${emojiHTML("🗓️","mini")} 記録継続（入力日数・習慣）</div>
               <div class="small" style="margin-bottom:6px;">${habitScore==null?"—":`${habitScore}/100`}</div>
               <div class="miniBar"><div style="--w:${habitScore==null?0:habitScore}%;"></div></div>
             </div>
             <div class="metricBlock ${getScoreTone(reflectionScore)}" style="margin-top:8px;">
-              <div class="metricLabel">🔍 振り返り（月次レポート開封）</div>
+              <div class="metricLabel">${emojiHTML("🔍","mini")} 振り返り（月次レポート開封）</div>
               <div class="small" style="margin-bottom:6px;">${reflectionScore}/100</div>
               <div class="miniBar"><div style="--w:${reflectionScore}%;"></div></div>
             </div>
@@ -2174,7 +2184,7 @@ function buildMonthlyResult(){
               const label = withEmoji(item.category, CATEGORY_EMOJI[item.category]);
               return `
                 <div class="metricBlock ${toneClass}" style="margin-top:8px;">
-                  <div class="metricLabel">${escapeHtml(label)}</div>
+                  <div class="metricLabel">${label}</div>
                   <div class="small" style="margin-bottom:6px;">${scoreText}</div>
                   <div class="miniBar"><div style="--w:${barWidth}%;"></div></div>
                 </div>
@@ -2201,12 +2211,12 @@ function buildMonthlyResult(){
         </div>
           <div>
             <div class="metricBlock ${getScoreTone(savingsScore)}">
-              <div class="metricLabel">💰 貯蓄率</div>
+              <div class="metricLabel">${emojiHTML("💰","mini")} 貯蓄率</div>
               <div class="small" style="margin-bottom:6px;">${savingsScore==null?"—":`${savingsScore}/100`}</div>
               <div class="miniBar"><div style="--w:${savingsScore==null?0:savingsScore}%;"></div></div>
             </div>
             <div class="metricBlock ${getScoreTone(balanceScore)}" style="margin-top:8px;">
-              <div class="metricLabel">⚖️ バランス（固定費・変動費の偏り）</div>
+              <div class="metricLabel">${emojiHTML("⚖️","mini")} バランス（固定費・変動費の偏り）</div>
               <div class="small" style="margin-bottom:6px;">${balanceScore==null?"—":`${balanceScore}/100`}</div>
               <div class="miniBar"><div style="--w:${balanceScore==null?0:balanceScore}%;"></div></div>
             </div>
