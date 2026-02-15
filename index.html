@@ -101,24 +101,27 @@
       <button class="ghost" onclick="closeModal('surveyModal')">✕</button>
     </div>
     <div class="modalBody" style="padding:16px;">
-      <div class="small" style="margin-bottom:12px;">わからない項目は空欄でも大丈夫です（後から変更できます）</div>
+      <div class="small" style="margin-bottom:12px;">はじめにすべて入力してください（後から変更できます）</div>
       <div class="row">
         <label>世帯人数
           <select id="surveyHousehold">
             <option value="unknown">未設定</option>
-            <option value="single">1人暮らし</option>
-            <option value="twoPlus">2人以上</option>
+            <option value="1">1人</option>
+            <option value="2">2人</option>
+            <option value="3">3人</option>
+            <option value="4">4人</option>
+            <option value="5">5人</option>
+            <option value="6">6人以上</option>
           </select>
         </label>
-        <label>年齢層
-          <select id="surveyAgeBand">
-            <option value="unknown">未設定</option>
-            <option value="u29">〜29歳</option>
-            <option value="30s">30代</option>
-            <option value="40s">40代</option>
-            <option value="50s">50代</option>
-            <option value="60p">60歳以上</option>
-          </select>
+        <label>年齢（世帯主）
+          <input type="number" id="surveyAge" placeholder="例：34">
+        </label>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <label>昨年の世帯年収（税込・額面 / 万円）
+          <input type="number" id="surveyAnnualIncome" placeholder="例：650">
         </label>
       </div>
 
@@ -132,6 +135,33 @@
       </div>
       <div class="row" style="margin-top:12px;">
         <label>サブスク (円) <input type="number" id="surveySub" placeholder="定期支払"></label>
+        <label>ローン元本返済 (円) <input type="number" id="surveyMortgagePrincipal" placeholder="住宅ローン元本"></label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>住居形態
+          <select id="surveyHousingType">
+            <option value="unknown">未設定</option>
+            <option value="mortgage">持ち家・ローン返済中</option>
+            <option value="rent">賃貸</option>
+            <option value="owned">持ち家・ローンなし</option>
+          </select>
+        </label>
+        <label>居住地域
+          <select id="surveyRegionType">
+            <option value="unknown">未設定</option>
+            <option value="metro">都市部</option>
+            <option value="local">地方都市</option>
+          </select>
+        </label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>就業形態
+          <select id="surveyWorkType">
+            <option value="unknown">未設定</option>
+            <option value="co">共働き</option>
+            <option value="single">片働き</option>
+          </select>
+        </label>
       </div>
       <div style="margin-top:16px;">
         <button class="primary" style="width:100%;" onclick="finishSurvey()">入力を保存して始める</button>
@@ -166,7 +196,7 @@
         <div class="datePill" id="entryDateText">----</div>
         <button class="dateNavBtn" type="button" id="entryNextDay" aria-label="next">›</button>
       </div>
-      <p class="muted small" style="margin:10px 0 0;">入力は「カテゴリ → 金額 →（必要なら）納得」</p>
+      <p class="muted small" style="margin:10px 0 0;">入力は「カテゴリ → 金額 → 納得」</p>
       <p class="muted small" style="margin:6px 0 0;">固定費（住居/光熱/通信/サブスク）は月次入力です</p>
     </div>
 
@@ -188,32 +218,23 @@
       </div>
 
       <div class="entryStep" id="step-quality" style="display:none;">
-        <div class="catTitle">納得度・きっかけ（任意）</div>
+        <div class="catTitle">納得度・価値観（任意）</div>
         <div class="qualityRow">
-          <div class="qualityLabel">納得度</div>
+          <div class="qualityLabel">今日の支出は納得？</div>
           <select id="entrySat">
             <option value="">未入力</option>
-            <option value="1">1（払う必要なかった）</option>
-            <option value="2">2（微妙だった）</option>
-            <option value="3">3（払ってよかった）</option>
-            <option value="4">4（最高だった）</option>
+            <option value="5">😊 すごく納得</option>
+            <option value="4">🙂 まあ納得</option>
+            <option value="3">😐 どちらでもない</option>
+            <option value="2">🙁 少し後悔</option>
+            <option value="1">😢 後悔している</option>
           </select>
         </div>
         <div class="qualityRow">
-          <div class="qualityLabel">きっかけ</div>
-          <select id="entryTrigger">
-            <option value="">未入力</option>
-            <option value="tired">疲れ</option>
-            <option value="stress">ストレス</option>
-            <option value="hungry">空腹</option>
-            <option value="reward">ご褒美</option>
-            <option value="social">付き合い</option>
-            <option value="timesave">時短</option>
-            <option value="bored">なんとなく</option>
+          <div class="qualityLabel">価値観カテゴリ</div>
+          <select id="entryValueTag">
+            <option value="">未設定</option>
           </select>
-        </div>
-        <div style="margin-top:8px;">
-          <button class="ghost" id="qualitySkipBtn" type="button">メモへスキップ</button>
         </div>
       </div>
 
@@ -278,22 +299,16 @@
         <label>納得度
           <select id="editSat">
             <option value="">未入力</option>
-            <option value="1">1（払う必要なかった）</option>
-            <option value="2">2（微妙だった）</option>
-            <option value="3">3（払ってよかった）</option>
-            <option value="4">4（最高だった）</option>
+            <option value="5">😊 すごく納得</option>
+            <option value="4">🙂 まあ納得</option>
+            <option value="3">😐 どちらでもない</option>
+            <option value="2">🙁 少し後悔</option>
+            <option value="1">😢 後悔している</option>
           </select>
         </label>
-        <label>きっかけ
-          <select id="editTrigger">
-            <option value="">未入力</option>
-            <option value="tired">疲れ</option>
-            <option value="stress">ストレス</option>
-            <option value="hungry">空腹</option>
-            <option value="reward">ご褒美</option>
-            <option value="social">付き合い</option>
-            <option value="timesave">時短</option>
-            <option value="bored">なんとなく</option>
+        <label>価値観カテゴリ
+          <select id="editValueTag">
+            <option value="">未設定</option>
           </select>
         </label>
       </div>
@@ -424,46 +439,111 @@
         </label>
       </div>
 
-      <div class="row" style="margin-top:16px;">
-        <label>世帯人数
-          <select id="profileHousehold">
-            <option value="unknown">未設定</option>
-            <option value="single">1人暮らし</option>
-            <option value="twoPlus">2人以上</option>
-          </select>
-        </label>
-        <label>年齢層
-          <select id="profileAgeBand">
-            <option value="unknown">未設定</option>
-            <option value="u29">〜29歳</option>
-            <option value="30s">30代</option>
-            <option value="40s">40代</option>
-            <option value="50s">50代</option>
-            <option value="60p">60歳以上</option>
-          </select>
-        </label>
-      </div>
+      <details class="settingsSection" open>
+        <summary>プロフィール（必須）</summary>
+        <div class="settingsBody">
+          <div class="row" style="margin-top:12px;">
+            <label>世帯人数
+              <select id="profileHousehold">
+                <option value="unknown">未設定</option>
+                <option value="1">1人</option>
+                <option value="2">2人</option>
+                <option value="3">3人</option>
+                <option value="4">4人</option>
+                <option value="5">5人</option>
+                <option value="6">6人以上</option>
+              </select>
+            </label>
+            <label>年齢（世帯主）
+              <input type="number" id="profileAge" placeholder="例：34">
+            </label>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <label>昨年の世帯年収（税込・額面 / 万円）
+              <input type="number" id="profileAnnualIncome" placeholder="例：650">
+            </label>
+          </div>
+        </div>
+      </details>
+
+      <details class="settingsSection">
+        <summary>住居・地域・就業（推奨）</summary>
+        <div class="settingsBody">
+          <div class="row" style="margin-top:12px;">
+            <label>住居形態
+              <select id="profileHousingType">
+                <option value="unknown">未設定</option>
+                <option value="mortgage">持ち家・ローン返済中</option>
+                <option value="rent">賃貸</option>
+                <option value="owned">持ち家・ローンなし</option>
+              </select>
+            </label>
+            <label>居住地域
+              <select id="profileRegionType">
+                <option value="unknown">未設定</option>
+                <option value="metro">都市部</option>
+                <option value="local">地方都市</option>
+              </select>
+            </label>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <label>就業形態
+              <select id="profileWorkType">
+                <option value="unknown">未設定</option>
+                <option value="co">共働き</option>
+                <option value="single">片働き</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </details>
+
+      <details class="settingsSection">
+        <summary>価値観カテゴリ</summary>
+        <div class="settingsBody">
+          <div class="small">自由に5つ設定し、TOP3を選んでください</div>
+          <div class="row" style="margin-top:12px;">
+            <label>カテゴリ1<input type="text" id="valueCat1" placeholder="例：自己投資"></label>
+            <label>カテゴリ2<input type="text" id="valueCat2" placeholder="例：家族時間"></label>
+            <label>カテゴリ3<input type="text" id="valueCat3" placeholder="例：趣味"></label>
+            <label>カテゴリ4<input type="text" id="valueCat4" placeholder="例：健康"></label>
+            <label>カテゴリ5<input type="text" id="valueCat5" placeholder="例：将来貯蓄"></label>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <label>TOP1<select id="valueTop1"><option value="">未設定</option></select></label>
+            <label>TOP2<select id="valueTop2"><option value="">未設定</option></select></label>
+            <label>TOP3<select id="valueTop3"><option value="">未設定</option></select></label>
+          </div>
+        </div>
+      </details>
+
+      <details class="settingsSection">
+        <summary>月収（手取り）</summary>
+        <div class="settingsBody">
+          <div class="row" style="margin-top:12px;">
+            <label>手取り月収 (円) <input type="number" id="incomeYen" placeholder="例：300000"></label>
+          </div>
+        </div>
+      </details>
+
+      <details class="settingsSection">
+        <summary>固定費（月次）</summary>
+        <div class="settingsBody">
+          <div class="small">診断する月の固定費をここで入力します</div>
+          <div class="row" style="margin-top:12px;">
+            <label>住居費<input type="number" id="housingYen" placeholder="家賃など"></label>
+            <label>光熱費<input type="number" id="utilityYen" placeholder="電気ガス水道"></label>
+            <label>通信費<input type="number" id="netYen" placeholder="スマホ・Net"></label>
+            <label>サブスク<input type="number" id="subYen" placeholder="定期支払"></label>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <label>ローン元本返済<input type="number" id="mortgagePrincipalYen" placeholder="住宅ローン元本"></label>
+          </div>
+        </div>
+      </details>
 
       <div class="bar" style="margin-top:12px; justify-content:flex-end;">
         <button class="primary" onclick="saveProfile()">保存</button>
-      </div>
-
-      <div class="box" style="margin:16px 0 0;">
-        <h3>月収（手取り）</h3>
-        <div class="row" style="margin-top:12px;">
-          <label>手取り月収 (円) <input type="number" id="incomeYen" placeholder="例：300000"></label>
-        </div>
-      </div>
-
-      <div class="box" style="margin:16px 0 0;">
-        <h3>固定費（月次）</h3>
-        <div class="small">診断する月の固定費をここで入力します</div>
-        <div class="row" style="margin-top:12px;">
-          <label>住居費<input type="number" id="housingYen" placeholder="家賃など"></label>
-          <label>光熱費<input type="number" id="utilityYen" placeholder="電気ガス水道"></label>
-          <label>通信費<input type="number" id="netYen" placeholder="スマホ・Net"></label>
-          <label>サブスク<input type="number" id="subYen" placeholder="定期支払"></label>
-        </div>
       </div>
 
       <div class="box" style="margin:16px 0 0;">
