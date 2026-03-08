@@ -18,6 +18,8 @@ const LS_SUPABASE = "supabase_config_v1";
 const LS_REMOTE_USER = "remote_user_v1";
 const LS_AUTH_SESSION = "supabase_auth_session_v1";
 const LS_ACTIVE_HOUSEHOLD = "active_household_id_v1";
+const LS_ACTIVE_HOUSEHOLD_CODE = "active_household_code_v1";
+const LS_HOUSEHOLD_ONBOARDING_DONE = "household_onboarding_done_v1";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
 const SAT_SCALE_VERSION = 2;
@@ -666,6 +668,24 @@ function setActiveHouseholdId(householdId){
     localStorage.removeItem(LS_ACTIVE_HOUSEHOLD);
   }
 }
+function setActiveHouseholdCode(code){
+  if(code){
+    localStorage.setItem(LS_ACTIVE_HOUSEHOLD_CODE, code);
+  }else{
+    localStorage.removeItem(LS_ACTIVE_HOUSEHOLD_CODE);
+  }
+}
+function getActiveHouseholdCode(){
+  return String(localStorage.getItem(LS_ACTIVE_HOUSEHOLD_CODE) || "");
+}
+function getInviteCodeFromUrl(){
+  try{
+    const u = new URL(window.location.href);
+    return String(u.searchParams.get("invite") || "").trim().toUpperCase();
+  }catch{
+    return "";
+  }
+}
 function isHouseholdSharedMode(){
   return !!(getAuthUserId() && getActiveHouseholdId());
 }
@@ -856,6 +876,7 @@ window.signInWithEmail = signInWithEmail;
 function signOutAccount(){
   saveAuthSession(null);
   setActiveHouseholdId("");
+  setActiveHouseholdCode("");
   if(HOUSEHOLD_PULL_TIMER){
     clearInterval(HOUSEHOLD_PULL_TIMER);
     HOUSEHOLD_PULL_TIMER = null;
@@ -895,6 +916,7 @@ async function createHousehold(){
       prefer: "resolution=merge-duplicates,return=minimal"
     });
     setActiveHouseholdId(household.id);
+    setActiveHouseholdCode(household.invite_code || "");
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
     setHouseholdStatus(`参加中: ${household.name} / コード ${household.invite_code}`);
@@ -927,6 +949,7 @@ async function joinHousehold(){
       prefer: "resolution=merge-duplicates,return=minimal"
     });
     setActiveHouseholdId(household.id);
+    setActiveHouseholdCode(household.invite_code || "");
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
     setHouseholdStatus(`参加中: ${household.name} / コード ${household.invite_code}`);
@@ -949,6 +972,7 @@ async function refreshHouseholdState(){
     const member = members?.[0];
     if(!member?.household_id){
       setActiveHouseholdId("");
+      setActiveHouseholdCode("");
       startHouseholdPulling();
       setHouseholdStatus("世帯未参加");
       return;
@@ -957,12 +981,52 @@ async function refreshHouseholdState(){
     startHouseholdPulling();
     const households = await supabaseRequest(`households?id=eq.${encodeURIComponent(member.household_id)}&select=id,name,invite_code&limit=1`);
     const h = households?.[0];
+    setActiveHouseholdCode(h?.invite_code || "");
     setHouseholdStatus(h?.name ? `参加中: ${h.name} / コード ${h.invite_code}` : "世帯参加中");
   }catch(err){
     console.error(err);
     setHouseholdStatus(`世帯状態取得失敗: ${err.message}`, true);
   }
 }
+async function copyHouseholdInvite(){
+  const code = getActiveHouseholdCode();
+  if(!code){
+    toast("世帯コードがありません");
+    return;
+  }
+  const inviteUrl = `${window.location.origin}${window.location.pathname}?invite=${encodeURIComponent(code)}`;
+  const text = `家計アプリの世帯招待コード: ${code}\n参加リンク: ${inviteUrl}`;
+  try{
+    await navigator.clipboard.writeText(text);
+    toast("招待情報をコピーしました");
+  }catch{
+    toast("コピーに失敗しました");
+  }
+}
+window.copyHouseholdInvite = copyHouseholdInvite;
+function shouldShowHouseholdOnboarding(){
+  if(localStorage.getItem(LS_HOUSEHOLD_ONBOARDING_DONE) === "1") return false;
+  if(getAuthUserId()) return false;
+  return true;
+}
+function openHouseholdOnboarding(){
+  if(!shouldShowHouseholdOnboarding()) return;
+  openModal("householdOnboardingModal");
+}
+function skipHouseholdOnboarding(){
+  localStorage.setItem(LS_HOUSEHOLD_ONBOARDING_DONE, "1");
+  closeModal("householdOnboardingModal");
+}
+window.skipHouseholdOnboarding = skipHouseholdOnboarding;
+function startSharedOnboarding(){
+  localStorage.setItem(LS_HOUSEHOLD_ONBOARDING_DONE, "1");
+  closeModal("householdOnboardingModal");
+  switchScreen("profile");
+  const section = $("settingsHouseholdSection");
+  if(section) section.open = true;
+  setTimeout(()=> $("authEmail")?.focus(), 0);
+}
+window.startSharedOnboarding = startSharedOnboarding;
 function hasSupabaseConfig(){
   const cfg = getSupabaseConfig();
   return !!(cfg.url && cfg.anonKey);
@@ -5214,6 +5278,7 @@ function finishSurvey(){
   if(surveyModal) surveyModal.dataset.locked = "0";
   closeModal("surveyModal");
   closeModal("onboardingModal");
+  openHouseholdOnboarding();
 }
 window.finishSurvey = finishSurvey;
 
@@ -5261,7 +5326,7 @@ function init(){
   $("tab-profile")?.addEventListener("click", ()=> updateScreenHeader("profile"));
   $("scoreQuickBtn")?.addEventListener("click", ()=> updateScreenHeader("score"));
 
-  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{
@@ -5307,6 +5372,13 @@ function init(){
   const auth = loadAuthSession();
   if($("authEmail") && auth?.user?.email) $("authEmail").value = auth.user.email;
   setAuthStatus(auth?.user?.email ? `ログイン中: ${auth.user.email}` : "未ログイン");
+  const inviteCode = getInviteCodeFromUrl();
+  if(inviteCode && $("joinHouseholdCode")){
+    $("joinHouseholdCode").value = inviteCode;
+    const section = $("settingsHouseholdSection");
+    if(section) section.open = true;
+    setHouseholdStatus(`招待コードを読み込みました: ${inviteCode}`);
+  }
   refreshHouseholdState().then(()=>{
     pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();

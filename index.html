@@ -231,6 +231,26 @@
   </div>
 </div>
 
+<!-- Household Onboarding Modal -->
+<div class="modalOverlay hidden" id="householdOnboardingModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">使い方を選んでください</div>
+      <button class="ghost" onclick="skipHouseholdOnboarding()">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="small" style="line-height:1.8;">
+        夫婦で使うなら、同じ世帯に参加すると同じレポートを見られます。<br>
+        あとで設定からいつでも変更できます。
+      </div>
+      <div class="bar" style="margin-top:14px; gap:10px; justify-content:flex-end;">
+        <button class="ghost" type="button" onclick="skipHouseholdOnboarding()">1人で使う</button>
+        <button class="primary" type="button" onclick="startSharedOnboarding()">2人で使う（招待）</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Entry Modal -->
 <div class="modalOverlay" id="entryModal">
   <div class="modal modal-like-app" id="entryModalCard">
@@ -754,7 +774,7 @@
         </div>
       </details>
 
-      <details class="settingsSection">
+      <details class="settingsSection" id="settingsHouseholdSection">
         <summary>アカウント・世帯共有</summary>
         <div class="settingsBody">
           <div class="small">夫婦で同じ家計を使う場合は、同じ世帯に参加します。</div>
@@ -785,6 +805,7 @@
             <button class="ghost" type="button" onclick="createHousehold()">世帯を作成</button>
             <button class="dark" type="button" onclick="joinHousehold()">コードで参加</button>
             <button class="ghost" type="button" onclick="pullHouseholdNow()">世帯データ再読み込み</button>
+            <button class="ghost" type="button" onclick="copyHouseholdInvite()">招待をコピー</button>
           </div>
           <div class="small muted" id="householdStatus" style="margin-top:8px;">世帯未参加</div>
         </div>
