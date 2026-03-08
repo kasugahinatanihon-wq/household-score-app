@@ -1813,14 +1813,162 @@ function buildMonthlyReportItems(monthStr){
   return { items, total };
 }
 
+function getReportCutoffDay(monthStr){
+  const tx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr));
+  let maxRecordedDay = 0;
+  tx.forEach(t=>{
+    const day = toDate(t.date).getDate();
+    if(day > maxRecordedDay) maxRecordedDay = day;
+  });
+  if(maxRecordedDay > 0) return maxRecordedDay;
+  if(monthStr === ym(new Date())) return new Date().getDate();
+  const [y, m] = monthStr.split("-").map(Number);
+  return new Date(y, m, 0).getDate();
+}
+
+function buildMonthlyReportItemsToDay(monthStr, cutoffDay){
+  const [y, m] = monthStr.split("-").map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const dayLimit = clamp(Math.round(Number(cutoffDay || 0)), 1, daysInMonth);
+  const tx = loadTx().filter(t=>{
+    if(!(t.date && t.date.startsWith(monthStr))) return false;
+    const day = toDate(t.date).getDate();
+    return day <= dayLimit;
+  });
+
+  const sums = {};
+  for(const t of tx){
+    if(!sums[t.category]) sums[t.category] = 0;
+    sums[t.category] += Number(t.amount || 0);
+  }
+
+  // Fixed costs are prorated to compare the same day range fairly.
+  const fixedAll = loadJSON(LS_FIXED, {});
+  const fixed = fixedAll[monthStr] || { housingYen:0, utilityYen:0, netYen:0, subYen:0 };
+  const ratio = dayLimit / daysInMonth;
+  const fixedMap = {
+    "住居費": Math.round(Number(fixed.housingYen || 0) * ratio),
+    "光熱費": Math.round(Number(fixed.utilityYen || 0) * ratio),
+    "通信費": Math.round(Number(fixed.netYen || 0) * ratio),
+    "サブスク": Math.round(Number(fixed.subYen || 0) * ratio),
+  };
+  for(const key in fixedMap){
+    if(fixedMap[key] > 0){
+      sums[key] = (sums[key] || 0) + fixedMap[key];
+    }
+  }
+
+  const items = Object.entries(sums)
+    .map(([label, amount])=>({ label, amount }))
+    .filter(item=>item.amount > 0)
+    .sort((a,b)=>b.amount - a.amount);
+  const total = items.reduce((a,b)=>a + b.amount, 0);
+  return { items, total, dayLimit };
+}
+
+function getLargestSinglePurchase(monthStr, totalBase){
+  const tx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr));
+  if(!tx.length) return null;
+  let maxTx = null;
+  tx.forEach(t=>{
+    const amount = Number(t.amount || 0);
+    if(!(amount > 0)) return;
+    if(!maxTx || amount > Number(maxTx.amount || 0)) maxTx = t;
+  });
+  if(!maxTx) return null;
+  const amount = Number(maxTx.amount || 0);
+  const share = totalBase > 0 ? Math.round((amount / totalBase) * 100) : 0;
+  return {
+    amount,
+    share,
+    category: maxTx.category || "未設定",
+    memo: String(maxTx.memo || "").trim()
+  };
+}
+
+function buildCategoryRealisticAdvice(label, limitYen){
+  const limit = fmtYen(Math.max(Math.round(limitYen || 0), 0));
+  const map = {
+    "食費": `買い物前に3日分の献立を決めて、食費は${limit}円を上限にする`,
+    "外食費": `外食は明日1回まで、予算は${limit}円で先に決める`,
+    "コンビニ": `明日はコンビニを1回だけにして、上限は${limit}円にする`,
+    "カフェ": `カフェは明日1回まで。追加注文はしない`,
+    "交際費": `交際費は明日1件だけ。2件目は来週に回す`,
+    "デート": `デート費は上限${limit}円を決めて、事前に店を選ぶ`,
+    "趣味": `趣味の購入は明日1件だけ。カート追加は24時間寝かせる`,
+    "衣服": `衣服は明日買う前に手持ち3点と合わせて必要性を確認する`,
+    "美容": `美容は明日1メニューに絞って、予算は${limit}円まで`,
+    "交通費": `移動は明日まとめて回り、追加移動を1回減らす`,
+    "日用品": `日用品は明日不足分だけ購入し、ストック買いはしない`,
+    "医療費": `医療費は必要支出。明日は他カテゴリを調整して吸収する`,
+    "教育費": `教育費は維持し、明日は娯楽費を1件だけ減らしてバランスを取る`,
+    "仕事": `仕事関連は明日1件に絞り、代替できるものは先送りする`,
+  };
+  return map[label] || `明日は「${label}」を1件減らすか、上限${limit}円を先に決めて使う`;
+}
+
+function renderReportCategoryDrill(monthStr, category, totalBase){
+  const wrap = $("reportCategoryDrill");
+  if(!wrap) return;
+  if(!category){
+    wrap.innerHTML = `<div class="small muted">カテゴリをタップすると、その内訳が表示されます</div>`;
+    return;
+  }
+  const tx = loadTx()
+    .filter(t=> t.date && t.date.startsWith(monthStr) && t.category === category)
+    .sort((a,b)=> Number(b.amount || 0) - Number(a.amount || 0));
+
+  if(tx.length){
+    const sum = tx.reduce((acc, t)=> acc + Number(t.amount || 0), 0);
+    const share = totalBase > 0 ? Math.round((sum / totalBase) * 100) : 0;
+    wrap.innerHTML = `
+      <div class="reportDrillHead">${escapeHtml(category)} の内訳 <span>${fmtYen(Math.round(sum))}円 / ${share}%</span></div>
+      <div class="reportDrillList">
+        ${tx.slice(0, 6).map(t=>{
+          const memo = String(t.memo || "").trim();
+          return `
+            <div class="reportDrillRow">
+              <div>${escapeHtml(t.date)}</div>
+              <div>${fmtYen(Math.round(Number(t.amount || 0)))}円${memo ? ` / ${escapeHtml(memo)}` : ""}</div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+    return;
+  }
+
+  // Fixed-cost categories can exist without transaction rows.
+  const fixedAll = loadJSON(LS_FIXED, {});
+  const fixed = fixedAll[monthStr] || {};
+  const fixedMap = {
+    "住居費": Number(fixed.housingYen || 0),
+    "光熱費": Number(fixed.utilityYen || 0),
+    "通信費": Number(fixed.netYen || 0),
+    "サブスク": Number(fixed.subYen || 0),
+  };
+  const fixedAmt = Number(fixedMap[category] || 0);
+  if(fixedAmt > 0){
+    const share = totalBase > 0 ? Math.round((fixedAmt / totalBase) * 100) : 0;
+    wrap.innerHTML = `
+      <div class="reportDrillHead">${escapeHtml(category)} の内訳 <span>${fmtYen(Math.round(fixedAmt))}円 / ${share}%</span></div>
+      <div class="small muted" style="margin-top:6px;">このカテゴリは月次設定から反映されています</div>
+    `;
+    return;
+  }
+
+  wrap.innerHTML = `<div class="small muted">このカテゴリの内訳データはありません</div>`;
+}
+
 let REPORT_TAB = "overview";
 function switchReportTab(tab){
-  REPORT_TAB = tab;
+  const exists = !!document.querySelector(`.reportPane#reportPane-${tab}`);
+  REPORT_TAB = exists ? tab : "overview";
   document.querySelectorAll(".reportTabBtn").forEach(btn=>{
-    btn.classList.toggle("active", btn.dataset.reportTab === tab);
+    btn.classList.toggle("active", btn.dataset.reportTab === REPORT_TAB);
   });
   document.querySelectorAll(".reportPane").forEach(pane=>{
-    pane.classList.toggle("active", pane.id === `reportPane-${tab}`);
+    pane.classList.toggle("active", pane.id === `reportPane-${REPORT_TAB}`);
   });
 }
 window.switchReportTab = switchReportTab;
@@ -1829,37 +1977,45 @@ function renderMonthlyReport(){
   const m = $("reportMonth")?.value || ym(new Date());
   const donut = $("reportDonut");
   const legend = $("reportLegend");
-  const list = $("reportList");
   const totalEl = $("reportTotal");
   const quickTotal = $("reportQuickTotal");
   const quickMoM = $("reportQuickMoM");
+  const quickMoMHint = $("reportQuickMoMHint");
   const quickTopCat = $("reportQuickTopCat");
   const quickInsight = $("reportQuickInsight");
-  const actionBox = $("reportActionBox");
+  const quickBigMemo = $("reportQuickBigMemo");
+  const drill = $("reportCategoryDrill");
   renderSpendTrendChart(m);
   renderMonthlyCompareChart(m);
-  if(!donut || !legend || !list || !totalEl) return;
+  if(!donut || !legend || !totalEl) return;
 
   const { items, total } = buildMonthlyReportItems(m);
-  const prevTotal = buildMonthlyReportItems(shiftYm(m, -1)).total;
-  const momDiff = total - prevTotal;
-  const momPct = prevTotal > 0 ? Math.round((momDiff / prevTotal) * 100) : null;
+  const cutoffDay = getReportCutoffDay(m);
+  const sameDay = buildMonthlyReportItemsToDay(m, cutoffDay);
+  const prevMonth = shiftYm(m, -1);
+  const prevSameDay = buildMonthlyReportItemsToDay(prevMonth, cutoffDay);
+  const momDiff = sameDay.total - prevSameDay.total;
+  const momPct = prevSameDay.total > 0 ? Math.round((momDiff / prevSameDay.total) * 100) : null;
+  const sameDayItems = sameDay.items;
   const variableItems = items.filter(item=> !FIXED_CATEGORIES.has(item.label));
   const topCat = variableItems[0]?.label || items[0]?.label || "未設定";
   const topCatAmount = variableItems[0]?.amount || items[0]?.amount || 0;
   const topCatShare = total > 0 ? Math.round((topCatAmount / total) * 100) : 0;
-  const insight = total === 0
-    ? "まずは1件記録してみましょう"
+  const sameDayVariableItems = sameDayItems.filter(item=> !FIXED_CATEGORIES.has(item.label));
+  const prevSameVariableItems = prevSameDay.items.filter(item=> !FIXED_CATEGORIES.has(item.label));
+  const momHintText = sameDay.total === 0
+    ? "まずは1件記録して比較を始める"
     : momDiff > 0
-      ? "先月より支出増。上位カテゴリを確認"
+      ? "先月同日より増加。上位カテゴリを確認"
       : momDiff < 0
-        ? "先月より支出減。良い流れです"
-        : "先月と同水準です";
+        ? "先月同日より減少。このペースを維持"
+        : "先月同日と同水準";
+  const largestSingle = getLargestSinglePurchase(m, total);
 
   if(quickTotal) quickTotal.textContent = `${fmtYen(Math.round(total))}円`;
   if(quickMoM){
     quickMoM.classList.remove("is-up", "is-down", "is-flat", "is-nodata");
-    if(prevTotal > 0){
+    if(prevSameDay.total > 0){
       const dir = momDiff > 0 ? "▲ " : momDiff < 0 ? "▼ " : "■ ";
       quickMoM.textContent = `${dir}${momDiff > 0 ? "+" : ""}${fmtYen(Math.round(momDiff))}円 (${momPct > 0 ? "+" : ""}${momPct}%)`;
       if(momDiff > 0){
@@ -1874,6 +2030,7 @@ function renderMonthlyReport(){
       quickMoM.classList.add("is-nodata");
     }
   }
+  if(quickMoMHint) quickMoMHint.textContent = momHintText;
   if(quickTopCat){
     if(topCat === "未設定" || total <= 0){
       quickTopCat.textContent = "未設定";
@@ -1881,51 +2038,63 @@ function renderMonthlyReport(){
       quickTopCat.textContent = `${topCat} ${fmtYen(Math.round(topCatAmount))}円 (${topCatShare}%)`;
     }
   }
-  if(quickInsight) quickInsight.textContent = insight;
-  if(actionBox){
-    const mission1 = momDiff > 0
-      ? `先月より ${fmtYen(Math.abs(Math.round(momDiff)))}円増。増えた理由を1つ特定する`
-      : `先月より ${fmtYen(Math.abs(Math.round(momDiff)))}円減。このペースを維持する`;
-    const mission2 = topCat === "未設定"
-      ? "まずは3日分の記録をつける"
-      : `変動費トップ「${escapeHtml(topCat)}」(${topCatShare}%)で後悔支出を1件見直す`;
-    const mission3 = variableItems.length >= 2
-      ? `2位カテゴリ「${escapeHtml(variableItems[1].label)}」の予算上限を決める`
-      : "来月に向けて、使い道ごとの上限を1つ決める";
-    actionBox.innerHTML = `
-      <div class="actionHero">
-        <div class="actionHeroTitle">今月の改善ミッション</div>
-        <div class="actionHeroSub">いちばん効く3つだけ実行すればOK</div>
-      </div>
-      <div class="actionMissionList">
-        <div class="actionMissionItem"><span class="actionMissionNo">1</span><span>${mission1}</span></div>
-        <div class="actionMissionItem"><span class="actionMissionNo">2</span><span>${mission2}</span></div>
-        <div class="actionMissionItem"><span class="actionMissionNo">3</span><span>${mission3}</span></div>
-      </div>
-    `;
+  if(quickInsight){
+    if(largestSingle){
+      quickInsight.textContent = `${fmtYen(Math.round(largestSingle.amount))}円 (${largestSingle.share}%)`;
+    }else{
+      quickInsight.textContent = "記録待ち";
+    }
   }
-
+  if(quickBigMemo){
+    if(largestSingle){
+      const memoText = largestSingle.memo ? escapeHtml(largestSingle.memo) : "メモなし";
+      quickBigMemo.innerHTML = `${escapeHtml(largestSingle.category)} / ${memoText}`;
+    }else{
+      quickBigMemo.textContent = "カテゴリ・メモなし";
+    }
+  }
   totalEl.textContent = total > 0 ? `合計 ${Math.round(total).toLocaleString("ja-JP")}円` : "—";
 
   if(total <= 0){
     donut.style.background = "conic-gradient(#e2e8f0 0 100%)";
+    donut.innerHTML = "";
     donut.classList.remove("is-anim");
     legend.innerHTML = `<div class="small muted">データがありません</div>`;
-    list.innerHTML = `<div class="muted small" style="padding:8px 0;">データがありません</div>`;
+    if(drill) drill.innerHTML = `<div class="small muted">データがありません</div>`;
     switchReportTab(REPORT_TAB);
     return;
   }
 
   let start = 0;
   const segments = items.map((item, idx)=>{
+    const startPct = start;
     const pct = total > 0 ? (item.amount / total) * 100 : 0;
     const color = REPORT_COLORS[idx % REPORT_COLORS.length];
     const end = start + pct;
-    const seg = `${color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
+    const seg = `${color} ${startPct.toFixed(2)}% ${end.toFixed(2)}%`;
     start = end;
-    return { ...item, pct, color, seg };
+    return { ...item, pct, color, seg, startPct, endPct:end };
   });
-  donut.style.background = `conic-gradient(${segments.map(s=>s.seg).join(",")})`;
+  const buildDonutGradient = (focusLabel = "")=>{
+    const segStr = segments.map(s=>{
+      const color = focusLabel && s.label !== focusLabel ? "#d1d5db" : s.color;
+      return `${color} ${s.startPct.toFixed(2)}% ${s.endPct.toFixed(2)}%`;
+    }).join(",");
+    return `conic-gradient(${segStr})`;
+  };
+  donut.style.background = buildDonutGradient("");
+  const labelMinPct = 7;
+  const labelRadiusPct = 34;
+  const labelHTML = segments
+    .filter(s=> s.pct >= labelMinPct)
+    .map(s=>{
+      const mid = (s.startPct + s.endPct) / 2;
+      const rad = (mid / 100) * Math.PI * 2 - (Math.PI / 2);
+      const x = 50 + Math.cos(rad) * labelRadiusPct;
+      const y = 50 + Math.sin(rad) * labelRadiusPct;
+      return `<span class="reportDonutLabel" data-label="${escapeHtml(s.label)}" style="left:${x}%; top:${y}%;">${escapeHtml(s.label)} ${Math.round(s.pct)}%</span>`;
+    }).join("");
+  donut.innerHTML = labelHTML;
   donut.classList.remove("is-anim");
   void donut.offsetWidth;
   donut.classList.add("is-anim");
@@ -1934,26 +2103,42 @@ function renderMonthlyReport(){
     const pctText = `${Math.round(item.pct)}%`;
     const amtText = `${Math.round(item.amount).toLocaleString("ja-JP")}円`;
     return `
-      <div class="reportLegendItem">
+      <button class="reportLegendItem" type="button" data-label="${escapeHtml(item.label)}">
         <div class="reportLegendKey"><span class="reportLegendDot" style="background:${item.color};"></span>${escapeHtml(item.label)}</div>
-        <div>${pctText} / ${amtText}</div>
-      </div>
+        <div class="reportLegendMeta">${pctText} / ${amtText}</div>
+      </button>
     `;
   }).join("");
-
-  list.innerHTML = segments.map(item=>{
-    const pctText = `${Math.round(item.pct)}%`;
-    const amtText = `${Math.round(item.amount).toLocaleString("ja-JP")}円`;
-    return `
-      <div class="reportListRow">
-        <div>
-          <div style="font-weight:900;">${escapeHtml(item.label)}</div>
-          <div class="reportListMeta">${pctText} / ${amtText}</div>
-        </div>
-        <div class="reportLegendDot" style="background:${item.color}; align-self:center;"></div>
-      </div>
-    `;
-  }).join("");
+  let activeLabel = "";
+  const syncDonutFocus = ()=>{
+    donut.style.background = buildDonutGradient(activeLabel);
+    legend.querySelectorAll(".reportLegendItem").forEach(el=>{
+      const isActive = el.dataset.label === activeLabel;
+      const isDim = activeLabel && !isActive;
+      el.classList.toggle("is-active", !!isActive);
+      el.classList.toggle("is-dim", !!isDim);
+    });
+    donut.querySelectorAll(".reportDonutLabel").forEach(el=>{
+      const isDim = activeLabel && el.dataset.label !== activeLabel;
+      el.classList.toggle("is-dim", !!isDim);
+    });
+    renderReportCategoryDrill(m, activeLabel, total);
+  };
+  legend.querySelectorAll(".reportLegendItem").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const label = el.dataset.label || "";
+      activeLabel = (activeLabel === label) ? "" : label;
+      syncDonutFocus();
+    });
+  });
+  donut.querySelectorAll(".reportDonutLabel").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const label = el.dataset.label || "";
+      activeLabel = (activeLabel === label) ? "" : label;
+      syncDonutFocus();
+    });
+  });
+  syncDonutFocus();
   switchReportTab(REPORT_TAB);
 }
 
@@ -2027,10 +2212,18 @@ function renderSpendTrendChart(monthStr){
   const yCumMarks = [maxCumVal, Math.round(maxCumVal/2), 0];
   const cumLatest = cum[cum.length - 1];
   const prevCumLatest = Number(prevCum[Math.min(days, prevDays) - 1] || 0);
+  const prevMonthFinal = buildMonthlyReportItems(prevMonthStr).total;
   const cumDelta = cumLatest - prevCumLatest;
   const deltaSign = cumDelta > 0 ? "+" : "";
   const prevLastIndex = Math.max(Math.min(days, prevDays) - 1, 0);
   const prevLastY = yCum(Number(prevCum[prevLastIndex] || 0));
+  const prevFinalY = yCum(prevMonthFinal);
+  const currentY = yCum(cum[cum.length - 1]);
+  let currentTopPct = clamp((currentY / h) * 100, 6, 86);
+  let prevTopPct = clamp((prevFinalY / h) * 100, 6, 86);
+  if(Math.abs(currentTopPct - prevTopPct) < 8){
+    prevTopPct = clamp(prevTopPct + 9, 6, 90);
+  }
   const maxDaySpend = Math.max(...daily);
   const maxDay = daily.indexOf(maxDaySpend) + 1;
   const shortYen = (v)=>{
@@ -2051,23 +2244,24 @@ function renderSpendTrendChart(monthStr){
       先月同日比 ${deltaSign}${fmtYen(Math.round(cumDelta))}円
     </div>
     <div class="small muted" style="margin-bottom:6px;">月累計（積み上げ）</div>
-    <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="1ヶ月の累計支出推移">
-      <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[0])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[0])}"></line>
-      <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[1])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[1])}"></line>
-      <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[2])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[2])}"></line>
-      ${yCumMarks.map(v=>`<text class="dailyTrendYLabel" x="2" y="${yCum(v)+4}">${shortYen(v)}</text>`).join("")}
-      <path class="dailyTrendArea" d="${areaCum}"></path>
-      <polyline class="dailyTrendPrevCum" points="${linePrevCum}"></polyline>
-      <polyline class="dailyTrendCum" points="${lineCum}"></polyline>
-      <circle class="dailyTrendDotPrev" cx="${x(prevLastIndex)}" cy="${prevLastY}" r="3.5"></circle>
-      <circle class="dailyTrendDot" cx="${x(days - 1)}" cy="${yCum(cum[cum.length - 1])}" r="4"></circle>
-    </svg>
+    <div class="dailyTrendChartBox">
+      <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="1ヶ月の累計支出推移">
+        <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[0])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[0])}"></line>
+        <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[1])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[1])}"></line>
+        <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[2])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[2])}"></line>
+        ${yCumMarks.map(v=>`<text class="dailyTrendYLabel" x="2" y="${yCum(v)+4}">${shortYen(v)}</text>`).join("")}
+        <path class="dailyTrendArea" d="${areaCum}"></path>
+        <polyline class="dailyTrendPrevCum" points="${linePrevCum}"></polyline>
+        <polyline class="dailyTrendCum" points="${lineCum}"></polyline>
+        <circle class="dailyTrendDotPrev" cx="${x(prevLastIndex)}" cy="${prevLastY}" r="3.5"></circle>
+        <circle class="dailyTrendDot" cx="${x(days - 1)}" cy="${currentY}" r="4"></circle>
+        <circle class="dailyTrendDotPrevFinal" cx="${x(days - 1)}" cy="${prevFinalY}" r="3.2"></circle>
+      </svg>
+      <div class="dailyTrendInlineValue current" style="top:${currentTopPct}%;">当月累計 ${fmtYen(Math.round(cumLatest))}円</div>
+      <div class="dailyTrendInlineValue prev" style="top:${prevTopPct}%;">先月着地 ${fmtYen(Math.round(prevMonthFinal))}円</div>
+    </div>
     <div class="dailyTrendAxis">
       ${ticks.map(d=>`<span>${d}日</span>`).join("")}
-    </div>
-    <div class="dailyTrendEndMeta">
-      <span class="dailyTrendEndBadge">当月 ${shortYen(cumLatest)}円</span>
-      <span class="dailyTrendEndBadge prev">先月 ${shortYen(prevCumLatest)}円</span>
     </div>
     <div class="small muted" style="margin-top:6px;">今月の最大支出日: ${maxDay}日（${fmtYen(Math.round(maxDaySpend))}円）</div>
   `;

@@ -474,7 +474,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .reportGrid{
   display:grid;
-  grid-template-columns:repeat(2, minmax(0,1fr));
+  grid-template-columns:1fr;
   gap:12px;
 }
 .reportHeader{
@@ -508,12 +508,18 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-weight:700;
   line-height:1.45;
 }
+.reportQuickSub{
+  margin-top:4px;
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.4;
+}
 .reportTabs{
   position:sticky;
   top:8px;
   z-index:3;
   display:grid;
-  grid-template-columns:repeat(4, minmax(0,1fr));
+  grid-template-columns:repeat(3, minmax(0,1fr));
   gap:8px;
   background:rgba(247,249,252,.96);
   border:1px solid rgba(15,23,42,.08);
@@ -617,6 +623,26 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   position:relative;
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
   margin:0 auto;
+  overflow:hidden;
+}
+.reportDonutLabel{
+  position:absolute;
+  transform:translate(-50%, -50%);
+  max-width:88px;
+  padding:3px 6px;
+  border-radius:8px;
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(15,23,42,.10);
+  color:#0f172a;
+  font-size:10px;
+  font-weight:900;
+  line-height:1.2;
+  text-align:center;
+  pointer-events:auto;
+  cursor:pointer;
+}
+.reportDonutLabel.is-dim{
+  opacity:.35;
 }
 .reportDonut.is-anim{
   animation:reportDonutPop 1.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -625,16 +651,93 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   content:none;
 }
 .reportLegend{
-  display:flex;
-  flex-direction:column;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
   gap:10px;
 }
 .reportLegendItem{
+  display:block;
+  text-align:left;
+  width:100%;
+  cursor:pointer;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:10px;
+  padding:8px 10px;
+  background:linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+  font-size:12px;
+}
+.reportLegendItem.is-active{
+  border-color:rgba(14,165,233,.40);
+  box-shadow:0 0 0 3px rgba(14,165,233,.14);
+}
+.reportLegendItem.is-dim{
+  opacity:.38;
+}
+.reportLegendItem:focus-visible{
+  outline:2px solid rgba(14,165,233,.45);
+  outline-offset:2px;
+}
+.reportLegendMeta{
+  margin-top:4px;
+  color:var(--muted);
+  font-weight:700;
+}
+.reportCategoryDrill{
+  margin-top:10px;
+  border:1px solid rgba(15,23,42,.10);
+  border-radius:10px;
+  padding:10px;
+  background:#fff;
+}
+.reportDrillHead{
   display:flex;
   justify-content:space-between;
-  gap:10px;
+  gap:8px;
+  align-items:center;
   font-size:12px;
-  color:var(--muted);
+  font-weight:900;
+  color:#0f172a;
+}
+.reportDrillHead span{
+  color:#0369a1;
+}
+.reportDrillList{
+  margin-top:8px;
+  display:grid;
+  gap:6px;
+}
+.reportDrillRow{
+  display:grid;
+  grid-template-columns:80px 1fr;
+  gap:8px;
+  font-size:11px;
+  color:#475569;
+}
+.dailyTrendChartBox{
+  position:relative;
+}
+.dailyTrendInlineValue{
+  position:absolute;
+  right:8px;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(15,23,42,.14);
+}
+.dailyTrendInlineValue.current{
+  top:8px;
+  color:#0f766e;
+}
+.dailyTrendInlineValue.prev{
+  color:#64748b;
+}
+.dailyTrendDotPrevFinal{
+  fill:#64748b;
+  stroke:#fff;
+  stroke-width:1.2;
 }
 .reportLegendKey{
   display:flex;
@@ -1004,6 +1107,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 @media (max-width:960px){
   .reportGrid{ grid-template-columns:1fr; }
   .reportChartWrap{ grid-template-columns:1fr; }
+  .reportLegend{ grid-template-columns:1fr; }
   .dailyCompareGrid{ grid-template-columns:1fr; }
   .reportQuickGrid{ grid-template-columns:1fr; }
 }

@@ -441,16 +441,18 @@
             <div class="reportQuickValue" id="reportQuickTotal">—</div>
           </div>
           <div class="reportQuickItem">
-            <div class="small muted">先月比</div>
+            <div class="small muted">先月同日比</div>
             <div class="reportQuickValue" id="reportQuickMoM">—</div>
+            <div class="reportQuickSub" id="reportQuickMoMHint">—</div>
           </div>
           <div class="reportQuickItem">
             <div class="small muted">最多カテゴリ</div>
             <div class="reportQuickValue" id="reportQuickTopCat">—</div>
           </div>
           <div class="reportQuickItem">
-            <div class="small muted">ワンポイント</div>
+            <div class="small muted">今月の一番大きな買い物</div>
             <div class="reportQuickValue reportQuickNote" id="reportQuickInsight">—</div>
+            <div class="reportQuickSub" id="reportQuickBigMemo">—</div>
           </div>
         </div>
       </div>
@@ -459,7 +461,6 @@
         <button class="reportTabBtn active" data-report-tab="overview" onclick="switchReportTab('overview')">全体</button>
         <button class="reportTabBtn" data-report-tab="trend" onclick="switchReportTab('trend')">推移</button>
         <button class="reportTabBtn" data-report-tab="compare" onclick="switchReportTab('compare')">比較</button>
-        <button class="reportTabBtn" data-report-tab="action" onclick="switchReportTab('action')">改善</button>
       </div>
 
       <div class="reportPane active" id="reportPane-overview">
@@ -471,14 +472,11 @@
             </div>
             <div class="reportChartWrap">
               <div class="reportDonut" id="reportDonut" role="img" aria-label="支出内訳の円グラフ"></div>
-              <div class="reportLegend" id="reportLegend"></div>
+              <div>
+                <div class="reportLegend" id="reportLegend"></div>
+                <div class="reportCategoryDrill" id="reportCategoryDrill"></div>
+              </div>
             </div>
-          </div>
-          <div class="sectionCard">
-            <div class="sectionHead">
-              <div><div class="sectionName">項目別内訳</div><div class="sectionHint">金額と割合</div></div>
-            </div>
-            <div id="reportList"></div>
           </div>
         </div>
       </div>
@@ -501,14 +499,6 @@
         </div>
       </div>
 
-      <div class="reportPane" id="reportPane-action">
-        <div class="sectionCard" style="margin-top:12px;">
-          <div class="sectionHead">
-            <div><div class="sectionName">次の一手</div><div class="sectionHint">今月の状態から提案</div></div>
-          </div>
-          <div id="reportActionBox"></div>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -528,7 +518,7 @@
     <div class="box boxSafeBottom">
       <input type="hidden" id="settingsMonth">
 
-      <details class="settingsSection" open>
+      <details class="settingsSection">
         <summary>プロフィール（必須）</summary>
         <div class="settingsBody">
           <div class="row" style="margin-top:12px;">
