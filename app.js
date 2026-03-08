@@ -667,15 +667,21 @@ function refreshHouseholdControls(){
   const joinBtn = $("joinHouseholdBtn");
   const pullBtn = $("pullHouseholdBtn");
   const copyBtn = $("copyInviteBtn");
+  const signOutBtn = $("signOutBtn");
   const guide = $("householdGuide");
   if(createBtn) createBtn.disabled = !loggedIn;
   if(joinBtn) joinBtn.disabled = !loggedIn;
   if(pullBtn) pullBtn.disabled = !(loggedIn && hasHousehold);
   if(copyBtn) copyBtn.disabled = !(loggedIn && hasHousehold && !!getActiveHouseholdCode());
+  if(signOutBtn) signOutBtn.disabled = !loggedIn;
+  if(createBtn && hasHousehold) createBtn.textContent = "世帯を作成済み";
+  else if(createBtn) createBtn.textContent = "世帯を作成";
+  if(joinBtn && hasHousehold) joinBtn.textContent = "参加済み";
+  else if(joinBtn) joinBtn.textContent = "コードで参加";
   if(guide){
-    if(!loggedIn) guide.textContent = "手順: 1) メールとパスワード入力 → 2) ログイン";
-    else if(!hasHousehold) guide.textContent = "手順: 1) 世帯を作成 または 参加コードで参加";
-    else guide.textContent = "共有中: 招待をコピーして相手に送ると、同じ家計を見られます";
+    if(!loggedIn) guide.textContent = "Step1: メールとパスワードでログイン";
+    else if(!hasHousehold) guide.textContent = "Step2: 世帯を作成 または 参加コードで参加";
+    else guide.textContent = "共有中: 招待をコピーして相手に送ってください";
   }
 }
 function getActiveHouseholdId(){

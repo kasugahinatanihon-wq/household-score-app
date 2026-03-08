@@ -777,10 +777,11 @@
       <details class="settingsSection" id="settingsHouseholdSection">
         <summary>アカウント・世帯共有</summary>
         <div class="settingsBody">
-          <div class="small">夫婦で同じ家計を使う場合は、同じ世帯に参加します。</div>
+          <div class="small">共有する場合は「アカウント」→「世帯共有」の順で進めます。</div>
           <div class="small" id="householdGuide" style="margin-top:8px; line-height:1.7;">
-            手順: 1) ログイン → 2) 世帯を作成 or コード参加
+            Step1: ログイン / Step2: 世帯を作成または参加
           </div>
+          <div class="small" style="margin-top:10px; font-weight:700;">Step1 アカウント</div>
           <div class="row" style="margin-top:12px;">
             <label>メールアドレス
               <input type="email" id="authEmail" placeholder="example@mail.com">
@@ -790,12 +791,13 @@
             </label>
           </div>
           <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
+            <button class="primary" type="button" onclick="signInWithEmail()">ログイン</button>
             <button class="ghost" type="button" onclick="signUpWithEmail()">新規登録</button>
-            <button class="ghost" type="button" onclick="signInWithEmail()">ログイン</button>
-            <button class="danger" type="button" onclick="signOutAccount()">ログアウト</button>
+            <button class="danger" type="button" id="signOutBtn" onclick="signOutAccount()">ログアウト</button>
           </div>
           <div class="small" id="authStatus" style="margin-top:8px; font-weight:700;">ログイン状態: 未ログイン</div>
 
+          <div class="small" style="margin-top:16px; font-weight:700;">Step2 世帯共有</div>
           <div class="row" style="margin-top:14px;">
             <label>新しい世帯名
               <input type="text" id="householdName" placeholder="例：田中家">
@@ -804,6 +806,7 @@
               <input type="text" id="joinHouseholdCode" placeholder="例：AB12CD">
             </label>
           </div>
+          <div class="small muted" style="margin-top:8px;">作成する人: 世帯名を入れて「世帯を作成」 / 参加する人: コードを入れて「コードで参加」</div>
           <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
             <button class="ghost" type="button" id="createHouseholdBtn" onclick="createHousehold()">世帯を作成</button>
             <button class="dark" type="button" id="joinHouseholdBtn" onclick="joinHousehold()">コードで参加</button>
