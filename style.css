@@ -425,6 +425,104 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   gap:10px;
   text-align:left;
 }
+.reportQuickGrid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+.reportQuickItem{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#fff;
+}
+.reportQuickValue{
+  margin-top:4px;
+  font-size:16px;
+  font-weight:1000;
+  color:var(--ink);
+}
+.reportQuickNote{
+  font-size:13px;
+  font-weight:700;
+  line-height:1.45;
+}
+.reportTabs{
+  position:sticky;
+  top:8px;
+  z-index:3;
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0,1fr));
+  gap:8px;
+  background:rgba(247,249,252,.96);
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:12px;
+  padding:6px;
+  backdrop-filter:blur(6px);
+}
+.reportTabBtn{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid transparent;
+  font-weight:800;
+  color:var(--muted);
+  background:transparent;
+}
+.reportTabBtn.active{
+  color:var(--ink);
+  background:#fff;
+  border-color:rgba(15,23,42,.1);
+  box-shadow:0 4px 12px rgba(15,23,42,.08);
+}
+.reportPane{ display:none; }
+.reportPane.active{ display:block; }
+.actionHero{
+  padding:12px;
+  border-radius:12px;
+  background:linear-gradient(135deg, rgba(14,165,233,.14), rgba(16,185,129,.12));
+  border:1px solid rgba(14,165,233,.22);
+}
+.actionHeroTitle{
+  font-size:16px;
+  font-weight:1000;
+  color:#0f172a;
+}
+.actionHeroSub{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--muted);
+}
+.actionMissionList{
+  margin-top:10px;
+  display:grid;
+  gap:8px;
+}
+.actionMissionItem{
+  display:grid;
+  grid-template-columns:24px 1fr;
+  gap:10px;
+  align-items:flex-start;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#fff;
+  font-size:13px;
+  color:var(--ink);
+  line-height:1.55;
+  font-weight:700;
+}
+.actionMissionNo{
+  width:24px;
+  height:24px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:#e0f2fe;
+  color:#0369a1;
+  font-weight:1000;
+  font-size:12px;
+}
 .reportHeader > div{
   width:100%;
   align-self:flex-start;
@@ -502,6 +600,238 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:var(--muted);
   font-size:12px;
   margin-top:4px;
+}
+.dailyCompareMeta{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  font-size:12px;
+  color:var(--muted);
+}
+.dailyComparePill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--ink);
+  font-weight:800;
+}
+.dailyCompareGrid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+  margin-top:10px;
+}
+.dailyCompareCard{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  background:linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+}
+.dailyCompareLabel{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:800;
+}
+.dailyCompareValue{
+  margin-top:6px;
+  font-size:24px;
+  line-height:1.1;
+  font-weight:1000;
+  color:var(--ink);
+}
+.dailyCompareValue.up{ color:#0f766e; }
+.dailyCompareValue.down{ color:#b91c1c; }
+.dailyCompareSub{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--muted);
+}
+.dailyDiffList{
+  margin-top:10px;
+}
+.dailyDiffRow{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:8px 0;
+  border-bottom:1px dashed rgba(15,23,42,.12);
+}
+.dailyDiffRow:last-child{ border-bottom:none; }
+.dailyDiffAmt{
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+}
+.dailyDiffAmt.up{ color:#0f766e; }
+.dailyDiffAmt.down{ color:#b91c1c; }
+.dailyTrendWrap{
+  margin-top:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#fff;
+}
+.dailyTrendSvg{
+  width:100%;
+  height:auto;
+  display:block;
+}
+.dailyTrendGrid{
+  stroke:rgba(15,23,42,.12);
+  stroke-width:1;
+  stroke-dasharray:3 3;
+}
+.dailyTrendMain{
+  fill:none;
+  stroke:#0284c7;
+  stroke-width:2.4;
+}
+.dailyTrendCum{
+  fill:none;
+  stroke:#0f766e;
+  stroke-width:2.4;
+}
+.dailyTrendAvg{
+  fill:none;
+  stroke:#94a3b8;
+  stroke-width:1.8;
+  stroke-dasharray:4 3;
+}
+.dailyTrendPrevCum{
+  fill:none;
+  stroke:#cbd5e1;
+  stroke-width:1.8;
+  stroke-dasharray:4 3;
+}
+.dailyTrendArea{
+  fill:rgba(2,132,199,.08);
+}
+.dailyTrendDot{
+  fill:#0284c7;
+  stroke:#fff;
+  stroke-width:1.5;
+}
+.dailyTrendDotPrev{
+  fill:#94a3b8;
+  stroke:#fff;
+  stroke-width:1.5;
+}
+.dailyTrendYLabel{
+  fill:#64748b;
+  font-size:10px;
+  font-weight:700;
+}
+.dailyTrendAxis{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(20px, 1fr));
+  gap:4px;
+  margin-top:4px;
+  font-size:11px;
+  color:var(--muted);
+}
+.dailyTrendAxis span{
+  text-align:center;
+}
+.dailyTrendEndMeta{
+  margin-top:8px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.dailyTrendEndBadge{
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+  color:#0f766e;
+  background:rgba(15,118,110,.10);
+  border:1px solid rgba(15,118,110,.20);
+}
+.dailyTrendEndBadge.prev{
+  color:#64748b;
+  background:rgba(100,116,139,.10);
+  border:1px solid rgba(100,116,139,.22);
+}
+.dailyTrendLegend{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:8px;
+  font-size:12px;
+  color:var(--muted);
+}
+.dailyTrendLegend span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.dailyTrendSwatch{
+  width:12px;
+  height:3px;
+  border-radius:999px;
+  display:inline-block;
+}
+.dailyTrendSwatch.main{ background:#0284c7; }
+.dailyTrendSwatch.avg{
+  background:#94a3b8;
+  background-image:linear-gradient(to right, #94a3b8 60%, transparent 40%);
+}
+.dailyTrendSwatch.cum{ background:#0f766e; }
+.dailyTrendSwatch.prevcum{
+  background:#cbd5e1;
+  background-image:linear-gradient(to right, #cbd5e1 60%, transparent 40%);
+}
+.dailyTrendDelta{
+  margin-bottom:8px;
+  font-size:12px;
+  font-weight:900;
+  color:#334155;
+}
+.dailyTrendDelta.up{ color:#0f766e; }
+.dailyTrendDelta.down{ color:#b91c1c; }
+.monthCompareRow{
+  display:grid;
+  grid-template-columns:42px 1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:8px 0;
+  border-bottom:1px dashed rgba(15,23,42,.12);
+}
+.monthCompareRow:last-child{ border-bottom:none; }
+.monthCompareRow.isCurrent .monthCompareLabel{
+  color:#0369a1;
+  font-weight:900;
+}
+.monthCompareLabel{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:800;
+}
+.monthCompareBar{
+  height:10px;
+  border-radius:999px;
+  background:#e2e8f0;
+  overflow:hidden;
+}
+.monthCompareFill{
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg, #38bdf8, #0284c7);
+}
+.monthCompareValue{
+  font-size:12px;
+  font-weight:900;
+  color:var(--ink);
+  font-variant-numeric:tabular-nums;
 }
 .rankScatter{
   background:var(--bg-card);
@@ -613,6 +943,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 @media (max-width:960px){
   .reportGrid{ grid-template-columns:1fr; }
   .reportChartWrap{ grid-template-columns:1fr; }
+  .dailyCompareGrid{ grid-template-columns:1fr; }
+  .reportQuickGrid{ grid-template-columns:1fr; }
 }
 @media (max-width:720px){
   .reportHeader{

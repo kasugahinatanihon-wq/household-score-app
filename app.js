@@ -241,6 +241,14 @@ function findRateByRange(list, value){
   return (list.find(x=> value >= x.min && value < x.max) || list[list.length - 1]).rate;
 }
 
+function normalizeAnnualIncomeYen(raw){
+  const value = Number(raw || 0);
+  if(!Number.isFinite(value) || value <= 0) return "";
+  // Backward compatibility: old data was stored in "万円" units.
+  if(value < 100000) return Math.round(value * 10000);
+  return Math.round(value);
+}
+
 function normalizeHouseholdSize(profile){
   const raw = Number(profile.householdSize || profile.household || 0);
   if(Number.isFinite(raw) && raw > 0) return Math.min(raw, 6);
@@ -265,17 +273,18 @@ function getAgeBandFromProfile(profile){
 function buildTargetBudget(profile){
   const householdSize = normalizeHouseholdSize(profile);
   const ageBandId = getAgeBandFromProfile(profile);
-  const annualIncomeGross = Number(profile.annualIncomeGross || 0);
+  const annualIncomeGross = Number(normalizeAnnualIncomeYen(profile.annualIncomeGross) || 0);
   if(!householdSize || ageBandId === "unknown" || !Number.isFinite(annualIncomeGross) || annualIncomeGross <= 0){
     return null;
   }
+  const annualIncomeGrossInMan = annualIncomeGross / 10000;
   const ageBand = BENCH_TARGET_2024.ageBands.find(x=>x.id === ageBandId) || BENCH_TARGET_2024.ageBands[0];
-  const netRate = findRateByRange(BENCH_TARGET_2024.netRateByIncome, annualIncomeGross);
-  const annualNet = annualIncomeGross * 10000 * netRate;
+  const netRate = findRateByRange(BENCH_TARGET_2024.netRateByIncome, annualIncomeGrossInMan);
+  const annualNet = annualIncomeGross * netRate;
   const monthlyNet = annualNet / 12;
 
   const engelBySize = getHouseholdEngel(householdSize);
-  const engelByIncome = findRateByRange(BENCH_TARGET_2024.engelByIncome, annualIncomeGross);
+  const engelByIncome = findRateByRange(BENCH_TARGET_2024.engelByIncome, annualIncomeGrossInMan);
   let foodRateTarget = (engelBySize + engelByIncome) / 2;
 
   if(profile.regionType && BENCH_TARGET_2024.regionAdjust[profile.regionType]){
@@ -521,7 +530,7 @@ function buildNextActionMonthly({ coveragePct, subjectiveScore, valueAlignScore,
   }else if(Number.isFinite(fixedRate) && fixedRate > 0.33){
     text = "通信 or サブスクを1つ棚卸しする";
   }else if(Number.isFinite(savingRate) && savingRate < 0.15){
-    text = "先取り貯蓄を1万円だけ上乗せする";
+    text = "先取り貯蓄を10,000円だけ上乗せする";
   }
   return `次は「${text}」を1つだけ試してみましょう`;
 }
@@ -1785,15 +1794,78 @@ function buildMonthlyReportItems(monthStr){
   return { items, total };
 }
 
+let REPORT_TAB = "overview";
+function switchReportTab(tab){
+  REPORT_TAB = tab;
+  document.querySelectorAll(".reportTabBtn").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.reportTab === tab);
+  });
+  document.querySelectorAll(".reportPane").forEach(pane=>{
+    pane.classList.toggle("active", pane.id === `reportPane-${tab}`);
+  });
+}
+window.switchReportTab = switchReportTab;
+
 function renderMonthlyReport(){
   const m = $("reportMonth")?.value || ym(new Date());
   const donut = $("reportDonut");
   const legend = $("reportLegend");
   const list = $("reportList");
   const totalEl = $("reportTotal");
+  const quickTotal = $("reportQuickTotal");
+  const quickMoM = $("reportQuickMoM");
+  const quickTopCat = $("reportQuickTopCat");
+  const quickInsight = $("reportQuickInsight");
+  const actionBox = $("reportActionBox");
+  renderSpendTrendChart(m);
+  renderMonthlyCompareChart(m);
   if(!donut || !legend || !list || !totalEl) return;
 
   const { items, total } = buildMonthlyReportItems(m);
+  const prevTotal = buildMonthlyReportItems(shiftYm(m, -1)).total;
+  const momDiff = total - prevTotal;
+  const momPct = prevTotal > 0 ? Math.round((momDiff / prevTotal) * 100) : null;
+  const variableItems = items.filter(item=> !FIXED_CATEGORIES.has(item.label));
+  const topCat = variableItems[0]?.label || items[0]?.label || "未設定";
+  const topCatAmount = variableItems[0]?.amount || items[0]?.amount || 0;
+  const topCatShare = total > 0 ? Math.round((topCatAmount / total) * 100) : 0;
+  const insight = total === 0
+    ? "まずは1件記録してみましょう"
+    : momDiff > 0
+      ? "先月より支出増。上位カテゴリを確認"
+      : momDiff < 0
+        ? "先月より支出減。良い流れです"
+        : "先月と同水準です";
+
+  if(quickTotal) quickTotal.textContent = `${fmtYen(Math.round(total))}円`;
+  if(quickMoM) quickMoM.textContent = prevTotal > 0
+    ? `${momDiff > 0 ? "+" : ""}${fmtYen(Math.round(momDiff))}円 (${momPct > 0 ? "+" : ""}${momPct}%)`
+    : "比較データなし";
+  if(quickTopCat) quickTopCat.textContent = topCat;
+  if(quickInsight) quickInsight.textContent = insight;
+  if(actionBox){
+    const mission1 = momDiff > 0
+      ? `先月より ${fmtYen(Math.abs(Math.round(momDiff)))}円増。増えた理由を1つ特定する`
+      : `先月より ${fmtYen(Math.abs(Math.round(momDiff)))}円減。このペースを維持する`;
+    const mission2 = topCat === "未設定"
+      ? "まずは3日分の記録をつける"
+      : `変動費トップ「${escapeHtml(topCat)}」(${topCatShare}%)で後悔支出を1件見直す`;
+    const mission3 = variableItems.length >= 2
+      ? `2位カテゴリ「${escapeHtml(variableItems[1].label)}」の予算上限を決める`
+      : "来月に向けて、使い道ごとの上限を1つ決める";
+    actionBox.innerHTML = `
+      <div class="actionHero">
+        <div class="actionHeroTitle">今月の改善ミッション</div>
+        <div class="actionHeroSub">いちばん効く3つだけ実行すればOK</div>
+      </div>
+      <div class="actionMissionList">
+        <div class="actionMissionItem"><span class="actionMissionNo">1</span><span>${mission1}</span></div>
+        <div class="actionMissionItem"><span class="actionMissionNo">2</span><span>${mission2}</span></div>
+        <div class="actionMissionItem"><span class="actionMissionNo">3</span><span>${mission3}</span></div>
+      </div>
+    `;
+  }
+
   totalEl.textContent = total > 0 ? `合計 ${Math.round(total).toLocaleString("ja-JP")}円` : "—";
 
   if(total <= 0){
@@ -1801,6 +1873,7 @@ function renderMonthlyReport(){
     donut.classList.remove("is-anim");
     legend.innerHTML = `<div class="small muted">データがありません</div>`;
     list.innerHTML = `<div class="muted small" style="padding:8px 0;">データがありません</div>`;
+    switchReportTab(REPORT_TAB);
     return;
   }
 
@@ -1842,6 +1915,344 @@ function renderMonthlyReport(){
       </div>
     `;
   }).join("");
+  switchReportTab(REPORT_TAB);
+}
+
+function shiftYm(monthStr, delta){
+  const [y, m] = monthStr.split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+}
+
+function renderSpendTrendChart(monthStr){
+  const area = $("reportSpendTrend");
+  if(!area) return;
+  const tx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr));
+  if(!tx.length){
+    area.innerHTML = `<div class="small muted" style="padding:8px 0;">対象月の日次データがありません</div>`;
+    return;
+  }
+
+  const [year, month] = monthStr.split("-").map(Number);
+  const days = new Date(year, month, 0).getDate();
+  const daily = Array.from({ length: days }, ()=>0);
+  tx.forEach(t=>{
+    const d = toDate(t.date).getDate();
+    if(d >= 1 && d <= days) daily[d - 1] += Number(t.amount || 0);
+  });
+
+  const prevMonthStr = shiftYm(monthStr, -1);
+  const prevTx = loadTx().filter(t=> t.date && t.date.startsWith(prevMonthStr));
+  const prevDays = new Date(Number(prevMonthStr.slice(0,4)), Number(prevMonthStr.slice(5,7)), 0).getDate();
+  const prevDaily = Array.from({ length: days }, (_, idx)=> idx < prevDays ? 0 : null);
+  prevTx.forEach(t=>{
+    const d = toDate(t.date).getDate();
+    if(d >= 1 && d <= days && prevDaily[d - 1] != null){
+      prevDaily[d - 1] += Number(t.amount || 0);
+    }
+  });
+
+  const cum = [];
+  const prevCum = [];
+  let run = 0;
+  let prevRun = 0;
+  for(let i=0;i<days;i++){
+    run += daily[i];
+    cum.push(run);
+    if(prevDaily[i] == null){
+      prevCum.push(null);
+    }else{
+      prevRun += Number(prevDaily[i] || 0);
+      prevCum.push(prevRun);
+    }
+  }
+
+  const maxCumVal = Math.max(...cum, ...prevCum.map(v=> Number(v || 0)), 1);
+  const w = 360;
+  const h = 170;
+  const pad = { left:14, right:10, top:8, bottom:26 };
+  const innerW = w - pad.left - pad.right;
+  const innerH = h - pad.top - pad.bottom;
+  const x = (i)=> pad.left + ((days <= 1 ? 0 : i / (days - 1)) * innerW);
+  const yCum = (v)=> pad.top + (1 - (v / maxCumVal)) * innerH;
+  const lineCum = cum.map((v, i)=>`${x(i)},${yCum(v)}`).join(" ");
+  const linePrevCum = prevCum
+    .map((v, i)=> v == null ? null : `${x(i)},${yCum(v)}`)
+    .filter(Boolean)
+    .join(" ");
+  const areaCum = `M ${x(0)} ${yCum(cum[0])} L ${cum.map((v, i)=>`${x(i)} ${yCum(v)}`).join(" L ")} L ${x(days - 1)} ${yCum(0)} L ${x(0)} ${yCum(0)} Z`;
+
+  const ticks = [];
+  for(let d=1; d<=days; d+=7) ticks.push(d);
+  if(ticks[ticks.length - 1] !== days) ticks.push(days);
+  const yCumMarks = [maxCumVal, Math.round(maxCumVal/2), 0];
+  const cumLatest = cum[cum.length - 1];
+  const prevCumLatest = Number(prevCum[Math.min(days, prevDays) - 1] || 0);
+  const cumDelta = cumLatest - prevCumLatest;
+  const deltaSign = cumDelta > 0 ? "+" : "";
+  const prevLastIndex = Math.max(Math.min(days, prevDays) - 1, 0);
+  const prevLastY = yCum(Number(prevCum[prevLastIndex] || 0));
+  const maxDaySpend = Math.max(...daily);
+  const maxDay = daily.indexOf(maxDaySpend) + 1;
+  const shortYen = (v)=>{
+    const n = Math.round(v);
+    if(n >= 10000){
+      const man = n / 10000;
+      return `${man >= 100 ? Math.round(man) : man.toFixed(1)}万`;
+    }
+    return `${fmtYen(n)}`;
+  };
+
+  area.innerHTML = `
+    <div class="dailyTrendLegend" style="margin-bottom:8px;">
+      <span><i class="dailyTrendSwatch cum"></i>当月累計 ${fmtYen(Math.round(cumLatest))}円</span>
+      <span><i class="dailyTrendSwatch prevcum"></i>先月累計 ${fmtYen(Math.round(prevCumLatest))}円</span>
+    </div>
+    <div class="dailyTrendDelta ${cumDelta > 0 ? "up" : (cumDelta < 0 ? "down" : "")}">
+      先月同日比 ${deltaSign}${fmtYen(Math.round(cumDelta))}円
+    </div>
+    <div class="small muted" style="margin-bottom:6px;">月累計（積み上げ）</div>
+    <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="1ヶ月の累計支出推移">
+      <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[0])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[0])}"></line>
+      <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[1])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[1])}"></line>
+      <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[2])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[2])}"></line>
+      ${yCumMarks.map(v=>`<text class="dailyTrendYLabel" x="2" y="${yCum(v)+4}">${shortYen(v)}</text>`).join("")}
+      <path class="dailyTrendArea" d="${areaCum}"></path>
+      <polyline class="dailyTrendPrevCum" points="${linePrevCum}"></polyline>
+      <polyline class="dailyTrendCum" points="${lineCum}"></polyline>
+      <circle class="dailyTrendDotPrev" cx="${x(prevLastIndex)}" cy="${prevLastY}" r="3.5"></circle>
+      <circle class="dailyTrendDot" cx="${x(days - 1)}" cy="${yCum(cum[cum.length - 1])}" r="4"></circle>
+    </svg>
+    <div class="dailyTrendAxis">
+      ${ticks.map(d=>`<span>${d}日</span>`).join("")}
+    </div>
+    <div class="dailyTrendEndMeta">
+      <span class="dailyTrendEndBadge">当月 ${shortYen(cumLatest)}円</span>
+      <span class="dailyTrendEndBadge prev">先月 ${shortYen(prevCumLatest)}円</span>
+    </div>
+    <div class="small muted" style="margin-top:6px;">今月の最大支出日: ${maxDay}日（${fmtYen(Math.round(maxDaySpend))}円）</div>
+  `;
+}
+
+function renderMonthlyCompareChart(monthStr){
+  const area = $("reportMonthlyCompare");
+  if(!area) return;
+  const months = [];
+  for(let i=5;i>=0;i--) months.push(shiftYm(monthStr, -i));
+  const rows = months.map(m=>({
+    month: m,
+    total: buildMonthlyReportItems(m).total
+  }));
+  const maxTotal = Math.max(...rows.map(r=>r.total), 1);
+  area.innerHTML = rows.map(r=>{
+    const width = Math.round((r.total / maxTotal) * 100);
+    const isCurrent = r.month === monthStr;
+    const label = `${Number(r.month.slice(5,7))}月`;
+    return `
+      <div class="monthCompareRow ${isCurrent ? "isCurrent" : ""}">
+        <div class="monthCompareLabel">${label}</div>
+        <div class="monthCompareBar">
+          <div class="monthCompareFill" style="width:${width}%;"></div>
+        </div>
+        <div class="monthCompareValue">${fmtYen(Math.round(r.total))}円</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function buildDailyComparisonData(monthStr){
+  const tx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr));
+  if(!tx.length) return null;
+
+  const byDate = {};
+  const byDateCategory = {};
+  tx.forEach(t=>{
+    const date = t.date;
+    if(!byDate[date]) byDate[date] = { sum:0, count:0 };
+    byDate[date].sum += Number(t.amount || 0);
+    byDate[date].count += 1;
+
+    if(!byDateCategory[date]) byDateCategory[date] = {};
+    byDateCategory[date][t.category] = (byDateCategory[date][t.category] || 0) + Number(t.amount || 0);
+  });
+
+  const dates = Object.keys(byDate).sort();
+  if(dates.length < 2){
+    return { dates, byDate, byDateCategory, latestDate: dates[0], prevDate: null };
+  }
+
+  const latestDate = dates[dates.length - 1];
+  const prevDate = dates[dates.length - 2];
+  return { dates, byDate, byDateCategory, latestDate, prevDate };
+}
+
+function calcWindowAverage(byDate, endDateStr, days){
+  const end = toDate(endDateStr);
+  let sum = 0;
+  for(let i=0;i<days;i++){
+    const d = new Date(end);
+    d.setDate(end.getDate() - i);
+    const key = ymd(d);
+    sum += Number(byDate[key]?.sum || 0);
+  }
+  return sum / days;
+}
+
+function calcCategoryWindowTotals(tx, endDateStr, days){
+  const end = toDate(endDateStr);
+  const start = new Date(end);
+  start.setDate(end.getDate() - (days - 1));
+  const sums = {};
+  tx.forEach(t=>{
+    const d = toDate(t.date);
+    if(d < start || d > end) return;
+    const key = t.category;
+    sums[key] = (sums[key] || 0) + Number(t.amount || 0);
+  });
+  return sums;
+}
+
+function buildDailyTrendChartHTML(byDate, latestDateStr, days = 30){
+  const end = toDate(latestDateStr);
+  const points = [];
+  for(let i=days-1;i>=0;i--){
+    const d = new Date(end);
+    d.setDate(end.getDate() - i);
+    const key = ymd(d);
+    points.push({
+      key,
+      label: `${d.getMonth()+1}/${d.getDate()}`,
+      value: Number(byDate[key]?.sum || 0),
+    });
+  }
+
+  const ma = points.map((_, idx)=>{
+    let sum = 0;
+    for(let i=0;i<7;i++){
+      const p = points[idx - i];
+      if(!p) continue;
+      sum += p.value;
+    }
+    return sum / Math.min(idx + 1, 7);
+  });
+
+  const maxValue = Math.max(
+    ...points.map(p=>p.value),
+    ...ma,
+    1
+  );
+  const w = 320;
+  const h = 140;
+  const pad = { left:8, right:8, top:8, bottom:18 };
+  const innerW = w - pad.left - pad.right;
+  const innerH = h - pad.top - pad.bottom;
+  const x = (idx)=> pad.left + (idx / (points.length - 1)) * innerW;
+  const y = (val)=> pad.top + (1 - (val / maxValue)) * innerH;
+
+  const line = points.map((p, idx)=>`${x(idx)},${y(p.value)}`).join(" ");
+  const avgLine = ma.map((v, idx)=>`${x(idx)},${y(v)}`).join(" ");
+  const latest = points[points.length - 1];
+  const latestAvg = ma[ma.length - 1];
+  const latestX = x(points.length - 1);
+  const latestY = y(latest.value);
+  const startLabel = points[0].label;
+  const endLabel = latest.label;
+
+  return `
+    <div class="dailyTrendWrap">
+      <div class="small muted" style="margin-bottom:6px;">日次推移（直近${days}日）</div>
+      <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="日次支出の推移">
+        <line class="dailyTrendGrid" x1="${pad.left}" y1="${y(maxValue*0.5)}" x2="${w-pad.right}" y2="${y(maxValue*0.5)}"></line>
+        <polyline class="dailyTrendAvg" points="${avgLine}"></polyline>
+        <polyline class="dailyTrendMain" points="${line}"></polyline>
+        <circle class="dailyTrendDot" cx="${latestX}" cy="${latestY}" r="3.5"></circle>
+      </svg>
+      <div class="dailyTrendAxis">
+        <span>${startLabel}</span>
+        <span>${endLabel}</span>
+      </div>
+      <div class="dailyTrendLegend">
+        <span><i class="dailyTrendSwatch main"></i>日次支出 ${fmtYen(Math.round(latest.value))}円</span>
+        <span><i class="dailyTrendSwatch avg"></i>7日平均 ${fmtYen(Math.round(latestAvg))}円/日</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderDailyComparison(monthStr){
+  const area = $("reportDailyCompare");
+  if(!area) return;
+  const data = buildDailyComparisonData(monthStr);
+  if(!data){
+    area.innerHTML = `<div class="small muted" style="padding:8px 0;">日次比較データがありません</div>`;
+    return;
+  }
+
+  const latest = data.latestDate;
+  if(!data.prevDate){
+    const latestSumOnly = Number(data.byDate[latest]?.sum || 0);
+    area.innerHTML = `
+      <div class="small muted" style="padding:8px 0;">
+        ${latest} の記録のみあります（${fmtYen(latestSumOnly)}円）。比較するには2日以上の記録が必要です。
+      </div>
+    `;
+    return;
+  }
+
+  const prev = data.prevDate;
+  const latestSum = Number(data.byDate[latest]?.sum || 0);
+  const prevSum = Number(data.byDate[prev]?.sum || 0);
+  const delta = latestSum - prevSum;
+  const deltaSign = delta > 0 ? "+" : "";
+  const deltaTone = delta > 0 ? "up" : (delta < 0 ? "down" : "");
+  const avg7 = calcWindowAverage(data.byDate, latest, 7);
+  const prev7End = ymd(new Date(toDate(latest).getFullYear(), toDate(latest).getMonth(), toDate(latest).getDate() - 7));
+  const prevAvg7 = calcWindowAverage(data.byDate, prev7End, 7);
+  const avgDelta = avg7 - prevAvg7;
+  const avgDeltaSign = avgDelta > 0 ? "+" : "";
+  const avgTone = avgDelta > 0 ? "up" : (avgDelta < 0 ? "down" : "");
+
+  const monthTx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr));
+  const latest7Cats = calcCategoryWindowTotals(monthTx, latest, 7);
+  const prev7Cats = calcCategoryWindowTotals(monthTx, prev7End, 7);
+  const keys = Array.from(new Set([...Object.keys(latest7Cats), ...Object.keys(prev7Cats)]));
+  const topDiff = keys.map(key=>({
+    key,
+    diff: Number(latest7Cats[key] || 0) - Number(prev7Cats[key] || 0),
+  }))
+    .filter(x=>x.diff !== 0)
+    .sort((a,b)=>Math.abs(b.diff) - Math.abs(a.diff))
+    .slice(0,3);
+  const trendChartHtml = buildDailyTrendChartHTML(data.byDate, latest, 30);
+
+  area.innerHTML = `
+    <div class="dailyCompareMeta">
+      <span class="dailyComparePill">最新記録日: ${escapeHtml(latest)}</span>
+      <span class="dailyComparePill">比較対象: ${escapeHtml(prev)}</span>
+    </div>
+    <div class="dailyCompareGrid">
+      <div class="dailyCompareCard">
+        <div class="dailyCompareLabel">1日支出の差分（最新 - 前回）</div>
+        <div class="dailyCompareValue ${deltaTone}">${deltaSign}${fmtYen(delta)}円</div>
+        <div class="dailyCompareSub">${fmtYen(latestSum)}円 vs ${fmtYen(prevSum)}円</div>
+      </div>
+      <div class="dailyCompareCard">
+        <div class="dailyCompareLabel">直近7日平均の差分</div>
+        <div class="dailyCompareValue ${avgTone}">${avgDeltaSign}${fmtYen(Math.round(avgDelta))}円/日</div>
+        <div class="dailyCompareSub">${fmtYen(Math.round(avg7))}円/日 vs ${fmtYen(Math.round(prevAvg7))}円/日</div>
+      </div>
+    </div>
+    <div class="dailyDiffList">
+      <div class="small muted" style="margin-bottom:6px;">カテゴリ差分（直近7日 - その前7日）</div>
+      ${topDiff.length ? topDiff.map(item=>`
+        <div class="dailyDiffRow">
+          <div style="font-weight:900;">${escapeHtml(item.key)}</div>
+          <div class="dailyDiffAmt ${item.diff > 0 ? "up" : "down"}">${item.diff > 0 ? "+" : ""}${fmtYen(item.diff)}円</div>
+        </div>
+      `).join("") : `<div class="small muted">カテゴリ差分はありません</div>`}
+    </div>
+    ${trendChartHtml}
+  `;
 }
 function getStateColorVar(state){
   const map = {
@@ -2525,7 +2936,7 @@ function buildMonthlyResult(){
   }).join("");
   const benchmarkIntroHtml = targetBudget ? `
     <div class="small muted" style="margin-top:6px; margin-bottom:10px;">
-      基準：${targetBudget.ageBandLabel} / 世帯${targetBudget.householdSize}人 / 年収${targetBudget.annualIncomeGross}万円（手取り換算）
+      基準：${targetBudget.ageBandLabel} / 世帯${targetBudget.householdSize}人 / 年収${fmtYen(targetBudget.annualIncomeGross)}円（手取り換算）
       ・目安手取り月収 ${fmtYen(Math.round(targetBudget.monthlyNetTarget))}円
     </div>
     <div class="small muted" style="margin-bottom:10px;">
@@ -2963,7 +3374,14 @@ function dedupeList(items){
   return out;
 }
 function getProfile(){
-  return loadJSON(LS_PROFILE, DEFAULT_PROFILE);
+  const prof = loadJSON(LS_PROFILE, DEFAULT_PROFILE);
+  const normalizedAnnualIncome = normalizeAnnualIncomeYen(prof.annualIncomeGross);
+  const currentAnnualIncome = Number(prof.annualIncomeGross || 0);
+  if(normalizedAnnualIncome !== "" && normalizedAnnualIncome !== currentAnnualIncome){
+    prof.annualIncomeGross = normalizedAnnualIncome;
+    saveJSON(LS_PROFILE, prof);
+  }
+  return prof;
 }
 function getValueTop3FromProfile(profile){
   const top = (profile && Array.isArray(profile.valueTop3)) ? profile.valueTop3 : [];
@@ -3035,13 +3453,13 @@ function saveProfile(){
   ];
   const valueTop3 = dedupeList(rawTop).slice(0,3);
   const ageRaw = Number($("profileAge")?.value || 0);
-  const annualIncomeGross = Number($("profileAnnualIncome")?.value || 0);
+  const annualIncomeGross = Number(normalizeAnnualIncomeYen($("profileAnnualIncome")?.value) || 0);
   const householdSize = Number($("profileHousehold")?.value || 0);
   const prof = {
     household: $("profileHousehold").value,
     householdSize: Number.isFinite(householdSize) && householdSize > 0 ? householdSize : "",
     age: Number.isFinite(ageRaw) && ageRaw > 0 ? ageRaw : "",
-    annualIncomeGross: Number.isFinite(annualIncomeGross) && annualIncomeGross > 0 ? annualIncomeGross : "",
+    annualIncomeGross: annualIncomeGross > 0 ? annualIncomeGross : "",
     housingType: $("profileHousingType")?.value || "unknown",
     regionType: $("profileRegionType")?.value || "unknown",
     workType: $("profileWorkType")?.value || "unknown",
@@ -3114,8 +3532,128 @@ function nextSlide(n){
 }
 window.nextSlide = nextSlide;
 
+const SURVEY_STEPS = [
+  { stepId:"surveyStepAge", fieldId:"surveyAge", label:"年齢（世帯主）", type:"input", question:"まずは、あなたの年齢を教えてください", hint:"同年代との比較精度が上がります。" },
+  { stepId:"surveyStepHousehold", fieldId:"surveyHousehold", label:"世帯人数", type:"select", question:"いま一緒に暮らしている人数は？", hint:"世帯人数で基準が変わります。" },
+  { stepId:"surveyStepWorkType", fieldId:"surveyWorkType", label:"就業形態", type:"select", question:"働き方はどちらに近いですか？", hint:"共働き/片働きで、家計の余裕度の見方が変わります。" },
+  { stepId:"surveyStepRegionType", fieldId:"surveyRegionType", label:"居住地域", type:"select", question:"お住まいのエリアはどちらですか？", hint:"地域差をふまえて分析します。" },
+  { stepId:"surveyStepHousingType", fieldId:"surveyHousingType", label:"住居形態", type:"select", question:"住まいのタイプを教えてください", hint:"次の住居費の質問を、家賃/ローンに合わせて出し分けます。" },
+  { stepId:"surveyStepAnnualIncome", fieldId:"surveyAnnualIncome", label:"昨年の世帯年収（円）", type:"input", question:"昨年の世帯年収（税込・額面）は？", hint:"おおよその金額で大丈夫です（例: 6500000）。" },
+  { stepId:"surveyStepIncome", fieldId:"surveyIncome", label:"手取り月収（円）", type:"input", question:"毎月の手取り収入はどのくらいですか？", hint:"だいたいの金額でOKです（例: 305000）。" },
+  { stepId:"surveyStepHousing", fieldId:"surveyHousing", label:"住居費", type:"input", question:"毎月の住まい関連の支払いは？", hint:"家賃またはローン返済額を入力してください。" },
+  { stepId:"surveyStepUtility", fieldId:"surveyUtility", label:"光熱費", type:"input", question:"光熱費は月いくらくらいですか？", hint:"電気・ガス・水道の合計です。" },
+  { stepId:"surveyStepNet", fieldId:"surveyNet", label:"通信費", type:"input", question:"通信費は月いくらくらいですか？", hint:"スマホとネット回線の合計です。" },
+  { stepId:"surveyStepSub", fieldId:"surveySub", label:"サブスク", type:"input", question:"サブスクの毎月支払いは？", hint:"把握していない場合は、ここで一度合計してみましょう。" },
+  { stepId:"surveyStepValueCats", fieldId:"surveyValueCat1", label:"価値観カテゴリ", type:"valuecats", question:"お金を使うときに、大事にしたいことは何ですか？", hint:"使い道（食費・趣味など）とは別に、何を大切にしたいかを3つまで設定します。" },
+  { stepId:"surveyStepMortgagePrincipal", fieldId:"surveyMortgagePrincipal", label:"ローン元本返済", type:"input", mortgageOnly:true, question:"そのうちローン元本返済はいくらですか？", hint:"ローン返済中の方のみ入力します。" },
+];
+let surveyStepIndex = 0;
+
+function getSurveyStepsForCurrentHousing(){
+  const housingType = $("surveyHousingType")?.value || "unknown";
+  return SURVEY_STEPS.filter(step=> !step.mortgageOnly || housingType === "mortgage");
+}
+
+function updateSurveyProgress(current, total){
+  const progress = $("surveyProgress");
+  if(progress) progress.textContent = `${current} / ${total}`;
+}
+
+function renderSurveyStep(){
+  const steps = getSurveyStepsForCurrentHousing();
+  if(surveyStepIndex > steps.length - 1) surveyStepIndex = Math.max(steps.length - 1, 0);
+  steps.forEach((step, i)=>{
+    const el = $(step.stepId);
+    if(el) el.style.display = i === surveyStepIndex ? "" : "none";
+  });
+  SURVEY_STEPS.forEach((step)=>{
+    if(steps.some(x=>x.stepId === step.stepId)) return;
+    const el = $(step.stepId);
+    if(el) el.style.display = "none";
+  });
+
+  const prevBtn = $("surveyPrevBtn");
+  const nextBtn = $("surveyNextBtn");
+  const finishBtn = $("surveyFinishBtn");
+  const titleEl = $("surveyQuestionTitle");
+  const hintEl = $("surveyQuestionHint");
+  const atFirst = surveyStepIndex === 0;
+  const atLast = surveyStepIndex === steps.length - 1;
+  const step = steps[surveyStepIndex];
+  if(prevBtn) prevBtn.style.visibility = atFirst ? "hidden" : "visible";
+  if(nextBtn) nextBtn.style.display = atLast ? "none" : "";
+  if(finishBtn) finishBtn.style.display = atLast ? "" : "none";
+  if(titleEl) titleEl.textContent = step?.question || "あなたのことを教えてください";
+  if(hintEl) hintEl.textContent = step?.hint || "答えやすいものからサクッと進めましょう。";
+  updateSurveyProgress(steps.length ? surveyStepIndex + 1 : 0, steps.length);
+}
+
+function getCurrentSurveyStep(){
+  const steps = getSurveyStepsForCurrentHousing();
+  return steps[surveyStepIndex] || null;
+}
+
+function validateSurveyStep(step){
+  if(!step) return true;
+  if(step.type === "valuecats"){
+    const cats = collectSurveyValueCats();
+    if(!cats.length){
+      alert("価値観カテゴリを1つ以上入力してください");
+      return false;
+    }
+    return true;
+  }
+  const el = $(step.fieldId);
+  if(!el){
+    alert(`${step.label}の入力欄が見つかりません`);
+    return false;
+  }
+  if(step.type === "select"){
+    if(!el.value || el.value === "unknown"){
+      alert(`${step.label}を選択してください`);
+      return false;
+    }
+    return true;
+  }
+  if(String(el.value ?? "").trim() === ""){
+    alert(`${step.label}を入力してください`);
+    return false;
+  }
+  return true;
+}
+
+function nextSurveyStep(){
+  const step = getCurrentSurveyStep();
+  if(!validateSurveyStep(step)) return;
+  const steps = getSurveyStepsForCurrentHousing();
+  if(surveyStepIndex < steps.length - 1){
+    surveyStepIndex += 1;
+    renderSurveyStep();
+  }
+}
+
+function prevSurveyStep(){
+  if(surveyStepIndex > 0){
+    surveyStepIndex -= 1;
+    renderSurveyStep();
+  }
+}
+
+function resetSurveyWizard(){
+  surveyStepIndex = 0;
+  renderSurveyStep();
+}
+
+function collectSurveyValueCats(){
+  return dedupeList([
+    $("surveyValueCat1")?.value || "",
+    $("surveyValueCat2")?.value || "",
+    $("surveyValueCat3")?.value || "",
+  ].map(v=> String(v || "").trim()).filter(Boolean)).slice(0,3);
+}
+
 function openSurvey(){
-  const prof = loadJSON(LS_PROFILE, {household:"unknown", ageBand:"unknown"});
+  const prof = getProfile();
   if($("surveyHousehold")){
     const size = normalizeHouseholdSize(prof);
     $("surveyHousehold").value = size ? String(size) : (prof.household || "unknown");
@@ -3125,6 +3663,12 @@ function openSurvey(){
   $("surveyHousingType") && ($("surveyHousingType").value = prof.housingType || "unknown");
   $("surveyRegionType") && ($("surveyRegionType").value = prof.regionType || "unknown");
   $("surveyWorkType") && ($("surveyWorkType").value = prof.workType || "unknown");
+  const surveyValueCats = normalizeValueCats(prof.valueCats).filter(Boolean).slice(0,3);
+  $("surveyValueCat1") && ($("surveyValueCat1").value = surveyValueCats[0] || "");
+  $("surveyValueCat2") && ($("surveyValueCat2").value = surveyValueCats[1] || "");
+  $("surveyValueCat3") && ($("surveyValueCat3").value = surveyValueCats[2] || "");
+  updateSurveyHousingFields();
+  resetSurveyWizard();
   const surveyModal = $("surveyModal");
   const isForced = !localStorage.getItem(LS_ONBOARD);
   if(surveyModal){
@@ -3137,21 +3681,55 @@ function openSurvey(){
 }
 window.openSurvey = openSurvey;
 
+function updateSurveyHousingFields(){
+  const housingType = $("surveyHousingType")?.value || "unknown";
+  const amountLabel = $("surveyHousingAmountText");
+  const housingInput = $("surveyHousing");
+  const principalWrap = $("surveyMortgagePrincipalWrap");
+  const principalInput = $("surveyMortgagePrincipal");
+  if(housingType === "rent"){
+    if(amountLabel) amountLabel.textContent = "家賃 (円)";
+    if(housingInput) housingInput.placeholder = "例：95000";
+  }else if(housingType === "mortgage"){
+    if(amountLabel) amountLabel.textContent = "住宅ローン返済額 (円)";
+    if(housingInput) housingInput.placeholder = "例：120000";
+  }else if(housingType === "owned"){
+    if(amountLabel) amountLabel.textContent = "住居費（管理費など）(円)";
+    if(housingInput) housingInput.placeholder = "例：20000";
+  }else{
+    if(amountLabel) amountLabel.textContent = "住居費 (円)";
+    if(housingInput) housingInput.placeholder = "家賃またはローン返済額";
+  }
+
+  const showPrincipal = housingType === "mortgage";
+  if(principalWrap) principalWrap.style.display = showPrincipal ? "" : "none";
+  if(!showPrincipal && principalInput) principalInput.value = "";
+  renderSurveyStep();
+}
+
 function finishSurvey(){
   const requiredFields = [
     { id:"surveyHousehold", label:"世帯人数", type:"select" },
     { id:"surveyAge", label:"年齢（世帯主）", type:"input" },
-    { id:"surveyAnnualIncome", label:"昨年の世帯年収", type:"input" },
-    { id:"surveyIncome", label:"手取り月収", type:"input" },
-    { id:"surveyHousing", label:"住居費", type:"input" },
+    { id:"surveyAnnualIncome", label:"昨年の世帯年収（円）", type:"input" },
+    { id:"surveyIncome", label:"手取り月収（円）", type:"input" },
     { id:"surveyUtility", label:"光熱費", type:"input" },
     { id:"surveyNet", label:"通信費", type:"input" },
     { id:"surveySub", label:"サブスク", type:"input" },
-    { id:"surveyMortgagePrincipal", label:"ローン元本返済", type:"input" },
     { id:"surveyHousingType", label:"住居形態", type:"select" },
     { id:"surveyRegionType", label:"居住地域", type:"select" },
     { id:"surveyWorkType", label:"就業形態", type:"select" },
   ];
+  const housingType = $("surveyHousingType")?.value || "unknown";
+  const housingLabel = housingType === "rent"
+    ? "家賃"
+    : housingType === "mortgage"
+      ? "住宅ローン返済額"
+      : "住居費";
+  requiredFields.push({ id:"surveyHousing", label:housingLabel, type:"input" });
+  if(housingType === "mortgage"){
+    requiredFields.push({ id:"surveyMortgagePrincipal", label:"ローン元本返済", type:"input" });
+  }
   const missing = [];
   requiredFields.forEach(({ id, label, type })=>{
     const el = $(id);
@@ -3169,23 +3747,33 @@ function finishSurvey(){
     alert(`以下の入力が必要です：\n${missing.join(" / ")}`);
     return;
   }
+  if(!collectSurveyValueCats().length){
+    alert("価値観カテゴリを1つ以上入力してください");
+    return;
+  }
   const ageRaw = Number($("surveyAge")?.value || 0);
-  const annualIncomeGross = Number($("surveyAnnualIncome")?.value || 0);
+  const annualIncomeGross = Number(normalizeAnnualIncomeYen($("surveyAnnualIncome")?.value) || 0);
   const householdSize = Number($("surveyHousehold")?.value || 0);
+  const valueCats = normalizeValueCats(collectSurveyValueCats());
+  const valueTop3 = dedupeList(valueCats.filter(Boolean)).slice(0,3);
   const prof = {
     household: $("surveyHousehold")?.value || "unknown",
     householdSize: Number.isFinite(householdSize) && householdSize > 0 ? householdSize : "",
     age: Number.isFinite(ageRaw) && ageRaw > 0 ? ageRaw : "",
-    annualIncomeGross: Number.isFinite(annualIncomeGross) && annualIncomeGross > 0 ? annualIncomeGross : "",
+    annualIncomeGross: annualIncomeGross > 0 ? annualIncomeGross : "",
     housingType: $("surveyHousingType")?.value || "unknown",
     regionType: $("surveyRegionType")?.value || "unknown",
     workType: $("surveyWorkType")?.value || "unknown",
+    valueCats,
+    valueTop3,
   };
   saveJSON(LS_PROFILE, prof);
 
   const m = ym(new Date());
-  const income = Number($("surveyIncome")?.value || 0);
-  if($("surveyIncome")?.value.trim() !== "") setIncomeForMonth(m, income);
+  const incomeYen = Number($("surveyIncome")?.value || 0);
+  if($("surveyIncome")?.value.trim() !== ""){
+    setIncomeForMonth(m, Math.round(incomeYen));
+  }
 
   const fixedAll = loadJSON(LS_FIXED, {});
   fixedAll[m] = {
@@ -3193,7 +3781,9 @@ function finishSurvey(){
     utilityYen: Number($("surveyUtility")?.value || 0),
     netYen: Number($("surveyNet")?.value || 0),
     subYen: Number($("surveySub")?.value || 0),
-    mortgagePrincipalYen: Number($("surveyMortgagePrincipal")?.value || 0),
+    mortgagePrincipalYen: (prof.housingType === "mortgage")
+      ? Number($("surveyMortgagePrincipal")?.value || 0)
+      : 0,
   };
   saveJSON(LS_FIXED, fixedAll);
 
@@ -3232,6 +3822,10 @@ function escapeHtml(str){
 function init(){
   migrateSatisfactionScale();
   buildCatCards();
+  $("surveyHousingType")?.addEventListener("change", updateSurveyHousingFields);
+  $("surveyNextBtn")?.addEventListener("click", nextSurveyStep);
+  $("surveyPrevBtn")?.addEventListener("click", prevSurveyStep);
+  updateSurveyHousingFields();
 
   const tryAdvanceQuality = ()=>{
     if(entryStep !== "quality") return;

@@ -97,12 +97,20 @@
 <div class="modalOverlay hidden" id="surveyModal">
   <div class="modal">
     <div class="modalHeader">
-      <div class="modalTitle">はじめに教えてください</div>
+      <div class="modalTitle">家計タイプ診断をはじめましょう</div>
       <button class="ghost" onclick="closeModal('surveyModal')">✕</button>
     </div>
     <div class="modalBody" style="padding:16px;">
-      <div class="small" style="margin-bottom:12px;">はじめにすべて入力してください（後から変更できます）</div>
-      <div class="row">
+      <div class="small muted" id="surveyProgress" style="margin-bottom:10px;">1 / 1</div>
+      <div id="surveyQuestionTitle" style="font-weight:700; color:var(--primary); margin:0 0 6px;">あなたのことを教えてください</div>
+      <div id="surveyQuestionHint" class="small muted" style="margin-bottom:12px;">答えやすいものからサクッと進めましょう。</div>
+
+      <div id="surveyStepAge" class="surveyStepItem">
+        <label>年齢（世帯主）
+          <input type="number" id="surveyAge" placeholder="例：34">
+        </label>
+      </div>
+      <div id="surveyStepHousehold" class="surveyStepItem" style="display:none;">
         <label>世帯人数
           <select id="surveyHousehold">
             <option value="unknown">未設定</option>
@@ -114,47 +122,8 @@
             <option value="6">6人以上</option>
           </select>
         </label>
-        <label>年齢（世帯主）
-          <input type="number" id="surveyAge" placeholder="例：34">
-        </label>
       </div>
-
-      <div class="row" style="margin-top:12px;">
-        <label>昨年の世帯年収（税込・額面 / 万円）
-          <input type="number" id="surveyAnnualIncome" placeholder="例：650">
-        </label>
-      </div>
-
-      <div class="row" style="margin-top:12px;">
-        <label>手取り月収 (円) <input type="number" id="surveyIncome" placeholder="例：300000"></label>
-        <label>住居費 (円) <input type="number" id="surveyHousing" placeholder="家賃など"></label>
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <label>光熱費 (円) <input type="number" id="surveyUtility" placeholder="電気ガス水道"></label>
-        <label>通信費 (円) <input type="number" id="surveyNet" placeholder="スマホ・Net"></label>
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <label>サブスク (円) <input type="number" id="surveySub" placeholder="定期支払"></label>
-        <label>ローン元本返済 (円) <input type="number" id="surveyMortgagePrincipal" placeholder="住宅ローン元本"></label>
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <label>住居形態
-          <select id="surveyHousingType">
-            <option value="unknown">未設定</option>
-            <option value="mortgage">持ち家・ローン返済中</option>
-            <option value="rent">賃貸</option>
-            <option value="owned">持ち家・ローンなし</option>
-          </select>
-        </label>
-        <label>居住地域
-          <select id="surveyRegionType">
-            <option value="unknown">未設定</option>
-            <option value="metro">都市部</option>
-            <option value="local">地方都市</option>
-          </select>
-        </label>
-      </div>
-      <div class="row" style="margin-top:12px;">
+      <div id="surveyStepWorkType" class="surveyStepItem" style="display:none;">
         <label>就業形態
           <select id="surveyWorkType">
             <option value="unknown">未設定</option>
@@ -163,9 +132,81 @@
           </select>
         </label>
       </div>
-      <div style="margin-top:16px;">
-        <button class="primary" style="width:100%;" onclick="finishSurvey()">入力を保存して始める</button>
+      <div id="surveyStepRegionType" class="surveyStepItem" style="display:none;">
+        <label>居住地域
+          <select id="surveyRegionType">
+            <option value="unknown">未設定</option>
+            <option value="metro">都市部</option>
+            <option value="local">地方都市</option>
+          </select>
+        </label>
       </div>
+      <div id="surveyStepHousingType" class="surveyStepItem" style="display:none;">
+        <label>住居形態
+          <select id="surveyHousingType">
+            <option value="unknown">未設定</option>
+            <option value="mortgage">持ち家・ローン返済中</option>
+            <option value="rent">賃貸</option>
+            <option value="owned">持ち家・ローンなし</option>
+          </select>
+        </label>
+      </div>
+      <div id="surveyStepAnnualIncome" class="surveyStepItem" style="display:none;">
+        <label>昨年の世帯年収（税込・額面 / 円）
+          <input type="number" id="surveyAnnualIncome" placeholder="例：6500000">
+        </label>
+      </div>
+      <div id="surveyStepIncome" class="surveyStepItem" style="display:none;">
+        <label>手取り月収（円）
+          <input type="number" id="surveyIncome" placeholder="例：305000">
+        </label>
+      </div>
+      <div id="surveyStepHousing" class="surveyStepItem" style="display:none;">
+        <label><span id="surveyHousingAmountText">住居費 (円)</span>
+          <input type="number" id="surveyHousing" placeholder="家賃またはローン返済額">
+        </label>
+      </div>
+      <div id="surveyStepUtility" class="surveyStepItem" style="display:none;">
+        <label>光熱費 (円)
+          <input type="number" id="surveyUtility" placeholder="電気ガス水道">
+        </label>
+      </div>
+      <div id="surveyStepNet" class="surveyStepItem" style="display:none;">
+        <label>通信費 (円)
+          <input type="number" id="surveyNet" placeholder="スマホ・Net">
+        </label>
+      </div>
+      <div id="surveyStepSub" class="surveyStepItem" style="display:none;">
+        <label>サブスク (円)
+          <input type="number" id="surveySub" placeholder="定期支払">
+        </label>
+      </div>
+      <div id="surveyStepValueCats" class="surveyStepItem" style="display:none;">
+        <div class="small muted" style="margin-bottom:10px;">
+          例：成長 / つながり / 回復 / 安心 / 挑戦
+        </div>
+        <label>価値観カテゴリ1
+          <input type="text" id="surveyValueCat1" placeholder="例：成長">
+        </label>
+        <label style="margin-top:10px;">価値観カテゴリ2
+          <input type="text" id="surveyValueCat2" placeholder="例：つながり">
+        </label>
+        <label style="margin-top:10px;">価値観カテゴリ3
+          <input type="text" id="surveyValueCat3" placeholder="例：回復">
+        </label>
+      </div>
+      <div id="surveyStepMortgagePrincipal" class="surveyStepItem" style="display:none;">
+        <label id="surveyMortgagePrincipalWrap">ローン元本返済 (円)
+          <input type="number" id="surveyMortgagePrincipal" placeholder="住宅ローン元本">
+        </label>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="ghost" id="surveyPrevBtn" style="flex:1;" type="button">戻る</button>
+        <button class="primary" id="surveyNextBtn" style="flex:2;" type="button">つづける</button>
+        <button class="primary" id="surveyFinishBtn" style="display:none; flex:2;" type="button" onclick="finishSurvey()">診断をはじめる</button>
+      </div>
+      <div class="small muted" style="margin-top:10px; text-align:right;">※ 後からいつでも変更できます</div>
     </div>
   </div>
 </div>
@@ -231,7 +272,7 @@
           </select>
         </div>
         <div class="qualityRow">
-          <div class="qualityLabel">価値観カテゴリ</div>
+          <div class="qualityLabel">価値観カテゴリ（何を満たした？）</div>
           <select id="entryValueTag">
             <option value="">未設定</option>
           </select>
@@ -306,7 +347,7 @@
             <option value="1">😢 後悔している</option>
           </select>
         </label>
-        <label>価値観カテゴリ
+        <label>価値観カテゴリ（何を満たした？）
           <select id="editValueTag">
             <option value="">未設定</option>
           </select>
@@ -390,22 +431,79 @@
         </label>
       </div>
 
-      <div class="reportGrid" style="margin-top:16px;">
-        <div class="sectionCard">
-          <div class="sectionHead">
-            <div><div class="sectionName">支出内訳（円）</div><div class="sectionHint">カテゴリ別の合計</div></div>
-            <div class="sectionScore" id="reportTotal">—</div>
+      <div class="sectionCard" style="margin-top:12px;">
+        <div class="reportQuickGrid">
+          <div class="reportQuickItem">
+            <div class="small muted">今月支出</div>
+            <div class="reportQuickValue" id="reportQuickTotal">—</div>
           </div>
-          <div class="reportChartWrap">
-            <div class="reportDonut" id="reportDonut" role="img" aria-label="支出内訳の円グラフ"></div>
-            <div class="reportLegend" id="reportLegend"></div>
+          <div class="reportQuickItem">
+            <div class="small muted">先月比</div>
+            <div class="reportQuickValue" id="reportQuickMoM">—</div>
+          </div>
+          <div class="reportQuickItem">
+            <div class="small muted">最多カテゴリ</div>
+            <div class="reportQuickValue" id="reportQuickTopCat">—</div>
+          </div>
+          <div class="reportQuickItem">
+            <div class="small muted">ワンポイント</div>
+            <div class="reportQuickValue reportQuickNote" id="reportQuickInsight">—</div>
           </div>
         </div>
-        <div class="sectionCard">
-          <div class="sectionHead">
-            <div><div class="sectionName">項目別内訳</div><div class="sectionHint">金額と割合</div></div>
+      </div>
+
+      <div class="reportTabs" style="margin-top:12px;">
+        <button class="reportTabBtn active" data-report-tab="overview" onclick="switchReportTab('overview')">全体</button>
+        <button class="reportTabBtn" data-report-tab="trend" onclick="switchReportTab('trend')">推移</button>
+        <button class="reportTabBtn" data-report-tab="compare" onclick="switchReportTab('compare')">比較</button>
+        <button class="reportTabBtn" data-report-tab="action" onclick="switchReportTab('action')">改善</button>
+      </div>
+
+      <div class="reportPane active" id="reportPane-overview">
+        <div class="reportGrid" style="margin-top:12px;">
+          <div class="sectionCard">
+            <div class="sectionHead">
+              <div><div class="sectionName">支出内訳（円）</div><div class="sectionHint">カテゴリ別の合計</div></div>
+              <div class="sectionScore" id="reportTotal">—</div>
+            </div>
+            <div class="reportChartWrap">
+              <div class="reportDonut" id="reportDonut" role="img" aria-label="支出内訳の円グラフ"></div>
+              <div class="reportLegend" id="reportLegend"></div>
+            </div>
           </div>
-          <div id="reportList"></div>
+          <div class="sectionCard">
+            <div class="sectionHead">
+              <div><div class="sectionName">項目別内訳</div><div class="sectionHint">金額と割合</div></div>
+            </div>
+            <div id="reportList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reportPane" id="reportPane-trend">
+        <div class="sectionCard" style="margin-top:12px;">
+          <div class="sectionHead">
+            <div><div class="sectionName">支出推移（1ヶ月）</div><div class="sectionHint">月累計の伸びを確認</div></div>
+          </div>
+          <div id="reportSpendTrend"></div>
+        </div>
+      </div>
+
+      <div class="reportPane" id="reportPane-compare">
+        <div class="sectionCard">
+          <div class="sectionHead" style="margin-top:12px;">
+            <div><div class="sectionName">月次支出比較</div><div class="sectionHint">直近6ヶ月</div></div>
+          </div>
+          <div id="reportMonthlyCompare"></div>
+        </div>
+      </div>
+
+      <div class="reportPane" id="reportPane-action">
+        <div class="sectionCard" style="margin-top:12px;">
+          <div class="sectionHead">
+            <div><div class="sectionName">次の一手</div><div class="sectionHint">今月の状態から提案</div></div>
+          </div>
+          <div id="reportActionBox"></div>
         </div>
       </div>
     </div>
@@ -432,12 +530,7 @@
   <section class="screen" id="screen-profile">
     <div class="box boxSafeBottom">
       <h2><span class="emojiWarm mini">⚙️</span> 設定・プロフィール</h2>
-      <div class="small">属性（世帯人数・年齢階級）は、将来の比較機能の土台になります</div>
-      <div class="row" style="margin-top:16px;">
-        <label>設定する月
-          <input type="month" id="settingsMonth">
-        </label>
-      </div>
+      <input type="hidden" id="settingsMonth">
 
       <details class="settingsSection" open>
         <summary>プロフィール（必須）</summary>
@@ -459,8 +552,8 @@
             </label>
           </div>
           <div class="row" style="margin-top:12px;">
-            <label>昨年の世帯年収（税込・額面 / 万円）
-              <input type="number" id="profileAnnualIncome" placeholder="例：650">
+            <label>昨年の世帯年収（税込・額面 / 円）
+              <input type="number" id="profileAnnualIncome" placeholder="例：6500000">
             </label>
           </div>
         </div>
@@ -501,13 +594,13 @@
       <details class="settingsSection">
         <summary>価値観カテゴリ</summary>
         <div class="settingsBody">
-          <div class="small">自由に5つ設定し、TOP3を選んでください</div>
+          <div class="small">「何を満たしたいか」を自由に5つ設定し、TOP3を選んでください（食費・趣味などの使い道とは別です）</div>
           <div class="row" style="margin-top:12px;">
-            <label>カテゴリ1<input type="text" id="valueCat1" placeholder="例：自己投資"></label>
-            <label>カテゴリ2<input type="text" id="valueCat2" placeholder="例：家族時間"></label>
-            <label>カテゴリ3<input type="text" id="valueCat3" placeholder="例：趣味"></label>
-            <label>カテゴリ4<input type="text" id="valueCat4" placeholder="例：健康"></label>
-            <label>カテゴリ5<input type="text" id="valueCat5" placeholder="例：将来貯蓄"></label>
+            <label>カテゴリ1<input type="text" id="valueCat1" placeholder="例：成長"></label>
+            <label>カテゴリ2<input type="text" id="valueCat2" placeholder="例：つながり"></label>
+            <label>カテゴリ3<input type="text" id="valueCat3" placeholder="例：回復"></label>
+            <label>カテゴリ4<input type="text" id="valueCat4" placeholder="例：安心"></label>
+            <label>カテゴリ5<input type="text" id="valueCat5" placeholder="例：挑戦"></label>
           </div>
           <div class="row" style="margin-top:12px;">
             <label>TOP1<select id="valueTop1"><option value="">未設定</option></select></label>
@@ -551,7 +644,7 @@
         <button class="ghost" style="width:100%;" onclick="resetOnboarding()">最初の説明をもう一度見る</button>
       </div>
 
-      <div class="adminBox">
+      <div class="adminBox" style="display:none;">
         <h3><span class="emojiWarm mini">📥</span> データ管理</h3>
         <div class="small" style="margin-bottom:12px;">機種変更や分析用に、全データを書き出し・読み込みできます。</div>
         <button class="dark" style="width:100%; margin-bottom:12px;" onclick="downloadData()">全データを書き出し (Export)</button>
