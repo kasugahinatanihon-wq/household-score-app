@@ -10,6 +10,7 @@
 psql "$DATABASE_URL" -f db/migrations/0001_init_schema.sql
 psql "$DATABASE_URL" -f db/migrations/0002_enable_rls_header_scope.sql
 psql "$DATABASE_URL" -f db/migrations/0003_auth_household_model.sql
+psql "$DATABASE_URL" -f db/migrations/0004_fix_household_members_rls_recursion.sql
 ```
 
 ## Notes

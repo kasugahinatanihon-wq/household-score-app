@@ -1,0 +1,205 @@
+openapi: 3.0.3
+info:
+  title: Household Score Data API
+  version: 0.1.0
+  description: >
+    Anonymous-first API for collecting household app data and returning
+    monthly scores/benchmarks.
+servers:
+  - url: https://api.example.com
+paths:
+  /v1/consent:
+    post:
+      summary: Register user consent and create anonymous user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [anonymous_id, consent_version]
+              properties:
+                anonymous_id: { type: string }
+                consent_version: { type: string, example: "2026-03-ja-v1" }
+                app_version: { type: string }
+                locale: { type: string, example: "ja-JP" }
+                timezone: { type: string, example: "Asia/Tokyo" }
+      responses:
+        "200":
+          description: user created/updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id: { type: string, format: uuid }
+                  premium: { type: boolean }
+
+  /v1/profile:
+    put:
+      summary: Upsert monthly profile snapshot
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [month]
+              properties:
+                month: { type: string, format: date, description: "first day of month" }
+                household_size: { type: integer }
+                age: { type: integer }
+                annual_income_gross_yen: { type: integer }
+                housing_type: { type: string, enum: [rent, mortgage, owned, unknown] }
+                region_type: { type: string, enum: [metro, local, unknown] }
+                work_type: { type: string, enum: [co, single, unknown] }
+                value_cats:
+                  type: array
+                  items: { type: string }
+                value_top3:
+                  type: array
+                  items: { type: string }
+      responses:
+        "204": { description: updated }
+
+  /v1/monthly-settings:
+    put:
+      summary: Upsert monthly income/saving/fixed costs
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [month, income_yen]
+              properties:
+                month: { type: string, format: date }
+                income_yen: { type: integer }
+                saving_yen: { type: integer }
+                invest_yen: { type: integer }
+                housing_yen: { type: integer }
+                utility_yen: { type: integer }
+                net_yen: { type: integer }
+                sub_yen: { type: integer }
+                mortgage_principal_yen: { type: integer }
+      responses:
+        "204": { description: updated }
+
+  /v1/transactions:
+    post:
+      summary: Create transaction
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [occurred_on, category, amount_yen]
+              properties:
+                occurred_on: { type: string, format: date }
+                category: { type: string }
+                amount_yen: { type: integer }
+                sat: { type: integer, minimum: 1, maximum: 5 }
+                value_tag: { type: string }
+                memo: { type: string, maxLength: 200 }
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+    get:
+      summary: List transactions for a month
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transaction"
+
+  /v1/monthly-score:
+    get:
+      summary: Get computed monthly score
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: monthly score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  month: { type: string, format: date }
+                  satisfaction_score: { type: integer }
+                  stability_score: { type: integer }
+                  monthly_avg_score: { type: integer }
+
+  /v1/benchmarks/monthly:
+    get:
+      summary: Get segment benchmark for the user and month
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: benchmark snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  n_users: { type: integer }
+                  support_level:
+                    type: string
+                    enum: [insufficient, limited, ready]
+                  stats:
+                    type: object
+                    properties:
+                      avg_stability: { type: number }
+                      p50_stability: { type: number }
+                      p90_stability: { type: number }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Transaction:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        occurred_on: { type: string, format: date }
+        category: { type: string }
+        amount_yen: { type: integer }
+        sat: { type: integer }
+        value_tag: { type: string }
+        memo: { type: string }
+
