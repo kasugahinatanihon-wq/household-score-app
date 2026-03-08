@@ -649,14 +649,34 @@ function getAuthUserId(){
 function setAuthStatus(msg, isError = false){
   const el = $("authStatus");
   if(!el) return;
-  el.textContent = msg;
+  el.textContent = `ログイン状態: ${msg}`;
   el.style.color = isError ? "#b91c1c" : "";
+  refreshHouseholdControls();
 }
 function setHouseholdStatus(msg, isError = false){
   const el = $("householdStatus");
   if(!el) return;
-  el.textContent = msg;
+  el.textContent = `世帯状態: ${msg}`;
   el.style.color = isError ? "#b91c1c" : "";
+  refreshHouseholdControls();
+}
+function refreshHouseholdControls(){
+  const loggedIn = !!getAuthUserId();
+  const hasHousehold = !!getActiveHouseholdId();
+  const createBtn = $("createHouseholdBtn");
+  const joinBtn = $("joinHouseholdBtn");
+  const pullBtn = $("pullHouseholdBtn");
+  const copyBtn = $("copyInviteBtn");
+  const guide = $("householdGuide");
+  if(createBtn) createBtn.disabled = !loggedIn;
+  if(joinBtn) joinBtn.disabled = !loggedIn;
+  if(pullBtn) pullBtn.disabled = !(loggedIn && hasHousehold);
+  if(copyBtn) copyBtn.disabled = !(loggedIn && hasHousehold && !!getActiveHouseholdCode());
+  if(guide){
+    if(!loggedIn) guide.textContent = "手順: 1) メールとパスワード入力 → 2) ログイン";
+    else if(!hasHousehold) guide.textContent = "手順: 1) 世帯を作成 または 参加コードで参加";
+    else guide.textContent = "共有中: 招待をコピーして相手に送ると、同じ家計を見られます";
+  }
 }
 function getActiveHouseholdId(){
   return String(localStorage.getItem(LS_ACTIVE_HOUSEHOLD) || "");
@@ -882,7 +902,7 @@ function signOutAccount(){
     HOUSEHOLD_PULL_TIMER = null;
   }
   setAuthStatus("未ログイン");
-  setHouseholdStatus("世帯未参加");
+  setHouseholdStatus("未参加");
   toast("ログアウトしました");
 }
 window.signOutAccount = signOutAccount;
@@ -5371,7 +5391,7 @@ function init(){
   setSupabaseStatus(supa.url && supa.anonKey ? "自動接続設定あり（未テスト）" : "未接続");
   const auth = loadAuthSession();
   if($("authEmail") && auth?.user?.email) $("authEmail").value = auth.user.email;
-  setAuthStatus(auth?.user?.email ? `ログイン中: ${auth.user.email}` : "未ログイン");
+  setAuthStatus(auth?.user?.email ? `${auth.user.email} でログイン中` : "未ログイン");
   const inviteCode = getInviteCodeFromUrl();
   if(inviteCode && $("joinHouseholdCode")){
     $("joinHouseholdCode").value = inviteCode;
@@ -5383,6 +5403,7 @@ function init(){
     pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
   });
+  refreshHouseholdControls();
 
   loadProfileToUI();
   [1,2,3,4,5].forEach(i=>{
