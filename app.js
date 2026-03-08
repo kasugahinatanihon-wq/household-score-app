@@ -638,6 +638,17 @@ function loadAuthSession(){
 function saveAuthSession(session){
   saveJSON(LS_AUTH_SESSION, session || null);
 }
+function normalizeAuthSessionPayload(payload){
+  if(!payload || typeof payload !== "object") return null;
+  if(payload.access_token) return payload;
+  if(payload.session && payload.session.access_token){
+    return {
+      ...payload.session,
+      user: payload.user || payload.session.user || null
+    };
+  }
+  return null;
+}
 function getAuthAccessToken(){
   const s = loadAuthSession();
   return s?.access_token || "";
@@ -853,9 +864,10 @@ async function signUpWithEmail(){
     return;
   }
   try{
-    const session = await supabaseAuthRequest("signup", {
+    const raw = await supabaseAuthRequest("signup", {
       body: { email, password }
     });
+    const session = normalizeAuthSessionPayload(raw);
     if(session?.access_token){
       saveAuthSession(session);
       await ensureRemoteUser();
@@ -883,9 +895,13 @@ async function signInWithEmail(){
     return;
   }
   try{
-    const session = await supabaseAuthRequest("token?grant_type=password", {
+    const raw = await supabaseAuthRequest("token?grant_type=password", {
       body: { email, password }
     });
+    const session = normalizeAuthSessionPayload(raw);
+    if(!session?.access_token){
+      throw new Error("ログインセッションの取得に失敗しました");
+    }
     saveAuthSession(session);
     await ensureRemoteUser();
     await refreshHouseholdState();
