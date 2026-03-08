@@ -566,7 +566,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   top:8px;
   z-index:3;
   display:grid;
-  grid-template-columns:repeat(4, minmax(0,1fr));
+  grid-template-columns:repeat(3, minmax(0,1fr));
   gap:8px;
   background:rgba(248,252,255,.96);
   border:1px solid var(--report-line);
@@ -587,6 +587,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:linear-gradient(180deg, #ffffff 0%, #f2f9ff 100%);
   border-color:rgba(8,145,178,.24);
   box-shadow:0 6px 14px rgba(15,23,42,.08);
+}
+.reportTabBtn.is-comingsoon{
+  color:#94a3b8;
+  background:linear-gradient(180deg, rgba(255,255,255,.88), rgba(248,250,252,.9));
+  border-color:rgba(148,163,184,.24);
+  box-shadow:none;
+  cursor:default;
 }
 .reportPane{ display:none; }
 .reportPane.active{ display:block; }
@@ -1488,6 +1495,116 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:flex;
   flex-wrap:wrap;
   gap:8px;
+}
+
+/* Home summary */
+.homeHeroCard{
+  border:1px solid rgba(8,145,178,.18);
+  border-radius:16px;
+  padding:14px;
+  background:linear-gradient(140deg, rgba(255,255,255,.98), rgba(240,249,255,.92));
+  box-shadow:0 12px 26px rgba(15,23,42,.08);
+}
+.homeHeroTop{
+  display:grid;
+  grid-template-columns:56px 1fr;
+  gap:10px;
+  align-items:center;
+}
+.homeAvatar{
+  width:56px;
+  height:56px;
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+  background:rgba(8,145,178,.12);
+  border:1px solid rgba(8,145,178,.25);
+}
+.homeStateTitle{
+  font-size:14px;
+  font-weight:900;
+  color:#0b1729;
+}
+.homeStatePill{
+  display:inline-flex;
+  align-items:center;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  color:#0b6b84;
+  background:rgba(8,145,178,.12);
+  border:1px solid rgba(8,145,178,.25);
+}
+.homeStatePill.good{
+  color:#0f766e;
+  background:rgba(16,185,129,.14);
+  border-color:rgba(16,185,129,.26);
+}
+.homeStatePill.warn{
+  color:#b45309;
+  background:rgba(245,158,11,.16);
+  border-color:rgba(245,158,11,.28);
+}
+.homeStateSub{
+  margin-top:4px;
+  color:#4b5d73;
+  font-size:12px;
+  line-height:1.45;
+}
+.homeGrowthRow{
+  margin-top:12px;
+}
+.homeGrowthLabel{
+  font-size:12px;
+  color:#4b5d73;
+  font-weight:800;
+}
+.homeGrowthBar{
+  margin-top:6px;
+  height:8px;
+  border-radius:999px;
+  background:#e5edf5;
+  overflow:hidden;
+}
+.homeGrowthBar span{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg, #0891b2, #38bdf8);
+}
+.homeTrendGrid{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+  grid-template-columns:1fr;
+}
+.homeTrendCard{
+  border:1px solid rgba(15,23,42,.10);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#fff;
+}
+.homeTrendLabel{
+  font-size:12px;
+  font-weight:800;
+  color:#4b5d73;
+}
+.homeTrendValue{
+  margin-top:4px;
+  font-size:15px;
+  font-weight:1000;
+  color:#0b1729;
+}
+.homeTrendValue.up{ color:#b91c1c; }
+.homeTrendValue.down{ color:#0f766e; }
+.homeTrendValue.flat{ color:#475569; }
+.homeTrendSub{
+  margin-top:4px;
+  font-size:11px;
+  color:#64748b;
 }
 .valueExampleChip{
   border:1px solid rgba(14,165,233,.25);

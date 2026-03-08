@@ -865,7 +865,7 @@ function updateScreenHeader(name){
     input: { icon:"✏️", title:"入力", hint:"カテゴリを選んで今日の支出を記録する" },
     list: { icon:"📅", title:"カレンダー", hint:"" },
     report: { icon:"🧾", title:"レポート", hint:"" },
-    score: { icon:"🏠", title:"ホーム", hint:"今週の状態を確認して次の一手を決める" },
+    score: { icon:"🏠", title:"ホーム", hint:"今月の状態をキャラクターで確認しよう" },
     profile: { icon:"⚙️", title:"設定", hint:"" }
   };
   const data = headerMap[name] || headerMap.score;
@@ -1886,27 +1886,6 @@ function getLargestSinglePurchase(monthStr, totalBase){
   };
 }
 
-function buildCategoryRealisticAdvice(label, limitYen){
-  const limit = fmtYen(Math.max(Math.round(limitYen || 0), 0));
-  const map = {
-    "食費": `買い物前に3日分の献立を決めて、食費は${limit}円を上限にする`,
-    "外食費": `外食は明日1回まで、予算は${limit}円で先に決める`,
-    "コンビニ": `明日はコンビニを1回だけにして、上限は${limit}円にする`,
-    "カフェ": `カフェは明日1回まで。追加注文はしない`,
-    "交際費": `交際費は明日1件だけ。2件目は来週に回す`,
-    "デート": `デート費は上限${limit}円を決めて、事前に店を選ぶ`,
-    "趣味": `趣味の購入は明日1件だけ。カート追加は24時間寝かせる`,
-    "衣服": `衣服は明日買う前に手持ち3点と合わせて必要性を確認する`,
-    "美容": `美容は明日1メニューに絞って、予算は${limit}円まで`,
-    "交通費": `移動は明日まとめて回り、追加移動を1回減らす`,
-    "日用品": `日用品は明日不足分だけ購入し、ストック買いはしない`,
-    "医療費": `医療費は必要支出。明日は他カテゴリを調整して吸収する`,
-    "教育費": `教育費は維持し、明日は娯楽費を1件だけ減らしてバランスを取る`,
-    "仕事": `仕事関連は明日1件に絞り、代替できるものは先送りする`,
-  };
-  return map[label] || `明日は「${label}」を1件減らすか、上限${limit}円を先に決めて使う`;
-}
-
 function renderReportCategoryDrill(monthStr, category, totalBase){
   const wrap = $("reportCategoryDrill");
   if(!wrap) return;
@@ -2674,10 +2653,114 @@ window.openWeeklyReport = openWeeklyReport;
 function renderWeeklyInline(){
   const wrap = $("weeklyInline");
   if(!wrap) return;
-  const result = buildWeeklyResult();
-  wrap.innerHTML = result.html;
-  animateDonuts(wrap);
-  animateGrowth(wrap);
+  const monthStr = ym(new Date());
+  const allMonthTx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr));
+  const variableTx = allMonthTx.filter(t=> !FIXED_CATEGORIES.has(t.category));
+  const variableTotal = variableTx.reduce((sum, t)=> sum + Number(t.amount || 0), 0);
+  const byCat = {};
+  variableTx.forEach(t=>{
+    byCat[t.category] = (byCat[t.category] || 0) + Number(t.amount || 0);
+  });
+  const topEntry = Object.entries(byCat).sort((a,b)=> b[1] - a[1])[0];
+  const topCategory = topEntry ? topEntry[0] : "未設定";
+  const topAmount = topEntry ? Number(topEntry[1] || 0) : 0;
+  const topShare = variableTotal > 0 ? Math.round((topAmount / variableTotal) * 100) : 0;
+
+  const prof = getProfile();
+  const valueTop3 = getValueTop3FromProfile(prof);
+  const subjective = calcSubjectiveMetrics(variableTx);
+  const valueAlign = calcValueAlignmentMetrics(variableTx, valueTop3);
+  const regret = calcRegretMetrics(variableTx);
+
+  const cutoffDay = getReportCutoffDay(monthStr);
+  const prevSameAll = buildMonthlyReportItemsToDay(shiftYm(monthStr, -1), cutoffDay);
+  const sameDayAll = buildMonthlyReportItemsToDay(monthStr, cutoffDay);
+  const sameDayVariable = sameDayAll.items
+    .filter(item=> !FIXED_CATEGORIES.has(item.label))
+    .reduce((sum, item)=> sum + Number(item.amount || 0), 0);
+  const prevSameVariable = prevSameAll.items
+    .filter(item=> !FIXED_CATEGORIES.has(item.label))
+    .reduce((sum, item)=> sum + Number(item.amount || 0), 0);
+  const variableDiffRate = prevSameVariable > 0 ? ((sameDayVariable - prevSameVariable) / prevSameVariable) : null;
+
+  const parts = [];
+  if(Number.isFinite(subjective.score)) parts.push({ score: subjective.score, weight: 0.5 });
+  if(Number.isFinite(valueAlign.score)) parts.push({ score: valueAlign.score, weight: 0.3 });
+  if(Number.isFinite(regret.score)) parts.push({ score: regret.score, weight: 0.2 });
+  const weightedBase = parts.length
+    ? (parts.reduce((s, p)=> s + p.score * p.weight, 0) / parts.reduce((s, p)=> s + p.weight, 0))
+    : null;
+  let characterScore = weightedBase;
+  if(Number.isFinite(characterScore)){
+    if(topShare >= 50) characterScore -= 10;
+    else if(topShare >= 40) characterScore -= 5;
+    if(Number.isFinite(variableDiffRate)){
+      if(variableDiffRate > 0.25) characterScore -= 8;
+      else if(variableDiffRate > 0.10) characterScore -= 4;
+      else if(variableDiffRate < -0.15) characterScore += 4;
+    }
+    characterScore = clamp(Math.round(characterScore), 0, 100);
+  }
+
+  const dataEnough = variableTx.length >= 5 && subjective.coverage >= 0.4;
+  const tier = !dataEnough || !Number.isFinite(characterScore)
+    ? "分析中"
+    : characterScore >= 82
+      ? "めっちゃ良い"
+      : characterScore >= 66
+        ? "良い"
+        : characterScore >= 45
+          ? "悪い"
+          : "めっちゃ悪い";
+
+  const archetype = (()=> {
+    const map = {
+      "食費":"グルメ探検家","外食費":"グルメ探検家","コンビニ":"グルメ探検家","カフェ":"グルメ探検家",
+      "交際費":"つながり重視","デート":"つながり重視",
+      "趣味":"ワクワク収集家","教育費":"成長コレクター","仕事":"成長コレクター",
+      "衣服":"セルフケア職人","美容":"セルフケア職人",
+      "日用品":"暮らし整え屋","医療費":"暮らし整え屋","交通費":"暮らし整え屋",
+    };
+    return map[topCategory] || "バランス志向";
+  })();
+
+  const daysInMonth = getDaysInMonth(monthStr) || 30;
+  const daysWithEntry = new Set(allMonthTx.map(t=> t.date)).size;
+  const progressPct = Math.round((daysWithEntry / daysInMonth) * 100);
+  const xp = getXPProgress(getTotalXP());
+  const mood = tier === "めっちゃ良い" ? "🤩"
+    : tier === "良い" ? "😄"
+    : tier === "悪い" ? "😟"
+    : tier === "めっちゃ悪い" ? "🥶"
+    : "🙂";
+  const speech = tier === "分析中"
+    ? "記録が増えると、あなたらしい使い方の傾向がはっきりしてきます。"
+    : tier === "めっちゃ良い"
+      ? "納得できる使い方ができています。今月はかなり良い状態です。"
+      : tier === "良い"
+        ? "大きな崩れはなく、いいペースで使えています。"
+        : tier === "悪い"
+          ? "使い方に少しブレがあります。内訳を見て1カテゴリだけ整えましょう。"
+          : "後悔につながる使い方が目立っています。今月は先に上限を決めて使うのが安全です。";
+
+  wrap.innerHTML = `
+    <div class="homeHeroCard">
+      <div class="homeHeroTop">
+        <div class="homeAvatar">${mood}</div>
+        <div style="min-width:0;">
+          <div class="homeStateTitle">${escapeHtml(archetype)} / <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span></div>
+          <div class="homeStateSub">${topCategory !== "未設定" ? `主カテゴリ: ${escapeHtml(topCategory)} (${topShare}%)` : "主カテゴリ判定中"}${Number.isFinite(characterScore) ? ` / 判定スコア ${characterScore}` : ""}</div>
+          <div class="homeStateSub">${speech}</div>
+        </div>
+      </div>
+      <div class="homeGrowthRow">
+        <div class="homeGrowthLabel">育成Lv ${xp.level} / 今月の記録進捗 ${daysWithEntry}/${daysInMonth}日</div>
+        <div class="homeGrowthBar"><span style="width:${progressPct}%;"></span></div>
+      </div>
+    </div>
+  `;
+  const section = $("score-weekly");
+  if(section) section.style.display = "";
 }
 window.renderWeeklyInline = renderWeeklyInline;
 
@@ -2720,7 +2803,7 @@ function renderMonthlyGate(){
     : `<span class="statusBadge status-soon">準備中</span>`;
   const readyHint = opened
     ? "月次レポートは受領済みです。"
-    : "ホームのキャラクターをタップして、貯蓄・投資を入力してから受け取りましょう。";
+    : "貯蓄・投資を入力して、月次レポートを受け取りましょう。";
   const tx = loadTx().filter(t=>t.date && t.date.startsWith(targetMonth));
   const daysInMonth = getDaysInMonth(targetMonth) || 0;
   const daysWithEntry = new Set(tx.map(t=>t.date)).size;
@@ -2751,6 +2834,7 @@ function renderMonthlyGate(){
           </div>
         </div>
         <div class="small muted" style="margin-top:8px;">${readyHint}</div>
+        <button class="primary" type="button" style="width:100%; margin-top:10px;" onclick="showMonthlyScore()">月次レポートを見る</button>
       </div>
     `;
     return;
@@ -2779,7 +2863,7 @@ function renderMonthlyGate(){
           })()}
         </div>
       </div>
-      <div class="small muted" style="margin-top:8px;">月の入力完了を押すと、キャラクターがレポートを届けます。</div>
+      <div class="small muted" style="margin-top:8px;">月の入力完了を押すと、月次レポートを受け取れます。</div>
     </div>
   `;
 }

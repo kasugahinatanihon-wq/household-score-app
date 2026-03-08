@@ -436,9 +436,11 @@
 
       <div class="reportTabs" style="margin-top:12px;">
         <button class="reportTabBtn active" data-report-tab="overview" onclick="switchReportTab('overview')">全体</button>
-        <button class="reportTabBtn" data-report-tab="breakdown" onclick="switchReportTab('breakdown')">支出内訳</button>
+        <button class="reportTabBtn" data-report-tab="breakdown" onclick="switchReportTab('breakdown')">内訳</button>
         <button class="reportTabBtn" data-report-tab="trend" onclick="switchReportTab('trend')">推移</button>
         <button class="reportTabBtn" data-report-tab="compare" onclick="switchReportTab('compare')">比較</button>
+        <button class="reportTabBtn is-comingsoon" type="button" disabled aria-label="新機能予定">新機能予定</button>
+        <button class="reportTabBtn is-comingsoon" type="button" disabled aria-label="新機能予定">新機能予定</button>
       </div>
 
       <div class="reportPane active" id="reportPane-overview">
@@ -507,10 +509,10 @@
 
   <section class="screen" id="screen-score">
     <div class="box boxSafeBottom">
-      <div id="score-weekly" style="margin-top:2px;">
+      <div id="score-weekly" style="display:block;">
         <div id="weeklyInline"></div>
       </div>
-      <div id="monthlyGate" style="margin-top:16px;"></div>
+      <div id="monthlyGate" style="margin-top:12px;"></div>
       <input type="hidden" id="scoreMonth">
       <input type="hidden" id="savingYen">
       <input type="hidden" id="investYen">
