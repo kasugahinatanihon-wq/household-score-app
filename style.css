@@ -79,6 +79,11 @@ header{
   display:flex;
   align-items:flex-start;
   gap:10px;
+  padding:12px 12px 10px !important;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  background:linear-gradient(135deg, rgba(255,255,255,.95), rgba(240,249,255,.92));
+  box-shadow:0 10px 24px rgba(15,23,42,.08);
 }
 .appHeaderText{
   display:flex;
@@ -87,15 +92,28 @@ header{
   min-width:0;
 }
 .appHeaderTitle{
-  font-size:15px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:16px;
   font-weight:900;
   color:#0f172a;
   letter-spacing:.01em;
 }
+.appHeaderIcon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:24px;
+  height:24px;
+  border-radius:8px;
+  background:rgba(14,165,233,.14);
+}
 .appHeaderHint{
-  font-size:12px;
-  color:var(--muted);
+  font-size:12.5px;
+  color:#334155;
   line-height:1.35;
+  font-weight:700;
 }
 
 h1{ margin:0; font-size:22px; font-weight:900; letter-spacing:.2px; }
@@ -186,8 +204,8 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   .row{ grid-template-columns:1fr; }
   .wrap{ width:100%; padding:0 10px; }
   .tabs{ width:100%; padding:10px 10px; }
-  .appHeaderTitle{ font-size:14px; }
-  .appHeaderHint{ font-size:11px; }
+  .appHeaderTitle{ font-size:15px; }
+  .appHeaderHint{ font-size:11.5px; }
   .screen > .box{
     background:transparent;
     border:none;

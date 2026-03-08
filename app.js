@@ -860,16 +860,23 @@ function syncReportMonthDefault(){
   if(el && !el.value) el.value = ym(new Date());
 }
 
+function updateScreenHeader(name){
+  const headerMap = {
+    input: { icon:"✏️", title:"入力", hint:"カテゴリを選んで今日の支出を記録する" },
+    list: { icon:"📅", title:"カレンダー", hint:"日付ごとの履歴を見て修正する" },
+    report: { icon:"🧾", title:"レポート", hint:"今月の傾向を見て改善ポイントをつかむ" },
+    score: { icon:"🏠", title:"ホーム", hint:"今週の状態を確認して次の一手を決める" },
+    profile: { icon:"⚙️", title:"設定", hint:"前提条件と価値観を整える" }
+  };
+  const data = headerMap[name] || headerMap.score;
+  if($("currentScreenIcon")) $("currentScreenIcon").textContent = data.icon;
+  if($("currentScreenTitle")) $("currentScreenTitle").textContent = data.title;
+  if($("currentScreenHint")) $("currentScreenHint").textContent = data.hint;
+}
+
 function switchScreen(name){
   const map = { input:"screen-input", list:"screen-list", report:"screen-report", score:"screen-score", profile:"screen-profile" };
-  const titleMap = { input:"入力", list:"カレンダー", report:"レポート", score:"ホーム", profile:"設定" };
-  const hintMap = {
-    input:"カテゴリを選んで今日の支出を記録する",
-    list:"日付ごとの履歴を見て修正する",
-    report:"今月の傾向を見て改善ポイントをつかむ",
-    score:"今週の状態を確認して次の一手を決める",
-    profile:"前提条件と価値観を整える"
-  };
+  if(!map[name]) name = "score";
   Object.values(map).forEach(id=>{
     const el = $(id);
     if(el) el.classList.toggle("active", id === map[name]);
@@ -879,8 +886,7 @@ function switchScreen(name){
     if(b) b.classList.toggle("active", t===name);
   });
   $("scoreQuickBtn")?.classList.toggle("active", name === "score");
-  if($("currentScreenTitle")) $("currentScreenTitle").textContent = titleMap[name] || "ホーム";
-  if($("currentScreenHint")) $("currentScreenHint").textContent = hintMap[name] || "";
+  updateScreenHeader(name);
 
   if(name === "list"){
     renderCalendar();
@@ -4005,6 +4011,11 @@ function init(){
 
   $("entryPrimaryBtn")?.addEventListener("click", handleEntryPrimary);
   $("entryCloseBtn")?.addEventListener("click", closeEntryModal);
+  $("tab-input")?.addEventListener("click", ()=> updateScreenHeader("input"));
+  $("tab-list")?.addEventListener("click", ()=> updateScreenHeader("list"));
+  $("tab-report")?.addEventListener("click", ()=> updateScreenHeader("report"));
+  $("tab-profile")?.addEventListener("click", ()=> updateScreenHeader("profile"));
+  $("scoreQuickBtn")?.addEventListener("click", ()=> updateScreenHeader("score"));
 
   ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal"].forEach(id=>{
     const ov = $(id);
@@ -4070,6 +4081,7 @@ function init(){
   renderMonthlyGate();
   loadMonthlySettings($("settingsMonth")?.value || ym(new Date()));
   switchScreen("score");
+  updateScreenHeader("score");
 }
 
 init();
