@@ -11,6 +11,8 @@ const LS_MONTHLY_AVG = "monthly_avg_score";
 const LS_TOTAL_XP = "total_xp";
 const LS_XP_MONTHS = "xp_months";
 const LS_DAILY_XP = "daily_xp";
+const LS_HOME_PREVIEW = "home_preview_mode";
+const LS_HOME_PREVIEW_CATEGORY = "home_preview_category";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
 const SAT_SCALE_VERSION = 2;
@@ -1939,6 +1941,94 @@ function renderReportCategoryDrill(monthStr, category, totalBase){
   wrap.innerHTML = `<div class="small muted">このカテゴリの内訳データはありません</div>`;
 }
 
+function getHomeBaseNameByCategory(category){
+  const map = {
+    "食費":"モグモグ隊長",
+    "外食費":"ごちそうハンター",
+    "日用品":"くらし整え名人",
+    "衣服":"スタイルメーカー",
+    "美容":"ビューティーチューナー",
+    "交際費":"コネクトキャプテン",
+    "医療費":"ヘルスガーディアン",
+    "教育費":"ラーニングブースター",
+    "交通費":"ムーブマネージャー",
+    "コンビニ":"クイックバイヤー",
+    "カフェ":"カフェブレイカー",
+    "デート":"ロマンスプランナー",
+    "趣味":"ホビーマスター",
+    "仕事":"ワークドライバー",
+  };
+  return map[category] || "バランス志向";
+}
+function getHomeTierKey(tier){
+  if(tier === "めっちゃ良い") return "great";
+  if(tier === "良い") return "good";
+  if(tier === "悪い") return "bad";
+  if(tier === "めっちゃ悪い") return "verybad";
+  return "analyzing";
+}
+function getHomeCharacterName(category, tier){
+  const key = getHomeTierKey(tier);
+  const table = {
+    "食費": { great:"満腹賢者モグリオン", good:"モグモグ隊長", bad:"迷い食いモグリン", verybad:"暴食タイタン", analyzing:"モグモグ隊長（分析中）" },
+    "外食費": { great:"予約名人グルメラ", good:"ごちそうハンター", bad:"衝動グルメランナー", verybad:"外食エンペラー", analyzing:"ごちそうハンター（分析中）" },
+    "日用品": { great:"節度の整頓王", good:"くらし整え名人", bad:"ついで買いスプライター", verybad:"買い溜めコング", analyzing:"くらし整え名人（分析中）" },
+    "衣服": { great:"着回しマエストロ", good:"スタイルメーカー", bad:"迷走クローゼッター", verybad:"浪費ランウェイ", analyzing:"スタイルメーカー（分析中）" },
+    "美容": { great:"艶肌プランナー", good:"ビューティーチューナー", bad:"焦りケアジャンキー", verybad:"コスメストーム", analyzing:"ビューティーチューナー（分析中）" },
+    "交際費": { great:"絆マネージャー", good:"コネクトキャプテン", bad:"見栄フォロワー", verybad:"付き合いヘラクレス", analyzing:"コネクトキャプテン（分析中）" },
+    "医療費": { great:"ケアバランサー", good:"ヘルスガーディアン", bad:"後回しヒーラー", verybad:"不調レスキュー常連", analyzing:"ヘルスガーディアン（分析中）" },
+    "教育費": { great:"投資インストラクター", good:"ラーニングブースター", bad:"散財スカラー", verybad:"教材コレクター暴走", analyzing:"ラーニングブースター（分析中）" },
+    "交通費": { great:"移動ルート名匠", good:"ムーブマネージャー", bad:"寄り道トラベラー", verybad:"タクシードラゴン", analyzing:"ムーブマネージャー（分析中）" },
+    "コンビニ": { great:"即決ミニマリスト", good:"クイックバイヤー", bad:"つまみ買いスプリンター", verybad:"深夜コンビニキング", analyzing:"クイックバイヤー（分析中）" },
+    "カフェ": { great:"一杯集中バリスタ", good:"カフェブレイカー", bad:"寄り道ラテウォーカー", verybad:"カフェホッパーMAX", analyzing:"カフェブレイカー（分析中）" },
+    "デート": { great:"しあわせ設計士", good:"ロマンスプランナー", bad:"見栄ロマンサー", verybad:"デート散財プリンス", analyzing:"ロマンスプランナー（分析中）" },
+    "趣味": { great:"熱中バランサー", good:"ホビーマスター", bad:"沼落ちコレクター", verybad:"趣味課金カイザー", analyzing:"ホビーマスター（分析中）" },
+    "仕事": { great:"成果ブースター", good:"ワークドライバー", bad:"焦り買いワーカー", verybad:"仕事道具メガトン", analyzing:"ワークドライバー（分析中）" },
+  };
+  const fallback = {
+    great: "輝きのバランス志向",
+    good: "バランス志向",
+    bad: "ゆらぎのバランス志向",
+    verybad: "暴走バランス志向",
+    analyzing: "バランス志向（分析中）",
+  };
+  const names = table[category] || fallback;
+  return names[key] || names.good;
+}
+function getHomeCategoryKey(category){
+  const map = {
+    "食費":"food",
+    "外食費":"dineout",
+    "日用品":"daily",
+    "衣服":"fashion",
+    "美容":"beauty",
+    "交際費":"social",
+    "医療費":"medical",
+    "教育費":"education",
+    "交通費":"transport",
+    "コンビニ":"convenience",
+    "カフェ":"cafe",
+    "デート":"date",
+    "趣味":"hobby",
+    "仕事":"work",
+  };
+  return map[category] || "balance";
+}
+function getHomeCharacterAsset(category, tier){
+  const tierKey = getHomeTierKey(tier);
+  const categoryKey = getHomeCategoryKey(category);
+  return `assets/characters/home/${categoryKey}_${tierKey}.png`;
+}
+function homeAvatarHTML(category, tier, mood){
+  const src = getHomeCharacterAsset(category, tier);
+  const alt = `${category || "バランス"} / ${tier} キャラクター`;
+  return `
+    <img class="homeAvatarImg" src="${src}" alt="${escapeHtml(alt)}"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <span class="homeAvatarFallback">${mood}</span>
+  `;
+}
+
 let REPORT_TAB = "overview";
 function switchReportTab(tab){
   const exists = !!document.querySelector(`.reportPane#reportPane-${tab}`);
@@ -2661,10 +2751,19 @@ function renderWeeklyInline(){
   variableTx.forEach(t=>{
     byCat[t.category] = (byCat[t.category] || 0) + Number(t.amount || 0);
   });
-  const topEntry = Object.entries(byCat).sort((a,b)=> b[1] - a[1])[0];
-  const topCategory = topEntry ? topEntry[0] : "未設定";
-  const topAmount = topEntry ? Number(topEntry[1] || 0) : 0;
-  const topShare = variableTotal > 0 ? Math.round((topAmount / variableTotal) * 100) : 0;
+  const adjustedEntries = Object.entries(byCat).map(([cat, amt])=>({
+    cat,
+    rawAmount: Number(amt || 0),
+    // Share correction: suppress dominance of very large categories.
+    adjustedWeight: Math.sqrt(Math.max(Number(amt || 0), 0)),
+  }));
+  const adjustedTotal = adjustedEntries.reduce((sum, row)=> sum + row.adjustedWeight, 0);
+  const topEntry = adjustedEntries.sort((a,b)=> b.adjustedWeight - a.adjustedWeight)[0];
+  const topCategory = topEntry ? topEntry.cat : "未設定";
+  const topAmount = topEntry ? topEntry.rawAmount : 0;
+  const topShare = adjustedTotal > 0
+    ? Math.round((topEntry.adjustedWeight / adjustedTotal) * 100)
+    : 0;
 
   const prof = getProfile();
   const valueTop3 = getValueTop3FromProfile(prof);
@@ -2692,8 +2791,8 @@ function renderWeeklyInline(){
     : null;
   let characterScore = weightedBase;
   if(Number.isFinite(characterScore)){
-    if(topShare >= 50) characterScore -= 10;
-    else if(topShare >= 40) characterScore -= 5;
+    if(topShare >= 40) characterScore -= 10;
+    else if(topShare >= 32) characterScore -= 5;
     if(Number.isFinite(variableDiffRate)){
       if(variableDiffRate > 0.25) characterScore -= 8;
       else if(variableDiffRate > 0.10) characterScore -= 4;
@@ -2703,7 +2802,7 @@ function renderWeeklyInline(){
   }
 
   const dataEnough = variableTx.length >= 5 && subjective.coverage >= 0.4;
-  const tier = !dataEnough || !Number.isFinite(characterScore)
+  let tier = !dataEnough || !Number.isFinite(characterScore)
     ? "分析中"
     : characterScore >= 82
       ? "めっちゃ良い"
@@ -2713,21 +2812,41 @@ function renderWeeklyInline(){
           ? "悪い"
           : "めっちゃ悪い";
 
-  const archetype = (()=> {
-    const map = {
-      "食費":"グルメ探検家","外食費":"グルメ探検家","コンビニ":"グルメ探検家","カフェ":"グルメ探検家",
-      "交際費":"つながり重視","デート":"つながり重視",
-      "趣味":"ワクワク収集家","教育費":"成長コレクター","仕事":"成長コレクター",
-      "衣服":"セルフケア職人","美容":"セルフケア職人",
-      "日用品":"暮らし整え屋","医療費":"暮らし整え屋","交通費":"暮らし整え屋",
-    };
-    return map[topCategory] || "バランス志向";
-  })();
+  let displayCategory = topCategory;
+  let displayShare = topShare;
+  let archetype = getHomeCharacterName(displayCategory, tier);
 
   const daysInMonth = getDaysInMonth(monthStr) || 30;
   const daysWithEntry = new Set(allMonthTx.map(t=> t.date)).size;
-  const progressPct = Math.round((daysWithEntry / daysInMonth) * 100);
-  const xp = getXPProgress(getTotalXP());
+  const latestEntry = allMonthTx
+    .map(t=> t.date)
+    .filter(Boolean)
+    .sort()
+    .pop() || "";
+  const latestEntryLabel = latestEntry
+    ? `${latestEntry.slice(5,7)}/${latestEntry.slice(8,10)}`
+    : "未記録";
+  const previewMode = localStorage.getItem(LS_HOME_PREVIEW) || "auto";
+  const previewCategory = localStorage.getItem(LS_HOME_PREVIEW_CATEGORY) || "auto";
+  if(previewCategory !== "auto" && CATEGORIES.includes(previewCategory)){
+    displayCategory = previewCategory;
+    displayShare = (displayCategory === topCategory && topShare > 0) ? topShare : 42;
+    archetype = getHomeCharacterName(displayCategory, tier);
+  }
+  if(previewMode !== "auto"){
+    const preset = {
+      analyzing: { tier:"分析中", mood:"🙂", speech:"記録が増えると、あなたらしい使い方の傾向がはっきりしてきます。" },
+      great: { tier:"めっちゃ良い", mood:"🤩", speech:"納得できる使い方ができています。今月はかなり良い状態です。" },
+      good: { tier:"良い", mood:"😄", speech:"大きな崩れはなく、いいペースで使えています。" },
+      bad: { tier:"悪い", mood:"😟", speech:"使い方に少しブレがあります。内訳を見て1カテゴリだけ整えましょう。" },
+      verybad: { tier:"めっちゃ悪い", mood:"🥶", speech:"後悔につながる使い方が目立っています。今月は先に上限を決めて使うのが安全です。" },
+    }[previewMode];
+    if(preset){
+      tier = preset.tier;
+      archetype = getHomeCharacterName(displayCategory, tier);
+    }
+  }
+
   const mood = tier === "めっちゃ良い" ? "🤩"
     : tier === "良い" ? "😄"
     : tier === "悪い" ? "😟"
@@ -2745,17 +2864,22 @@ function renderWeeklyInline(){
 
   wrap.innerHTML = `
     <div class="homeHeroCard">
+      <div class="homeHeroHeader">
+        <span class="homeHeroEyebrow">今月のキャラクター</span>
+      </div>
       <div class="homeHeroTop">
-        <div class="homeAvatar">${mood}</div>
-        <div style="min-width:0;">
-          <div class="homeStateTitle">${escapeHtml(archetype)} / <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span></div>
-          <div class="homeStateSub">${topCategory !== "未設定" ? `主カテゴリ: ${escapeHtml(topCategory)} (${topShare}%)` : "主カテゴリ判定中"}${Number.isFinite(characterScore) ? ` / 判定スコア ${characterScore}` : ""}</div>
-          <div class="homeStateSub">${speech}</div>
+        <div class="homeAvatarWrap">
+          <div class="homeAvatar">${homeAvatarHTML(displayCategory, tier, mood)}</div>
+        </div>
+        <div class="homeStateBlock">
+          <div class="homeStateTitle">${escapeHtml(archetype)} <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span></div>
+          <div class="homeStateSub">${displayCategory !== "未設定" ? `主カテゴリ: ${escapeHtml(displayCategory)} (${displayShare}%)` : "主カテゴリ判定中"}${Number.isFinite(characterScore) ? ` / 判定スコア ${characterScore}` : ""}</div>
         </div>
       </div>
-      <div class="homeGrowthRow">
-        <div class="homeGrowthLabel">育成Lv ${xp.level} / 今月の記録進捗 ${daysWithEntry}/${daysInMonth}日</div>
-        <div class="homeGrowthBar"><span style="width:${progressPct}%;"></span></div>
+      <div class="homeSpeech">${speech}</div>
+      <div class="homeRecordMeta">
+        <span class="homeRecordPill">今月の記録あり: ${daysWithEntry}日</span>
+        <span class="homeRecordPill">最終記録: ${latestEntryLabel}</span>
       </div>
     </div>
   `;
@@ -2763,6 +2887,24 @@ function renderWeeklyInline(){
   if(section) section.style.display = "";
 }
 window.renderWeeklyInline = renderWeeklyInline;
+
+function setHomePreviewMode(mode){
+  const allow = new Set(["auto","analyzing","great","good","bad","verybad"]);
+  const value = allow.has(mode) ? mode : "auto";
+  localStorage.setItem(LS_HOME_PREVIEW, value);
+  renderWeeklyInline();
+  toast(`表示確認: ${value === "auto" ? "自動判定" : value}`);
+}
+window.setHomePreviewMode = setHomePreviewMode;
+
+function setHomePreviewCategory(category){
+  const allow = new Set(["auto", ...CATEGORIES]);
+  const value = allow.has(category) ? category : "auto";
+  localStorage.setItem(LS_HOME_PREVIEW_CATEGORY, value);
+  renderWeeklyInline();
+  toast(`カテゴリ確認: ${value === "auto" ? "自動" : value}`);
+}
+window.setHomePreviewCategory = setHomePreviewCategory;
 
 function animateGrowth(scope){
   const root = scope || document;
@@ -4349,6 +4491,10 @@ function init(){
     renderMonthlyReport();
   });
   $("incomeYen")?.addEventListener("input", ()=>{});
+  if($("homePreviewCategory")){
+    const current = localStorage.getItem(LS_HOME_PREVIEW_CATEGORY) || "auto";
+    $("homePreviewCategory").value = CATEGORIES.includes(current) ? current : "auto";
+  }
 
   loadProfileToUI();
   [1,2,3,4,5].forEach(i=>{

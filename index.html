@@ -512,6 +512,37 @@
       <div id="score-weekly" style="display:block;">
         <div id="weeklyInline"></div>
       </div>
+      <details class="homePreviewTools">
+        <summary>表示確認</summary>
+        <div class="homePreviewRow">
+          <label class="small muted" for="homePreviewCategory">カテゴリ確認</label>
+          <select id="homePreviewCategory" onchange="setHomePreviewCategory(this.value)">
+            <option value="auto">自動（実データ）</option>
+            <option value="食費">食費</option>
+            <option value="外食費">外食費</option>
+            <option value="日用品">日用品</option>
+            <option value="衣服">衣服</option>
+            <option value="美容">美容</option>
+            <option value="交際費">交際費</option>
+            <option value="医療費">医療費</option>
+            <option value="教育費">教育費</option>
+            <option value="交通費">交通費</option>
+            <option value="コンビニ">コンビニ</option>
+            <option value="カフェ">カフェ</option>
+            <option value="デート">デート</option>
+            <option value="趣味">趣味</option>
+            <option value="仕事">仕事</option>
+          </select>
+        </div>
+        <div class="homePreviewBtns">
+          <button class="ghost" type="button" onclick="setHomePreviewMode('auto')">自動</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('analyzing')">分析中</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('great')">めっちゃ良い</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('good')">良い</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('bad')">悪い</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('verybad')">めっちゃ悪い</button>
+        </div>
+      </details>
       <div id="monthlyGate" style="margin-top:12px;"></div>
       <input type="hidden" id="scoreMonth">
       <input type="hidden" id="savingYen">
