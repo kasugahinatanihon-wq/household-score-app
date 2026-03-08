@@ -1857,9 +1857,23 @@ function renderMonthlyReport(){
         : "先月と同水準です";
 
   if(quickTotal) quickTotal.textContent = `${fmtYen(Math.round(total))}円`;
-  if(quickMoM) quickMoM.textContent = prevTotal > 0
-    ? `${momDiff > 0 ? "+" : ""}${fmtYen(Math.round(momDiff))}円 (${momPct > 0 ? "+" : ""}${momPct}%)`
-    : "比較データなし";
+  if(quickMoM){
+    quickMoM.classList.remove("is-up", "is-down", "is-flat", "is-nodata");
+    if(prevTotal > 0){
+      const dir = momDiff > 0 ? "▲ " : momDiff < 0 ? "▼ " : "■ ";
+      quickMoM.textContent = `${dir}${momDiff > 0 ? "+" : ""}${fmtYen(Math.round(momDiff))}円 (${momPct > 0 ? "+" : ""}${momPct}%)`;
+      if(momDiff > 0){
+        quickMoM.classList.add("is-up");
+      }else if(momDiff < 0){
+        quickMoM.classList.add("is-down");
+      }else{
+        quickMoM.classList.add("is-flat");
+      }
+    }else{
+      quickMoM.textContent = "比較データなし";
+      quickMoM.classList.add("is-nodata");
+    }
+  }
   if(quickTopCat) quickTopCat.textContent = topCat;
   if(quickInsight) quickInsight.textContent = insight;
   if(actionBox){
