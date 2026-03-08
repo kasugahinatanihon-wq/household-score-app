@@ -863,6 +863,13 @@ function syncReportMonthDefault(){
 function switchScreen(name){
   const map = { input:"screen-input", list:"screen-list", report:"screen-report", score:"screen-score", profile:"screen-profile" };
   const titleMap = { input:"入力", list:"カレンダー", report:"レポート", score:"ホーム", profile:"設定" };
+  const hintMap = {
+    input:"カテゴリを選んで今日の支出を記録する",
+    list:"日付ごとの履歴を見て修正する",
+    report:"今月の傾向を見て改善ポイントをつかむ",
+    score:"今週の状態を確認して次の一手を決める",
+    profile:"前提条件と価値観を整える"
+  };
   Object.values(map).forEach(id=>{
     const el = $(id);
     if(el) el.classList.toggle("active", id === map[name]);
@@ -873,6 +880,7 @@ function switchScreen(name){
   });
   $("scoreQuickBtn")?.classList.toggle("active", name === "score");
   if($("currentScreenTitle")) $("currentScreenTitle").textContent = titleMap[name] || "ホーム";
+  if($("currentScreenHint")) $("currentScreenHint").textContent = hintMap[name] || "";
 
   if(name === "list"){
     renderCalendar();
