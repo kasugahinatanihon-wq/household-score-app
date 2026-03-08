@@ -644,6 +644,7 @@ function getAuthAccessToken(){
 }
 function getAuthUserId(){
   const s = loadAuthSession();
+  if(!s?.access_token) return "";
   return s?.user?.id || "";
 }
 function setAuthStatus(msg, isError = false){
@@ -661,7 +662,7 @@ function setHouseholdStatus(msg, isError = false){
   refreshHouseholdControls();
 }
 function refreshHouseholdControls(){
-  const loggedIn = !!getAuthUserId();
+  const loggedIn = !!getAuthAccessToken();
   const hasHousehold = !!getActiveHouseholdId();
   const createBtn = $("createHouseholdBtn");
   const joinBtn = $("joinHouseholdBtn");
@@ -922,7 +923,7 @@ function makeInviteCode(len = 6){
 }
 async function createHousehold(){
   const name = String($("householdName")?.value || "").trim() || "わが家";
-  if(!getAuthUserId()){
+  if(!getAuthAccessToken() || !getAuthUserId()){
     toast("先にログインしてください");
     return;
   }
@@ -949,7 +950,11 @@ async function createHousehold(){
     toast("世帯を作成しました");
   }catch(err){
     console.error(err);
-    setHouseholdStatus(`世帯作成失敗: ${err.message}`, true);
+    if(String(err?.message || "").includes("42501")){
+      setHouseholdStatus("世帯作成失敗: ログインをやり直してから再実行してください", true);
+    }else{
+      setHouseholdStatus(`世帯作成失敗: ${err.message}`, true);
+    }
     toast("世帯作成失敗");
   }
 }
@@ -960,7 +965,7 @@ async function joinHousehold(){
     toast("参加コードを入力してください");
     return;
   }
-  if(!getAuthUserId()){
+  if(!getAuthAccessToken() || !getAuthUserId()){
     toast("先にログインしてください");
     return;
   }
