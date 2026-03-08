@@ -34,6 +34,10 @@ const DEFAULT_PROFILE = {
   valueCats:["","","","",""],
   valueTop3:[]
 };
+const VALUE_CATEGORY_SUGGESTIONS = [
+  "リフレッシュ","家族時間","自己投資","安心感","時短","健康",
+  "ご褒美","体験","人付き合い","学び","挑戦","趣味没頭"
+];
 const SAT_LEVELS = [
   { value:5, label:"😊 すごく納得" },
   { value:4, label:"🙂 まあ納得" },
@@ -822,7 +826,6 @@ function setEntryStep(step){
   entryStep = step;
   const btn = $("entryPrimaryBtn");
   if(!btn) return;
-  btn.style.display = (step === "quality") ? "none" : "";
   btn.textContent = (step === "memo") ? "保存" : "次へ";
 }
 
@@ -1058,6 +1061,8 @@ function openEntryModal(dt, opts = {}){
   $("entryMemoTop").value = "";
   $("entrySat").value = "";
   $("entryValueTag") && ($("entryValueTag").value = "");
+  $("entryValueTagCustom") && ($("entryValueTagCustom").value = "");
+  $("entryValueTagCustomWrap") && ($("entryValueTagCustomWrap").style.display = "none");
 
   $("entryCategoryHidden").value = "";
   document.querySelectorAll("#entryCatArea .catCard").forEach(c=> c.classList.remove("active"));
@@ -1154,7 +1159,7 @@ function saveEntry(){
   }
 
   const sat = $("entrySat").value ? Number($("entrySat").value) : null;
-  const valueTag = ($("entryValueTag")?.value || "").trim();
+  const valueTag = resolveValueTag("entryValueTag", "entryValueTagCustom");
   const memoTop = ($("entryMemoTop").value||"").trim();
   const note = memoTop;
 
@@ -1189,12 +1194,6 @@ function handleEntryPrimary(){
   }
 
   if(entryStep === "quality"){
-    const sat = ($("entrySat")?.value || "").trim();
-    const valueTag = ($("entryValueTag")?.value || "").trim();
-    if(!sat || !valueTag){
-      toast("納得度と価値観カテゴリを選んでね");
-      return;
-    }
     showEntryStep("memo");
     return;
   }
@@ -1236,13 +1235,14 @@ function openEditModal(id){
   const tx = loadTx().find(t=>t.id === id);
   if(!tx) return;
   const prof = getProfile();
-  updateValueCategorySelects(normalizeValueCats(prof.valueCats).filter(Boolean));
+  const valueCats = normalizeValueCats(prof.valueCats).filter(Boolean);
+  updateValueCategorySelects(valueCats);
   $("editId") && ($("editId").value = tx.id);
   $("editDate") && ($("editDate").value = tx.date || "");
   $("editCategory") && ($("editCategory").value = tx.category || "");
   $("editAmount") && ($("editAmount").value = tx.amount || "");
   $("editSat") && ($("editSat").value = (tx.satisfaction!=null ? String(tx.satisfaction) : ""));
-  $("editValueTag") && ($("editValueTag").value = tx.valueTag || "");
+  setValueTagSelection("editValueTag", "editValueTagCustom", tx.valueTag || "", valueCats);
   $("editMemo") && ($("editMemo").value = tx.memo || "");
   openModal("editModal");
 }
@@ -1264,7 +1264,7 @@ function saveEdit(){
   const category = $("editCategory")?.value || list[idx].category;
   const memo = ($("editMemo")?.value || "").trim();
   const satRaw = ($("editSat")?.value || "").trim();
-  const valueTag = ($("editValueTag")?.value || "").trim();
+  const valueTag = resolveValueTag("editValueTag", "editValueTagCustom");
 
   list[idx] = {
     ...list[idx],
@@ -3391,7 +3391,63 @@ function buildValueOptionHTML(cats, withEmpty){
   const base = withEmpty ? `<option value="">未設定</option>` : "";
   return base + cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
 }
-function updateValueCategorySelects(cats){
+function buildValueTagOptionHTML(cats, current = ""){
+  const normalized = dedupeList((cats || []).map(c=> String(c || "").trim()).filter(Boolean));
+  const options = [`<option value="">未設定</option>`];
+  options.push(...normalized.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`));
+  options.push(`<option value="__none__">該当なし</option>`);
+  options.push(`<option value="__custom__">その他（自由入力）</option>`);
+  if(current && !normalized.includes(current)){
+    options.push(`<option value="${escapeHtml(current)}">${escapeHtml(current)}（登録済み）</option>`);
+  }
+  return options.join("");
+}
+function setValueTagSelection(selectId, customId, value, cats){
+  const selectEl = $(selectId);
+  const customEl = $(customId);
+  const wrapEl = $(`${customId}Wrap`);
+  if(!selectEl) return;
+  const current = String(value || "").trim();
+  selectEl.innerHTML = buildValueTagOptionHTML(cats, current);
+  if(!current){
+    selectEl.value = "";
+    if(customEl) customEl.value = "";
+    if(wrapEl) wrapEl.style.display = "none";
+    return;
+  }
+  const values = Array.from(selectEl.options).map(o=> o.value);
+  if(values.includes(current)){
+    selectEl.value = current;
+    if(customEl) customEl.value = "";
+    if(wrapEl) wrapEl.style.display = "none";
+    return;
+  }
+  selectEl.value = "__custom__";
+  if(customEl) customEl.value = current;
+  if(wrapEl) wrapEl.style.display = "";
+}
+function toggleValueTagCustom(selectId, customId){
+  const selectEl = $(selectId);
+  const customEl = $(customId);
+  const wrapEl = $(`${customId}Wrap`);
+  if(!selectEl || !wrapEl) return;
+  const showCustom = selectEl.value === "__custom__";
+  wrapEl.style.display = showCustom ? "" : "none";
+  if(showCustom){
+    setTimeout(()=> customEl?.focus(), 0);
+  }else if(customEl){
+    customEl.value = "";
+  }
+}
+function resolveValueTag(selectId, customId){
+  const raw = String($(selectId)?.value || "").trim();
+  if(!raw || raw === "__none__") return "";
+  if(raw === "__custom__"){
+    return String($(customId)?.value || "").trim();
+  }
+  return raw;
+}
+function updateValueCategorySelects(cats, currentValueTag = ""){
   const options = buildValueOptionHTML(cats, true);
   ["valueTop1","valueTop2","valueTop3"].forEach(id=>{
     const el = $(id);
@@ -3400,13 +3456,8 @@ function updateValueCategorySelects(cats){
     el.innerHTML = options;
     if(current && cats.includes(current)) el.value = current;
   });
-  ["entryValueTag","editValueTag"].forEach(id=>{
-    const el = $(id);
-    if(!el) return;
-    const current = el.value || "";
-    el.innerHTML = options;
-    if(current && cats.includes(current)) el.value = current;
-  });
+  setValueTagSelection("entryValueTag", "entryValueTagCustom", currentValueTag || $("entryValueTag")?.value || "", cats);
+  setValueTagSelection("editValueTag", "editValueTagCustom", currentValueTag || $("editValueTag")?.value || "", cats);
 }
 function collectValueCatsFromUI(){
   return [1,2,3,4,5].map(i=> ($(`valueCat${i}`)?.value || "").trim());
@@ -3586,6 +3637,7 @@ function renderSurveyStep(){
   if(titleEl) titleEl.textContent = step?.question || "あなたのことを教えてください";
   if(hintEl) hintEl.textContent = step?.hint || "答えやすいものからサクッと進めましょう。";
   updateSurveyProgress(steps.length ? surveyStepIndex + 1 : 0, steps.length);
+  focusCurrentSurveyField();
 }
 
 function getCurrentSurveyStep(){
@@ -3652,6 +3704,44 @@ function collectSurveyValueCats(){
   ].map(v=> String(v || "").trim()).filter(Boolean)).slice(0,3);
 }
 
+function collectValueCategoryInputIds(mode){
+  if(mode === "survey") return ["surveyValueCat1","surveyValueCat2","surveyValueCat3"];
+  return ["valueCat1","valueCat2","valueCat3","valueCat4","valueCat5"];
+}
+
+function fillFirstEmptyValueCategory(mode, text){
+  const ids = collectValueCategoryInputIds(mode);
+  for(const id of ids){
+    const el = $(id);
+    if(!el) continue;
+    if(!String(el.value || "").trim()){
+      el.value = text;
+      el.dispatchEvent(new Event("input", { bubbles:true }));
+      el.focus();
+      return;
+    }
+  }
+  const last = $(ids[ids.length - 1]);
+  if(last){
+    last.value = text;
+    last.dispatchEvent(new Event("input", { bubbles:true }));
+    last.focus();
+  }
+}
+
+function renderValueCategorySuggestions(mode, targetId){
+  const wrap = $(targetId);
+  if(!wrap) return;
+  wrap.innerHTML = VALUE_CATEGORY_SUGGESTIONS
+    .map(item=>`<button type="button" class="valueExampleChip" data-value-example="${escapeHtml(item)}">${escapeHtml(item)}</button>`)
+    .join("");
+  wrap.querySelectorAll("[data-value-example]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      fillFirstEmptyValueCategory(mode, btn.dataset.valueExample || "");
+    });
+  });
+}
+
 function openSurvey(){
   const prof = getProfile();
   if($("surveyHousehold")){
@@ -3705,6 +3795,73 @@ function updateSurveyHousingFields(){
   if(principalWrap) principalWrap.style.display = showPrincipal ? "" : "none";
   if(!showPrincipal && principalInput) principalInput.value = "";
   renderSurveyStep();
+}
+
+function focusCurrentSurveyField(){
+  const step = getCurrentSurveyStep();
+  const id = step?.fieldId;
+  const el = id ? $(id) : null;
+  if(!el) return;
+  setTimeout(()=>{
+    el.focus();
+    if(el instanceof HTMLInputElement && (el.type === "number" || el.type === "text")){
+      const len = el.value?.length || 0;
+      el.setSelectionRange(len, len);
+    }
+  }, 0);
+}
+
+function handleSurveyEnterKey(e){
+  if(e.key !== "Enter") return;
+  const step = getCurrentSurveyStep();
+  if(!step) return;
+  const target = e.target;
+  if(!(target instanceof HTMLElement)) return;
+  if(step.type === "valuecats"){
+    const ids = ["surveyValueCat1","surveyValueCat2","surveyValueCat3"];
+    const idx = ids.findIndex(id=> $(id) === target);
+    if(idx >= 0){
+      e.preventDefault();
+      const nextId = ids[idx + 1];
+      if(nextId && !String($(nextId)?.value || "").trim()){
+        $(nextId)?.focus();
+        return;
+      }
+      const steps = getSurveyStepsForCurrentHousing();
+      if(surveyStepIndex >= steps.length - 1){
+        finishSurvey();
+      }else{
+        nextSurveyStep();
+      }
+      return;
+    }
+  }
+  if(step.fieldId && $(step.fieldId) === target){
+    e.preventDefault();
+    const steps = getSurveyStepsForCurrentHousing();
+    if(surveyStepIndex >= steps.length - 1){
+      finishSurvey();
+    }else{
+      nextSurveyStep();
+    }
+  }
+}
+
+function bindSurveyKeyboardFlow(){
+  const ids = dedupeList(SURVEY_STEPS.map(s=> s.fieldId).filter(Boolean));
+  ids.forEach(id=>{
+    const el = $(id);
+    if(!el) return;
+    el.addEventListener("keydown", handleSurveyEnterKey);
+    if(el instanceof HTMLSelectElement){
+      el.addEventListener("change", ()=>{
+        const step = getCurrentSurveyStep();
+        if(step?.fieldId === id && id !== "surveyHousingType"){
+          nextSurveyStep();
+        }
+      });
+    }
+  });
 }
 
 function finishSurvey(){
@@ -3825,16 +3982,21 @@ function init(){
   $("surveyHousingType")?.addEventListener("change", updateSurveyHousingFields);
   $("surveyNextBtn")?.addEventListener("click", nextSurveyStep);
   $("surveyPrevBtn")?.addEventListener("click", prevSurveyStep);
+  bindSurveyKeyboardFlow();
   updateSurveyHousingFields();
+  renderValueCategorySuggestions("survey", "surveyValueExampleChips");
+  renderValueCategorySuggestions("profile", "profileValueExampleChips");
 
   const tryAdvanceQuality = ()=>{
     if(entryStep !== "quality") return;
     const sat = ($("entrySat")?.value || "").trim();
-    const valueTag = ($("entryValueTag")?.value || "").trim();
-    if(sat && valueTag) showEntryStep("memo");
+    const valueTag = resolveValueTag("entryValueTag", "entryValueTagCustom");
+    if(sat || valueTag) showEntryStep("memo");
   };
   $("entrySat")?.addEventListener("change", tryAdvanceQuality);
   $("entryValueTag")?.addEventListener("change", tryAdvanceQuality);
+  $("entryValueTag")?.addEventListener("change", ()=> toggleValueTagCustom("entryValueTag", "entryValueTagCustom"));
+  $("editValueTag")?.addEventListener("change", ()=> toggleValueTagCustom("editValueTag", "editValueTagCustom"));
 
   $("entryPrevDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, -1), { keepCategory:true }));
   $("entryNextDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, +1), { keepCategory:true }));
