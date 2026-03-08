@@ -3987,14 +3987,6 @@ function init(){
   renderValueCategorySuggestions("survey", "surveyValueExampleChips");
   renderValueCategorySuggestions("profile", "profileValueExampleChips");
 
-  const tryAdvanceQuality = ()=>{
-    if(entryStep !== "quality") return;
-    const sat = ($("entrySat")?.value || "").trim();
-    const valueTag = resolveValueTag("entryValueTag", "entryValueTagCustom");
-    if(sat || valueTag) showEntryStep("memo");
-  };
-  $("entrySat")?.addEventListener("change", tryAdvanceQuality);
-  $("entryValueTag")?.addEventListener("change", tryAdvanceQuality);
   $("entryValueTag")?.addEventListener("change", ()=> toggleValueTagCustom("entryValueTag", "entryValueTagCustom"));
   $("editValueTag")?.addEventListener("change", ()=> toggleValueTagCustom("editValueTag", "editValueTagCustom"));
 
