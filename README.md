@@ -19,7 +19,17 @@ HTML / CSS / JavaScript (localStorage)
 ```bash
 export DATABASE_URL="$DATABASE_URL_PROD"
 psql "$DATABASE_URL" -f db/migrations/0001_init_schema.sql
+psql "$DATABASE_URL" -f db/migrations/0002_enable_rls_header_scope.sql
 ```
+
+### Security hardening (prod-like)
+- `0002_enable_rls_header_scope.sql` enables RLS on:
+  - `users`
+  - `user_profiles`
+  - `monthly_settings`
+  - `transactions`
+  - `app_events`
+- App sends `x-anon-id` header and policies scope each row to the same anonymous id.
 
 ### App to Supabase wiring (current)
 1. Open `設定` → `Supabase連携（本番データ収集）`

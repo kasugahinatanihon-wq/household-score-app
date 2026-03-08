@@ -591,6 +591,20 @@ function saveJSON(key, obj){
 function getSupabaseConfig(){
   return loadJSON(LS_SUPABASE, { url:"", anonKey:"" });
 }
+function normalizeSupabaseBaseUrl(raw){
+  let url = String(raw || "").trim();
+  if(!url) return "";
+  // If DB host is pasted (e.g. db.<ref>.supabase.co), convert to project API host.
+  if(/^db\.[a-z0-9-]+\.supabase\.co$/i.test(url)){
+    url = `https://${url.replace(/^db\./i, "")}`;
+  }
+  if(/^https?:\/\/db\.[a-z0-9-]+\.supabase\.co$/i.test(url)){
+    url = url.replace(/^https?:\/\/db\./i, "https://");
+  }
+  url = url.replace(/\/+$/, "");
+  url = url.replace(/\/rest\/v1(?:\/.*)?$/i, "");
+  return url;
+}
 function setSupabaseStatus(msg, isError = false){
   const el = $("supabaseSyncStatus");
   if(!el) return;
@@ -598,9 +612,10 @@ function setSupabaseStatus(msg, isError = false){
   el.style.color = isError ? "#b91c1c" : "";
 }
 function saveSupabaseConfig(){
-  const url = String($("supabaseUrl")?.value || "").trim().replace(/\/+$/, "");
+  const url = normalizeSupabaseBaseUrl($("supabaseUrl")?.value || "");
   const anonKey = String($("supabaseAnonKey")?.value || "").trim();
   saveJSON(LS_SUPABASE, { url, anonKey });
+  if($("supabaseUrl")) $("supabaseUrl").value = url;
   setSupabaseStatus(url && anonKey ? "接続情報を保存しました" : "未接続");
   toast("接続情報を保存しました");
 }
@@ -622,9 +637,11 @@ function monthToDate(m){
 async function supabaseRequest(path, { method = "GET", body = null, prefer = "" } = {}){
   const cfg = getSupabaseConfig();
   if(!cfg.url || !cfg.anonKey) throw new Error("Supabase未設定");
+  const anonId = getAnonId();
   const headers = {
     apikey: cfg.anonKey,
     Authorization: `Bearer ${cfg.anonKey}`,
+    "x-anon-id": anonId,
   };
   if(body !== null) headers["Content-Type"] = "application/json";
   if(prefer) headers["Prefer"] = prefer;
