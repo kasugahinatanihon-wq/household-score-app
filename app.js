@@ -862,6 +862,7 @@ function syncReportMonthDefault(){
 
 function switchScreen(name){
   const map = { input:"screen-input", list:"screen-list", report:"screen-report", score:"screen-score", profile:"screen-profile" };
+  const titleMap = { input:"入力", list:"カレンダー", report:"レポート", score:"育成状況", profile:"設定・プロフィール" };
   Object.values(map).forEach(id=>{
     const el = $(id);
     if(el) el.classList.toggle("active", id === map[name]);
@@ -871,6 +872,7 @@ function switchScreen(name){
     if(b) b.classList.toggle("active", t===name);
   });
   $("scoreQuickBtn")?.classList.toggle("active", name === "score");
+  if($("currentScreenTitle")) $("currentScreenTitle").textContent = titleMap[name] || "";
 
   if(name === "list"){
     renderCalendar();

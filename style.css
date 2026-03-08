@@ -75,6 +75,17 @@ header{
   border-bottom:none;
   z-index:5;
 }
+.appHeaderBar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.appHeaderTitle{
+  font-size:14px;
+  font-weight:900;
+  color:#0f172a;
+  letter-spacing:.01em;
+}
 
 h1{ margin:0; font-size:22px; font-weight:900; letter-spacing:.2px; }
 .brandTitle{ display:flex; align-items:center; gap:10px; }
@@ -164,6 +175,7 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   .row{ grid-template-columns:1fr; }
   .wrap{ width:100%; padding:0 10px; }
   .tabs{ width:100%; padding:10px 10px; }
+  .appHeaderTitle{ font-size:13px; }
   .screen > .box{
     background:transparent;
     border:none;
