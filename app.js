@@ -16,6 +16,8 @@ const LS_HOME_PREVIEW_CATEGORY = "home_preview_category";
 const LS_PREMIUM = "premium_plan";
 const LS_SUPABASE = "supabase_config_v1";
 const LS_REMOTE_USER = "remote_user_v1";
+const LS_AUTH_SESSION = "supabase_auth_session_v1";
+const LS_ACTIVE_HOUSEHOLD = "active_household_id_v1";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
 const SAT_SCALE_VERSION = 2;
@@ -628,6 +630,212 @@ function saveSupabaseConfig(){
   toast("接続情報を保存しました");
 }
 window.saveSupabaseConfig = saveSupabaseConfig;
+function loadAuthSession(){
+  return loadJSON(LS_AUTH_SESSION, null);
+}
+function saveAuthSession(session){
+  saveJSON(LS_AUTH_SESSION, session || null);
+}
+function getAuthAccessToken(){
+  const s = loadAuthSession();
+  return s?.access_token || "";
+}
+function getAuthUserId(){
+  const s = loadAuthSession();
+  return s?.user?.id || "";
+}
+function setAuthStatus(msg, isError = false){
+  const el = $("authStatus");
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? "#b91c1c" : "";
+}
+function setHouseholdStatus(msg, isError = false){
+  const el = $("householdStatus");
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? "#b91c1c" : "";
+}
+function getActiveHouseholdId(){
+  return String(localStorage.getItem(LS_ACTIVE_HOUSEHOLD) || "");
+}
+function setActiveHouseholdId(householdId){
+  if(householdId){
+    localStorage.setItem(LS_ACTIVE_HOUSEHOLD, householdId);
+  }else{
+    localStorage.removeItem(LS_ACTIVE_HOUSEHOLD);
+  }
+}
+async function supabaseAuthRequest(path, { method = "POST", body = null } = {}){
+  const cfg = getSupabaseConfig();
+  if(!cfg.url || !cfg.anonKey) throw new Error("Supabase未設定");
+  const headers = {
+    apikey: cfg.anonKey,
+    "Content-Type": "application/json",
+  };
+  const res = await fetch(`${cfg.url}/auth/v1/${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : {};
+  if(!res.ok){
+    throw new Error(json?.msg || json?.error_description || json?.error || `Auth error ${res.status}`);
+  }
+  return json;
+}
+async function signUpWithEmail(){
+  const email = String($("authEmail")?.value || "").trim();
+  const password = String($("authPassword")?.value || "");
+  if(!email || !password){
+    toast("メールアドレスとパスワードを入力してください");
+    return;
+  }
+  try{
+    const session = await supabaseAuthRequest("signup", {
+      body: { email, password }
+    });
+    if(session?.access_token){
+      saveAuthSession(session);
+      await ensureRemoteUser();
+      await refreshHouseholdState();
+      setAuthStatus(`ログイン中: ${email}`);
+      toast("登録してログインしました");
+      return;
+    }
+    setAuthStatus("確認メールを送信しました。メール確認後にログインしてください");
+    toast("確認メールを送信しました");
+  }catch(err){
+    console.error(err);
+    setAuthStatus(`登録失敗: ${err.message}`, true);
+    toast("登録失敗");
+  }
+}
+window.signUpWithEmail = signUpWithEmail;
+async function signInWithEmail(){
+  const email = String($("authEmail")?.value || "").trim();
+  const password = String($("authPassword")?.value || "");
+  if(!email || !password){
+    toast("メールアドレスとパスワードを入力してください");
+    return;
+  }
+  try{
+    const session = await supabaseAuthRequest("token?grant_type=password", {
+      body: { email, password }
+    });
+    saveAuthSession(session);
+    await ensureRemoteUser();
+    await refreshHouseholdState();
+    setAuthStatus(`ログイン中: ${email}`);
+    toast("ログインしました");
+  }catch(err){
+    console.error(err);
+    setAuthStatus(`ログイン失敗: ${err.message}`, true);
+    toast("ログイン失敗");
+  }
+}
+window.signInWithEmail = signInWithEmail;
+function signOutAccount(){
+  saveAuthSession(null);
+  setActiveHouseholdId("");
+  setAuthStatus("未ログイン");
+  setHouseholdStatus("世帯未参加");
+  toast("ログアウトしました");
+}
+window.signOutAccount = signOutAccount;
+function makeInviteCode(len = 6){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for(let i = 0; i < len; i += 1){
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+async function createHousehold(){
+  const name = String($("householdName")?.value || "").trim() || "わが家";
+  if(!getAuthUserId()){
+    toast("先にログインしてください");
+    return;
+  }
+  try{
+    const userId = await ensureRemoteUser();
+    const code = makeInviteCode(6);
+    const created = await supabaseRequest("households?select=id,name,invite_code", {
+      method: "POST",
+      body: { name, invite_code: code, created_by: userId },
+      prefer: "return=representation"
+    });
+    const household = created?.[0];
+    if(!household?.id) throw new Error("世帯作成に失敗しました");
+    await supabaseRequest("household_members?on_conflict=household_id,user_id", {
+      method: "POST",
+      body: { household_id: household.id, user_id: userId, role: "owner" },
+      prefer: "resolution=merge-duplicates,return=minimal"
+    });
+    setActiveHouseholdId(household.id);
+    setHouseholdStatus(`参加中: ${household.name} / コード ${household.invite_code}`);
+    toast("世帯を作成しました");
+  }catch(err){
+    console.error(err);
+    setHouseholdStatus(`世帯作成失敗: ${err.message}`, true);
+    toast("世帯作成失敗");
+  }
+}
+window.createHousehold = createHousehold;
+async function joinHousehold(){
+  const code = String($("joinHouseholdCode")?.value || "").trim().toUpperCase();
+  if(!code){
+    toast("参加コードを入力してください");
+    return;
+  }
+  if(!getAuthUserId()){
+    toast("先にログインしてください");
+    return;
+  }
+  try{
+    const userId = await ensureRemoteUser();
+    const found = await supabaseRequest(`households?invite_code=eq.${encodeURIComponent(code)}&select=id,name,invite_code&limit=1`);
+    const household = found?.[0];
+    if(!household?.id) throw new Error("参加コードが見つかりません");
+    await supabaseRequest("household_members?on_conflict=household_id,user_id", {
+      method: "POST",
+      body: { household_id: household.id, user_id: userId, role: "member" },
+      prefer: "resolution=merge-duplicates,return=minimal"
+    });
+    setActiveHouseholdId(household.id);
+    setHouseholdStatus(`参加中: ${household.name} / コード ${household.invite_code}`);
+    toast("世帯に参加しました");
+  }catch(err){
+    console.error(err);
+    setHouseholdStatus(`参加失敗: ${err.message}`, true);
+    toast("参加失敗");
+  }
+}
+window.joinHousehold = joinHousehold;
+async function refreshHouseholdState(){
+  if(!getAuthUserId()){
+    setHouseholdStatus("世帯未参加");
+    return;
+  }
+  try{
+    const userId = await ensureRemoteUser();
+    const members = await supabaseRequest(`household_members?user_id=eq.${encodeURIComponent(userId)}&select=household_id,role&limit=1`);
+    const member = members?.[0];
+    if(!member?.household_id){
+      setActiveHouseholdId("");
+      setHouseholdStatus("世帯未参加");
+      return;
+    }
+    setActiveHouseholdId(member.household_id);
+    const households = await supabaseRequest(`households?id=eq.${encodeURIComponent(member.household_id)}&select=id,name,invite_code&limit=1`);
+    const h = households?.[0];
+    setHouseholdStatus(h?.name ? `参加中: ${h.name} / コード ${h.invite_code}` : "世帯参加中");
+  }catch(err){
+    console.error(err);
+    setHouseholdStatus(`世帯状態取得失敗: ${err.message}`, true);
+  }
+}
 function hasSupabaseConfig(){
   const cfg = getSupabaseConfig();
   return !!(cfg.url && cfg.anonKey);
@@ -646,9 +854,10 @@ async function supabaseRequest(path, { method = "GET", body = null, prefer = "" 
   const cfg = getSupabaseConfig();
   if(!cfg.url || !cfg.anonKey) throw new Error("Supabase未設定");
   const anonId = getAnonId();
+  const accessToken = getAuthAccessToken();
   const headers = {
     apikey: cfg.anonKey,
-    Authorization: `Bearer ${cfg.anonKey}`,
+    Authorization: `Bearer ${accessToken || cfg.anonKey}`,
     "x-anon-id": anonId,
   };
   if(body !== null) headers["Content-Type"] = "application/json";
@@ -668,6 +877,30 @@ async function supabaseRequest(path, { method = "GET", body = null, prefer = "" 
 }
 async function ensureRemoteUser(){
   const state = loadJSON(LS_REMOTE_USER, {});
+  const authUserId = getAuthUserId();
+  if(authUserId){
+    const s = loadAuthSession();
+    const anonymousId = `auth_${authUserId}`;
+    const payload = {
+      id: authUserId,
+      anonymous_id: anonymousId,
+      consent_version: "2026-03-ja-v1",
+      app_version: "web-local",
+      locale: "ja-JP",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo",
+    };
+    await supabaseRequest(
+      "users?on_conflict=id&select=id,anonymous_id",
+      { method: "POST", body: payload, prefer: "resolution=merge-duplicates,return=representation" }
+    );
+    saveJSON(LS_REMOTE_USER, {
+      ...state,
+      anonymousId,
+      userId: authUserId,
+      email: s?.user?.email || state.email || ""
+    });
+    return authUserId;
+  }
   if(state.userId) return state.userId;
   const anonymousId = getAnonId();
   const consentVersion = "2026-03-ja-v1";
@@ -690,6 +923,7 @@ async function ensureRemoteUser(){
 async function syncProfileToSupabase(){
   if(!hasSupabaseConfig()) return;
   const userId = await ensureRemoteUser();
+  const householdId = getActiveHouseholdId() || null;
   const profile = getProfile();
   const nowMonth = monthToDate(ym(new Date()));
   if(!nowMonth) return;
@@ -697,6 +931,7 @@ async function syncProfileToSupabase(){
   const top3 = getValueTop3FromProfile(profile);
   const payload = {
     user_id: userId,
+    household_id: householdId,
     household_size: Number(profile.householdSize || profile.household || 0) || null,
     age: Number(profile.age || 0) || null,
     annual_income_gross_yen: Number(profile.annualIncomeGross || 0) || null,
@@ -724,6 +959,7 @@ async function syncMonthlySettingsToSupabase(monthStr){
   const month = monthToDate(monthStr);
   if(!month) return;
   const userId = await ensureRemoteUser();
+  const householdId = getActiveHouseholdId() || null;
   const fixedAll = loadJSON(LS_FIXED, {});
   const fixed = fixedAll[monthStr] || {};
   const incomeAll = loadIncomeMap();
@@ -731,6 +967,7 @@ async function syncMonthlySettingsToSupabase(monthStr){
   const saving = savingAll[monthStr] || {};
   const payload = {
     user_id: userId,
+    household_id: householdId,
     month,
     income_yen: Number(incomeAll[monthStr] || 0),
     saving_yen: Number(saving.saving || 0),
@@ -748,9 +985,11 @@ async function syncMonthlySettingsToSupabase(monthStr){
   });
 }
 function txToRemotePayload(tx, userId){
+  const householdId = getActiveHouseholdId() || null;
   return {
     id: tx.id,
     user_id: userId,
+    household_id: householdId,
     occurred_on: tx.date,
     category: tx.category,
     amount_yen: Number(tx.amount || 0),
@@ -4937,6 +5176,10 @@ function init(){
   if($("supabaseUrl")) $("supabaseUrl").value = supa.url || "";
   if($("supabaseAnonKey")) $("supabaseAnonKey").value = supa.anonKey || "";
   setSupabaseStatus(supa.url && supa.anonKey ? "自動接続設定あり（未テスト）" : "未接続");
+  const auth = loadAuthSession();
+  if($("authEmail") && auth?.user?.email) $("authEmail").value = auth.user.email;
+  setAuthStatus(auth?.user?.email ? `ログイン中: ${auth.user.email}` : "未ログイン");
+  refreshHouseholdState();
 
   loadProfileToUI();
   [1,2,3,4,5].forEach(i=>{

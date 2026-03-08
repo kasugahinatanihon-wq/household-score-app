@@ -754,6 +754,41 @@
         </div>
       </details>
 
+      <details class="settingsSection">
+        <summary>アカウント・世帯共有</summary>
+        <div class="settingsBody">
+          <div class="small">夫婦で同じ家計を使う場合は、同じ世帯に参加します。</div>
+          <div class="row" style="margin-top:12px;">
+            <label>メールアドレス
+              <input type="email" id="authEmail" placeholder="example@mail.com">
+            </label>
+            <label>パスワード
+              <input type="password" id="authPassword" placeholder="8文字以上">
+            </label>
+          </div>
+          <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
+            <button class="ghost" type="button" onclick="signUpWithEmail()">新規登録</button>
+            <button class="ghost" type="button" onclick="signInWithEmail()">ログイン</button>
+            <button class="danger" type="button" onclick="signOutAccount()">ログアウト</button>
+          </div>
+          <div class="small muted" id="authStatus" style="margin-top:8px;">未ログイン</div>
+
+          <div class="row" style="margin-top:14px;">
+            <label>新しい世帯名
+              <input type="text" id="householdName" placeholder="例：田中家">
+            </label>
+            <label>参加コード
+              <input type="text" id="joinHouseholdCode" placeholder="例：AB12CD">
+            </label>
+          </div>
+          <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
+            <button class="ghost" type="button" onclick="createHousehold()">世帯を作成</button>
+            <button class="dark" type="button" onclick="joinHousehold()">コードで参加</button>
+          </div>
+          <div class="small muted" id="householdStatus" style="margin-top:8px;">世帯未参加</div>
+        </div>
+      </details>
+
       <div class="bar" style="margin-top:12px; justify-content:flex-end;">
         <button class="primary" onclick="saveProfile()">保存</button>
       </div>

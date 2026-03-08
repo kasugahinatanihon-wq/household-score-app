@@ -20,6 +20,7 @@ HTML / CSS / JavaScript (localStorage)
 export DATABASE_URL="$DATABASE_URL_PROD"
 psql "$DATABASE_URL" -f db/migrations/0001_init_schema.sql
 psql "$DATABASE_URL" -f db/migrations/0002_enable_rls_header_scope.sql
+psql "$DATABASE_URL" -f db/migrations/0003_auth_household_model.sql
 ```
 
 ### Security hardening (prod-like)
@@ -30,6 +31,16 @@ psql "$DATABASE_URL" -f db/migrations/0002_enable_rls_header_scope.sql
   - `transactions`
   - `app_events`
 - App sends `x-anon-id` header and policies scope each row to the same anonymous id.
+
+### Shared household mode (couple/family)
+- `0003_auth_household_model.sql` adds:
+  - `households`
+  - `household_members`
+  - `household_id` columns on core tables
+- App supports:
+  - Email/password sign-up and sign-in (Supabase Auth)
+  - Household create (invite code issuance)
+  - Household join by invite code
 
 ### App to Supabase wiring (current)
 1. Open `設定` → `Supabase連携（本番データ収集）`
