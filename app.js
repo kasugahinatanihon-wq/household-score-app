@@ -589,7 +589,15 @@ function saveJSON(key, obj){
   localStorage.setItem(key, JSON.stringify(obj));
 }
 function getSupabaseConfig(){
-  return loadJSON(LS_SUPABASE, { url:"", anonKey:"" });
+  const local = loadJSON(LS_SUPABASE, { url:"", anonKey:"" });
+  const appDefault = window.APP_SUPABASE_CONFIG || {};
+  const defaultUrl = normalizeSupabaseBaseUrl(appDefault.url || "");
+  const defaultKey = String(appDefault.anonKey || "").trim();
+  const usableDefaultKey = defaultKey && defaultKey !== "PASTE_PUBLISHABLE_KEY_HERE" ? defaultKey : "";
+  return {
+    url: normalizeSupabaseBaseUrl(local.url || "") || defaultUrl,
+    anonKey: String(local.anonKey || "").trim() || usableDefaultKey
+  };
 }
 function normalizeSupabaseBaseUrl(raw){
   let url = String(raw || "").trim();
@@ -4923,9 +4931,12 @@ function init(){
   }
   syncPremiumModeDevUI();
   const supa = getSupabaseConfig();
+  if(supa.url && supa.anonKey){
+    saveJSON(LS_SUPABASE, supa);
+  }
   if($("supabaseUrl")) $("supabaseUrl").value = supa.url || "";
   if($("supabaseAnonKey")) $("supabaseAnonKey").value = supa.anonKey || "";
-  setSupabaseStatus(supa.url && supa.anonKey ? "接続情報あり（未テスト）" : "未接続");
+  setSupabaseStatus(supa.url && supa.anonKey ? "自動接続設定あり（未テスト）" : "未接続");
 
   loadProfileToUI();
   [1,2,3,4,5].forEach(i=>{
