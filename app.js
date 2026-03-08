@@ -863,15 +863,18 @@ function syncReportMonthDefault(){
 function updateScreenHeader(name){
   const headerMap = {
     input: { icon:"✏️", title:"入力", hint:"カテゴリを選んで今日の支出を記録する" },
-    list: { icon:"📅", title:"カレンダー", hint:"日付ごとの履歴を見て修正する" },
-    report: { icon:"🧾", title:"レポート", hint:"今月の傾向を見て改善ポイントをつかむ" },
+    list: { icon:"📅", title:"カレンダー", hint:"" },
+    report: { icon:"🧾", title:"レポート", hint:"" },
     score: { icon:"🏠", title:"ホーム", hint:"今週の状態を確認して次の一手を決める" },
-    profile: { icon:"⚙️", title:"設定", hint:"前提条件と価値観を整える" }
+    profile: { icon:"⚙️", title:"設定", hint:"" }
   };
   const data = headerMap[name] || headerMap.score;
   if($("currentScreenIcon")) $("currentScreenIcon").textContent = data.icon;
   if($("currentScreenTitle")) $("currentScreenTitle").textContent = data.title;
-  if($("currentScreenHint")) $("currentScreenHint").textContent = data.hint;
+  if($("currentScreenHint")){
+    $("currentScreenHint").textContent = data.hint;
+    $("currentScreenHint").style.display = data.hint ? "" : "none";
+  }
 }
 
 function switchScreen(name){

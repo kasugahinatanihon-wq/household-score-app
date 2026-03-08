@@ -402,19 +402,14 @@
 <div class="wrap">
   <section class="screen active" id="screen-input">
     <div class="box">
-      <h2 style="display:flex; align-items:center; gap:8px;">
-        <span class="emojiWarm mini">📝</span> 記録
-      </h2>
-      <div class="small" style="margin-top:6px;">カテゴリを選ぶと入力が始まります</div>
-      <div class="catTitle" style="margin-top:12px;">カテゴリー</div>
+      <div class="catTitle" style="margin-top:2px;">カテゴリー</div>
       <div class="catGridApp" id="quickCatArea"></div>
     </div>
   </section>
 
   <section class="screen" id="screen-list">
     <div class="box">
-      <h2><span class="emojiWarm mini">📅</span> カレンダー</h2>
-      <div class="calendarBox" id="calendarBox" style="margin-top:12px;">
+      <div class="calendarBox" id="calendarBox" style="margin-top:2px;">
         <div class="calHeader">
           <span class="pill" id="calMonthPill" style="font-size:14px; padding:6px 12px;">----</span>
           <div class="bar" style="gap:4px;">
@@ -436,11 +431,7 @@
 
   <section class="screen" id="screen-report">
     <div class="box boxSafeBottom">
-      <div class="bar reportHeader" style="justify-content:space-between; align-items:flex-end;">
-        <div>
-          <h2 style="font-size:20px; margin:0;"><span class="emojiWarm mini">🧾</span> レポート</h2>
-          <div class="small">使ったお金の内訳を確認</div>
-        </div>
+      <div class="bar reportHeader" style="justify-content:flex-end; align-items:flex-end;">
         <label class="small reportMonthLabel">対象月
           <input type="month" id="reportMonth">
         </label>
@@ -526,13 +517,7 @@
 
   <section class="screen" id="screen-score">
     <div class="box boxSafeBottom">
-      <div class="bar" style="justify-content:space-between;">
-        <div>
-          <h2 style="font-size:20px; margin:0;"><span class="emojiWarm mini">📊</span> 育成状況</h2>
-        </div>
-      </div>
-
-      <div id="score-weekly" style="margin-top:16px;">
+      <div id="score-weekly" style="margin-top:2px;">
         <div id="weeklyInline"></div>
       </div>
       <div id="monthlyGate" style="margin-top:16px;"></div>
@@ -544,7 +529,6 @@
 
   <section class="screen" id="screen-profile">
     <div class="box boxSafeBottom">
-      <h2><span class="emojiWarm mini">⚙️</span> 設定・プロフィール</h2>
       <input type="hidden" id="settingsMonth">
 
       <details class="settingsSection" open>
