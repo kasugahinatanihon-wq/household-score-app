@@ -396,6 +396,55 @@
   </div>
 </div>
 
+<!-- Premium Modal -->
+<div class="modalOverlay" id="premiumModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle" id="premiumModalTitle">プレミアムで解放</div>
+      <button class="ghost" onclick="closeModal('premiumModal')">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="small" id="premiumModalBody" style="line-height:1.7;">この機能はプレミアムで利用できます。</div>
+      <div class="row" style="margin-top:14px;">
+        <button class="ghost" style="width:100%;" onclick="closeModal('premiumModal')">閉じる</button>
+        <button class="primary" style="width:100%;" onclick="openPremiumPlan()">プランを見る</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Premium Plan Modal -->
+<div class="modalOverlay" id="premiumPlanModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">プレミアムプラン（予定）</div>
+      <button class="ghost" onclick="closeModal('premiumPlanModal')">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="small" style="line-height:1.7;">
+        先月以前のマンスリーサマリー詳細を確認できます。
+      </div>
+      <div class="sectionCard" style="margin-top:10px;">
+        <div class="sectionHead">
+          <div>
+            <div class="sectionName">Premium</div>
+            <div class="sectionHint">比較・詳細レポートを解放</div>
+          </div>
+          <div class="sectionScore">予定</div>
+        </div>
+        <div class="small" style="line-height:1.7;">
+          ・先月以前のマンスリーサマリー詳細<br>
+          ・将来の成長ログ機能<br>
+          ・履歴の深掘り表示
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="primary" style="width:100%;" onclick="closeModal('premiumPlanModal')">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
   <section class="screen active" id="screen-input">
     <div class="box">
@@ -439,7 +488,7 @@
         <button class="reportTabBtn" data-report-tab="breakdown" onclick="switchReportTab('breakdown')">内訳</button>
         <button class="reportTabBtn" data-report-tab="trend" onclick="switchReportTab('trend')">推移</button>
         <button class="reportTabBtn" data-report-tab="compare" onclick="switchReportTab('compare')">比較</button>
-        <button class="reportTabBtn is-comingsoon" type="button" disabled aria-label="新機能予定">新機能予定</button>
+        <button class="reportTabBtn is-comingsoon" data-report-tab="growth" type="button" disabled aria-label="成長ログ（企画中）">成長ログ（企画中）</button>
         <button class="reportTabBtn is-comingsoon" type="button" disabled aria-label="新機能予定">新機能予定</button>
       </div>
 
@@ -501,6 +550,15 @@
             <div><div class="sectionName">月次支出比較</div><div class="sectionHint">直近6ヶ月</div></div>
           </div>
           <div id="reportMonthlyCompare"></div>
+        </div>
+      </div>
+
+      <div class="reportPane" id="reportPane-growth">
+        <div class="sectionCard" style="margin-top:12px;">
+          <div class="sectionHead">
+            <div><div class="sectionName">成長ログ</div><div class="sectionHint">続けた成果を確認</div></div>
+          </div>
+          <div id="reportGrowthLog"></div>
         </div>
       </div>
 
@@ -655,6 +713,44 @@
           <div class="row" style="margin-top:12px;">
             <label>ローン元本返済<input type="number" id="mortgagePrincipalYen" placeholder="住宅ローン元本"></label>
           </div>
+        </div>
+      </details>
+
+      <details class="settingsSection">
+        <summary>開発用プラン切替</summary>
+        <div class="settingsBody">
+          <div class="small">UIUX確認用に、無料/プレミアム表示を切り替えできます。</div>
+          <div class="row" style="margin-top:12px;">
+            <label>表示モード
+              <select id="premiumModeDev" onchange="setPremiumMode(this.value)">
+                <option value="free">無料</option>
+                <option value="premium">プレミアム</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </details>
+
+      <details class="settingsSection">
+        <summary>Supabase連携（本番データ収集）</summary>
+        <div class="settingsBody">
+          <div class="small">Project Settings → API の URL と anon key を入力します。</div>
+          <div class="row" style="margin-top:12px;">
+            <label>Supabase URL
+              <input type="text" id="supabaseUrl" placeholder="https://xxxx.supabase.co">
+            </label>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <label>Supabase Anon Key
+              <input type="password" id="supabaseAnonKey" placeholder="eyJ...">
+            </label>
+          </div>
+          <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
+            <button class="ghost" type="button" onclick="saveSupabaseConfig()">接続情報を保存</button>
+            <button class="ghost" type="button" onclick="testSupabaseConnection()">接続テスト</button>
+            <button class="dark" type="button" onclick="syncAllToSupabase()">今すぐ同期</button>
+          </div>
+          <div class="small muted" id="supabaseSyncStatus" style="margin-top:8px;">未接続</div>
         </div>
       </details>
 

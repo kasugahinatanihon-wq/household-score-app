@@ -13,6 +13,9 @@ const LS_XP_MONTHS = "xp_months";
 const LS_DAILY_XP = "daily_xp";
 const LS_HOME_PREVIEW = "home_preview_mode";
 const LS_HOME_PREVIEW_CATEGORY = "home_preview_category";
+const LS_PREMIUM = "premium_plan";
+const LS_SUPABASE = "supabase_config_v1";
+const LS_REMOTE_USER = "remote_user_v1";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
 const SAT_SCALE_VERSION = 2;
@@ -314,6 +317,25 @@ function buildTargetBudget(profile){
   };
 }
 
+function calcSurplusTargetRate(profile, income){
+  if(!Number.isFinite(income) || income <= 0) return null;
+  let base = 0.18;
+  if(income >= 600000) base = 0.24;
+  else if(income >= 450000) base = 0.21;
+  else if(income >= 320000) base = 0.18;
+  else if(income >= 250000) base = 0.15;
+  else base = 0.12;
+
+  const size = normalizeHouseholdSize(profile);
+  if(Number.isFinite(size) && size >= 4) base -= 0.02;
+  else if(Number.isFinite(size) && size >= 3) base -= 0.01;
+
+  if(profile.housingType === "owned") base += 0.01;
+  if(profile.housingType === "mortgage") base -= 0.01;
+
+  return clamp(base, 0.10, 0.30);
+}
+
 function niceMax(value){
   if(!Number.isFinite(value) || value <= 0) return 1;
   const pow = Math.pow(10, Math.floor(Math.log10(value)));
@@ -566,6 +588,255 @@ function loadJSON(key, fallback){
 function saveJSON(key, obj){
   localStorage.setItem(key, JSON.stringify(obj));
 }
+function getSupabaseConfig(){
+  return loadJSON(LS_SUPABASE, { url:"", anonKey:"" });
+}
+function setSupabaseStatus(msg, isError = false){
+  const el = $("supabaseSyncStatus");
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? "#b91c1c" : "";
+}
+function saveSupabaseConfig(){
+  const url = String($("supabaseUrl")?.value || "").trim().replace(/\/+$/, "");
+  const anonKey = String($("supabaseAnonKey")?.value || "").trim();
+  saveJSON(LS_SUPABASE, { url, anonKey });
+  setSupabaseStatus(url && anonKey ? "接続情報を保存しました" : "未接続");
+  toast("接続情報を保存しました");
+}
+window.saveSupabaseConfig = saveSupabaseConfig;
+function hasSupabaseConfig(){
+  const cfg = getSupabaseConfig();
+  return !!(cfg.url && cfg.anonKey);
+}
+function getAnonId(){
+  const state = loadJSON(LS_REMOTE_USER, {});
+  if(state.anonymousId) return state.anonymousId;
+  const anonymousId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : `anon_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  saveJSON(LS_REMOTE_USER, { ...state, anonymousId });
+  return anonymousId;
+}
+function monthToDate(m){
+  return /^\d{4}-\d{2}$/.test(m || "") ? `${m}-01` : null;
+}
+async function supabaseRequest(path, { method = "GET", body = null, prefer = "" } = {}){
+  const cfg = getSupabaseConfig();
+  if(!cfg.url || !cfg.anonKey) throw new Error("Supabase未設定");
+  const headers = {
+    apikey: cfg.anonKey,
+    Authorization: `Bearer ${cfg.anonKey}`,
+  };
+  if(body !== null) headers["Content-Type"] = "application/json";
+  if(prefer) headers["Prefer"] = prefer;
+  const res = await fetch(`${cfg.url}/rest/v1/${path}`, {
+    method,
+    headers,
+    body: body !== null ? JSON.stringify(body) : undefined,
+  });
+  if(!res.ok){
+    const text = await res.text();
+    throw new Error(`Supabase API error ${res.status}: ${text || res.statusText}`);
+  }
+  if(res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+async function ensureRemoteUser(){
+  const state = loadJSON(LS_REMOTE_USER, {});
+  if(state.userId) return state.userId;
+  const anonymousId = getAnonId();
+  const consentVersion = "2026-03-ja-v1";
+  const payload = {
+    anonymous_id: anonymousId,
+    consent_version: consentVersion,
+    app_version: "web-local",
+    locale: "ja-JP",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tokyo",
+  };
+  const upsert = await supabaseRequest(
+    "users?on_conflict=anonymous_id&select=id,anonymous_id",
+    { method: "POST", body: payload, prefer: "resolution=merge-duplicates,return=representation" }
+  );
+  const userId = upsert?.[0]?.id;
+  if(!userId) throw new Error("ユーザー作成に失敗しました");
+  saveJSON(LS_REMOTE_USER, { ...state, anonymousId, userId });
+  return userId;
+}
+async function syncProfileToSupabase(){
+  if(!hasSupabaseConfig()) return;
+  const userId = await ensureRemoteUser();
+  const profile = getProfile();
+  const nowMonth = monthToDate(ym(new Date()));
+  if(!nowMonth) return;
+  const valueCats = normalizeValueCats(profile.valueCats);
+  const top3 = getValueTop3FromProfile(profile);
+  const payload = {
+    user_id: userId,
+    household_size: Number(profile.householdSize || profile.household || 0) || null,
+    age: Number(profile.age || 0) || null,
+    annual_income_gross_yen: Number(profile.annualIncomeGross || 0) || null,
+    housing_type: profile.housingType || "unknown",
+    region_type: profile.regionType || "unknown",
+    work_type: profile.workType || "unknown",
+    value_cat_1: valueCats[0] || null,
+    value_cat_2: valueCats[1] || null,
+    value_cat_3: valueCats[2] || null,
+    value_cat_4: valueCats[3] || null,
+    value_cat_5: valueCats[4] || null,
+    value_top_1: top3[0] || null,
+    value_top_2: top3[1] || null,
+    value_top_3: top3[2] || null,
+    effective_month: nowMonth,
+  };
+  await supabaseRequest("user_profiles", {
+    method: "POST",
+    body: payload,
+    prefer: "return=minimal",
+  });
+}
+async function syncMonthlySettingsToSupabase(monthStr){
+  if(!hasSupabaseConfig()) return;
+  const month = monthToDate(monthStr);
+  if(!month) return;
+  const userId = await ensureRemoteUser();
+  const fixedAll = loadJSON(LS_FIXED, {});
+  const fixed = fixedAll[monthStr] || {};
+  const incomeAll = loadIncomeMap();
+  const savingAll = loadSavingMap();
+  const saving = savingAll[monthStr] || {};
+  const payload = {
+    user_id: userId,
+    month,
+    income_yen: Number(incomeAll[monthStr] || 0),
+    saving_yen: Number(saving.saving || 0),
+    invest_yen: Number(saving.invest || 0),
+    housing_yen: Number(fixed.housingYen || 0),
+    utility_yen: Number(fixed.utilityYen || 0),
+    net_yen: Number(fixed.netYen || 0),
+    sub_yen: Number(fixed.subYen || 0),
+    mortgage_principal_yen: Number(fixed.mortgagePrincipalYen || 0),
+  };
+  await supabaseRequest("monthly_settings?on_conflict=user_id,month", {
+    method: "POST",
+    body: payload,
+    prefer: "resolution=merge-duplicates,return=minimal",
+  });
+}
+function txToRemotePayload(tx, userId){
+  return {
+    id: tx.id,
+    user_id: userId,
+    occurred_on: tx.date,
+    category: tx.category,
+    amount_yen: Number(tx.amount || 0),
+    sat: tx.satisfaction == null ? null : Number(tx.satisfaction),
+    value_tag: tx.valueTag || null,
+    memo: tx.memo || null,
+    is_deleted: !!tx.isDeleted,
+  };
+}
+async function syncTransactionToSupabase(tx){
+  if(!hasSupabaseConfig() || !tx?.id) return;
+  const userId = await ensureRemoteUser();
+  await supabaseRequest("transactions?on_conflict=id", {
+    method: "POST",
+    body: txToRemotePayload(tx, userId),
+    prefer: "resolution=merge-duplicates,return=minimal",
+  });
+}
+async function testSupabaseConnection(){
+  if(!hasSupabaseConfig()){
+    toast("先に接続情報を保存してください");
+    setSupabaseStatus("未接続", true);
+    return;
+  }
+  setSupabaseStatus("接続テスト中...");
+  try{
+    const userId = await ensureRemoteUser();
+    setSupabaseStatus(`接続OK / user: ${userId.slice(0, 8)}...`);
+    toast("接続OK");
+  }catch(err){
+    console.error(err);
+    setSupabaseStatus(`接続失敗: ${err.message}`, true);
+    toast("接続失敗");
+  }
+}
+window.testSupabaseConnection = testSupabaseConnection;
+async function syncAllToSupabase(){
+  if(!hasSupabaseConfig()){
+    toast("先に接続情報を保存してください");
+    setSupabaseStatus("未接続", true);
+    return;
+  }
+  setSupabaseStatus("同期中...");
+  try{
+    await syncProfileToSupabase();
+    const monthKeys = new Set();
+    Object.keys(loadJSON(LS_FIXED, {})).forEach(m=> monthKeys.add(m));
+    Object.keys(loadIncomeMap()).forEach(m=> monthKeys.add(m));
+    Object.keys(loadSavingMap()).forEach(m=> monthKeys.add(m));
+    for(const m of monthKeys){
+      await syncMonthlySettingsToSupabase(m);
+    }
+    const tx = loadTx();
+    for(const row of tx){
+      await syncTransactionToSupabase(row);
+    }
+    setSupabaseStatus(`同期完了: ${tx.length}件`);
+    toast("Supabase同期完了");
+  }catch(err){
+    console.error(err);
+    setSupabaseStatus(`同期失敗: ${err.message}`, true);
+    toast("同期失敗");
+  }
+}
+window.syncAllToSupabase = syncAllToSupabase;
+function syncSafely(task, successMessage){
+  task().then(()=>{
+    if(successMessage) setSupabaseStatus(successMessage);
+  }).catch(err=>{
+    console.error(err);
+    if(hasSupabaseConfig()){
+      setSupabaseStatus(`同期失敗: ${err.message}`, true);
+    }
+  });
+}
+function isPremiumUser(){
+  return localStorage.getItem(LS_PREMIUM) === "1";
+}
+function syncPremiumModeDevUI(){
+  const el = $("premiumModeDev");
+  if(!el) return;
+  el.value = isPremiumUser() ? "premium" : "free";
+}
+function setPremiumMode(mode){
+  const premium = mode === "premium";
+  localStorage.setItem(LS_PREMIUM, premium ? "1" : "0");
+  syncPremiumModeDevUI();
+  renderMonthlyReport();
+  renderMonthlyGate();
+  toast(`表示モード: ${premium ? "プレミアム" : "無料"}`);
+}
+window.setPremiumMode = setPremiumMode;
+function openPremiumModal(opts = {}){
+  const title = $("premiumModalTitle");
+  const body = $("premiumModalBody");
+  if(title) title.textContent = opts.title || "プレミアムで解放";
+  if(body) body.textContent = opts.message || "この機能はプレミアムで利用できます。";
+  openModal("premiumModal");
+}
+function openPremiumFromCompare(){
+  openPremiumModal({
+    title: "比較履歴を解放",
+    message: "マンスリーサマリー詳細はプレミアムで利用できます。"
+  });
+}
+window.openPremiumFromCompare = openPremiumFromCompare;
+function openPremiumPlan(){
+  closeModal("premiumModal");
+  openModal("premiumPlanModal");
+}
+window.openPremiumPlan = openPremiumPlan;
 function loadReviewState(){
   return loadJSON(LS_REVIEW, { weeklyLast:null, monthly:{} });
 }
@@ -815,6 +1086,7 @@ function saveMonthlySettings(m){
   if(incomeRaw !== ""){
     setIncomeForMonth(m, Number(incomeRaw || 0));
   }
+  syncSafely(()=> syncMonthlySettingsToSupabase(m));
 }
 
 let CAL_ANCHOR = monthStart(new Date());
@@ -1186,8 +1458,10 @@ function saveEntry(){
 
   const id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
   const tx = loadTx();
-  tx.push({ id, date: dt, category: cat, amount: amt, satisfaction: sat, valueTag: valueTag || null, trigMemo: note, memo: memoTop });
+  const row = { id, date: dt, category: cat, amount: amt, satisfaction: sat, valueTag: valueTag || null, trigMemo: note, memo: memoTop, isDeleted:false };
+  tx.push(row);
   saveTx(tx);
+  syncSafely(()=> syncTransactionToSupabase(row));
   localStorage.setItem("last_cat", cat);
   return true;
 }
@@ -1246,8 +1520,13 @@ function closeEntryModal(){
 }
 
 function deleteTx(id){
-  const next = loadTx().filter(t=>t.id !== id);
+  const before = loadTx();
+  const target = before.find(t=> t.id === id);
+  const next = before.filter(t=>t.id !== id);
   saveTx(next);
+  if(target){
+    syncSafely(()=> syncTransactionToSupabase({ ...target, isDeleted:true }));
+  }
   renderWeeklyInline();
   renderMonthlyGate();
 }
@@ -1296,8 +1575,10 @@ function saveEdit(){
     memo,
     valueTag: valueTag || null,
     trigMemo: memo,
+    isDeleted: false,
   };
   saveTx(list);
+  syncSafely(()=> syncTransactionToSupabase(list[idx]));
   closeModal("editModal");
   toast("更新しました");
   renderList();
@@ -1592,9 +1873,9 @@ function calcBenchScore(you, target, mode){
 
 function benchZone(score){
   if(!Number.isFinite(score)) return { label:"評価待ち", tone:"neutral" };
-  if(score >= 80) return { label:"🟢 安心ゾーン", tone:"good" };
-  if(score >= 60) return { label:"🟦 安定ゾーン", tone:"mid" };
-  return { label:"🟡 見直しゾーン", tone:"low" };
+  if(score >= 80) return { label:"目安内", tone:"good" };
+  if(score >= 60) return { label:"注意", tone:"mid" };
+  return { label:"要改善", tone:"low" };
 }
 
 function benchComment(you, target){
@@ -1613,8 +1894,12 @@ function renderBenchCompareBar(you, target){
   const targetPos = clamp01(target / max) * 100;
   return `
     <div class="benchCompare">
-      <span class="benchCompareTarget" style="left:${targetPos}%"></span>
-      <span class="benchCompareMarker" style="left:${youPos}%"></span>
+      <span class="benchCompareTarget" style="left:${targetPos}%;">
+        <span class="benchCompareTargetLabel">目安</span>
+      </span>
+      <span class="benchCompareMarker" style="left:${youPos}%;">
+        <span class="benchCompareMarkerLabel">あなた</span>
+      </span>
     </div>
   `;
 }
@@ -2029,8 +2314,12 @@ function homeAvatarHTML(category, tier, mood){
   `;
 }
 
+const ENABLE_GROWTH_LOG = false;
 let REPORT_TAB = "overview";
 function switchReportTab(tab){
+  if(tab === "growth" && !ENABLE_GROWTH_LOG){
+    tab = "overview";
+  }
   const exists = !!document.querySelector(`.reportPane#reportPane-${tab}`);
   REPORT_TAB = exists ? tab : "overview";
   document.querySelectorAll(".reportTabBtn").forEach(btn=>{
@@ -2056,6 +2345,9 @@ function renderMonthlyReport(){
   const drill = $("reportCategoryDrill");
   renderSpendTrendChart(m);
   renderMonthlyCompareChart(m);
+  if(ENABLE_GROWTH_LOG){
+    renderReportGrowthLog(m);
+  }
   if(!donut || !legend || !totalEl) return;
 
   const { items, total } = buildMonthlyReportItems(m);
@@ -2211,6 +2503,161 @@ function renderMonthlyReport(){
   switchReportTab(REPORT_TAB);
 }
 
+function getVariableSpendTotalToCutoff(monthStr, cutoffDay){
+  return buildMonthlyReportItemsToDay(monthStr, cutoffDay).items
+    .filter(item=> !FIXED_CATEGORIES.has(item.label))
+    .reduce((sum, item)=> sum + Number(item.amount || 0), 0);
+}
+
+function buildCharacterSnapshot(monthStr){
+  const monthTx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr));
+  const variableTx = monthTx.filter(t=> !FIXED_CATEGORIES.has(t.category));
+  const byCat = {};
+  variableTx.forEach(t=>{
+    byCat[t.category] = (byCat[t.category] || 0) + Number(t.amount || 0);
+  });
+  const adjustedEntries = Object.entries(byCat).map(([cat, amt])=>({
+    cat,
+    rawAmount: Number(amt || 0),
+    adjustedWeight: Math.sqrt(Math.max(Number(amt || 0), 0)),
+  }));
+  const adjustedTotal = adjustedEntries.reduce((sum, row)=> sum + row.adjustedWeight, 0);
+  const topEntry = adjustedEntries.sort((a,b)=> b.adjustedWeight - a.adjustedWeight)[0];
+  const topCategory = topEntry ? topEntry.cat : "未設定";
+  const topShare = adjustedTotal > 0
+    ? Math.round((topEntry.adjustedWeight / adjustedTotal) * 100)
+    : 0;
+
+  const prof = getProfile();
+  const valueTop3 = getValueTop3FromProfile(prof);
+  const subjective = calcSubjectiveMetrics(variableTx);
+  const valueAlign = calcValueAlignmentMetrics(variableTx, valueTop3);
+  const regret = calcRegretMetrics(variableTx);
+  const cutoffDay = getReportCutoffDay(monthStr);
+  const sameMonthVariable = getVariableSpendTotalToCutoff(monthStr, cutoffDay);
+  const prevMonth = shiftYm(monthStr, -1);
+  const prevMonthVariable = getVariableSpendTotalToCutoff(prevMonth, cutoffDay);
+  const variableDiffRate = prevMonthVariable > 0
+    ? ((sameMonthVariable - prevMonthVariable) / prevMonthVariable)
+    : null;
+
+  const parts = [];
+  if(Number.isFinite(subjective.score)) parts.push({ score: subjective.score, weight: 0.5 });
+  if(Number.isFinite(valueAlign.score)) parts.push({ score: valueAlign.score, weight: 0.3 });
+  if(Number.isFinite(regret.score)) parts.push({ score: regret.score, weight: 0.2 });
+  const weightedBase = parts.length
+    ? (parts.reduce((s, p)=> s + p.score * p.weight, 0) / parts.reduce((s, p)=> s + p.weight, 0))
+    : null;
+  let characterScore = weightedBase;
+  if(Number.isFinite(characterScore)){
+    if(topShare >= 40) characterScore -= 10;
+    else if(topShare >= 32) characterScore -= 5;
+    if(Number.isFinite(variableDiffRate)){
+      if(variableDiffRate > 0.25) characterScore -= 8;
+      else if(variableDiffRate > 0.10) characterScore -= 4;
+      else if(variableDiffRate < -0.15) characterScore += 4;
+    }
+    characterScore = clamp(Math.round(characterScore), 0, 100);
+  }
+  const dataEnough = variableTx.length >= 5 && subjective.coverage >= 0.4;
+  const tier = !dataEnough || !Number.isFinite(characterScore)
+    ? "分析中"
+    : characterScore >= 82
+      ? "めっちゃ良い"
+      : characterScore >= 66
+        ? "良い"
+        : characterScore >= 45
+          ? "悪い"
+          : "めっちゃ悪い";
+  return {
+    tier,
+    score: Number.isFinite(characterScore) ? characterScore : null,
+    category: topCategory,
+    name: getHomeCharacterName(topCategory, tier),
+  };
+}
+
+function countContinuousMonthsWithRecords(targetMonth, monthsBack = 24){
+  const recorded = new Set(loadTx().map(t=> (t.date || "").slice(0, 7)).filter(Boolean));
+  let count = 0;
+  for(let i=0;i<monthsBack;i++){
+    const month = shiftYm(targetMonth, -i);
+    if(recorded.has(month)){
+      count += 1;
+    }else{
+      break;
+    }
+  }
+  return count;
+}
+
+function renderReportGrowthLog(monthStr){
+  const area = $("reportGrowthLog");
+  if(!area) return;
+  const continuousMonths = countContinuousMonthsWithRecords(monthStr, 24);
+  const uniqueMonths = new Set(
+    loadTx().map(t=> (t.date || "").slice(0, 7)).filter(m=> m && m <= monthStr)
+  ).size;
+  const current = buildCharacterSnapshot(monthStr);
+  const prevMonth = shiftYm(monthStr, -1);
+  const prev = buildCharacterSnapshot(prevMonth);
+  const tierRank = { "分析中":0, "めっちゃ悪い":1, "悪い":2, "良い":3, "めっちゃ良い":4 };
+  const tierDelta = (tierRank[current.tier] || 0) - (tierRank[prev.tier] || 0);
+  const scoreDelta = (Number.isFinite(current.score) && Number.isFinite(prev.score))
+    ? (current.score - prev.score)
+    : null;
+  const deltaClass = tierDelta > 0 ? "up" : tierDelta < 0 ? "down" : "flat";
+  const deltaText = tierDelta > 0
+    ? "先月より一段階アップ"
+    : tierDelta < 0
+      ? "先月より一段階ダウン"
+      : "先月と同じ段階";
+  const scoreText = Number.isFinite(scoreDelta)
+    ? `${scoreDelta > 0 ? "+" : ""}${scoreDelta}pt`
+    : "—";
+  const trendMonths = [shiftYm(monthStr, -2), shiftYm(monthStr, -1), monthStr];
+  const trendRows = trendMonths.map(m=>({
+    month: m,
+    total: buildMonthlyReportItems(m).total,
+  }));
+  const trendMax = Math.max(...trendRows.map(r=> r.total), 1);
+
+  area.innerHTML = `
+    <div class="growthLogGrid">
+      <div class="growthLogCard">
+        <div class="growthLogLabel">継続月数</div>
+        <div class="growthLogValue">${continuousMonths}ヶ月</div>
+        <div class="growthLogSub">これまで記録した月: ${uniqueMonths}ヶ月</div>
+      </div>
+      <div class="growthLogCard">
+        <div class="growthLogLabel">キャラクター進化履歴</div>
+        <div class="growthLogValue growthLogFlow">${escapeHtml(prev.name)} → ${escapeHtml(current.name)}</div>
+        <div class="growthLogSub">
+          <span class="growthLogDelta ${deltaClass}">${escapeHtml(deltaText)}</span>
+          <span> / 判定スコア ${scoreText}</span>
+        </div>
+      </div>
+      <div class="growthLogCard">
+        <div class="growthLogLabel">3ヶ月推移</div>
+        <div class="growthMiniTrend">
+          ${trendRows.map(row=>{
+            const label = `${Number(row.month.slice(5,7))}月`;
+            const width = Math.max(8, Math.round((row.total / trendMax) * 100));
+            const currentClass = row.month === monthStr ? "is-current" : "";
+            return `
+              <div class="growthMiniTrendRow ${currentClass}">
+                <div class="growthMiniTrendLabel">${label}</div>
+                <div class="growthMiniTrendBar"><span style="width:${width}%;"></span></div>
+                <div class="growthMiniTrendValue">${fmtYen(Math.round(row.total))}円</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function shiftYm(monthStr, delta){
   const [y, m] = monthStr.split("-").map(Number);
   const d = new Date(y, m - 1 + delta, 1);
@@ -2346,7 +2793,7 @@ function renderMonthlyCompareChart(monthStr){
     total: buildMonthlyReportItems(m).total
   }));
   const maxTotal = Math.max(...rows.map(r=>r.total), 1);
-  area.innerHTML = rows.map(r=>{
+  const chartHtml = rows.map(r=>{
     const width = Math.round((r.total / maxTotal) * 100);
     const isCurrent = r.month === monthStr;
     const label = `${Number(r.month.slice(5,7))}月`;
@@ -2360,6 +2807,10 @@ function renderMonthlyCompareChart(monthStr){
       </div>
     `;
   }).join("");
+  const premiumHint = isPremiumUser()
+    ? ""
+    : `<button class="monthCompareUnlockBtn" type="button" onclick="openPremiumFromCompare()">マンスリーサマリー詳細を解放する</button>`;
+  area.innerHTML = `${chartHtml}${premiumHint}`;
 }
 
 function buildDailyComparisonData(monthStr){
@@ -2650,11 +3101,11 @@ function buildWeeklyResult(){
   const weeklyStateLabel = getStateLabel(weeklyState);
   const readyMonth = getLatestReadyMonth();
   const weeklyReportHint = readyMonth
-    ? `<div class="weeklyHeroHint">${emojiHTML("📄","mini")} 月次レポートが届いています</div>`
+    ? `<div class="weeklyHeroHint">${emojiHTML("📄","mini")} マンスリーサマリーが届いています</div>`
     : "";
   const weeklyMascotCTA = "";
   const weeklyReportCTA = readyMonth
-    ? `role="button" aria-label="月次レポートを開く" onclick="showMonthlyScore()"`
+    ? `role="button" aria-label="マンスリーサマリーを開く" onclick="showMonthlyScore()"`
     : "";
   const growthTotal = getTotalXP();
   const xp = getXPProgress(growthTotal);
@@ -2938,45 +3389,14 @@ function renderMonthlyGate(){
   const currentMonth = ym(new Date());
   const targetMonth = readyMonth || currentMonth;
   $("scoreMonth") && ($("scoreMonth").value = targetMonth);
-  const reviewState = loadReviewState();
-  const opened = !!(reviewState.monthly && reviewState.monthly[targetMonth]);
-  const statusBadge = readyMonth
-    ? (opened ? `<span class="statusBadge status-done">受領済み</span>` : `<span class="statusBadge status-wait">受け取り待ち</span>`)
-    : `<span class="statusBadge status-soon">準備中</span>`;
-  const readyHint = opened
-    ? "月次レポートは受領済みです。"
-    : "貯蓄・投資を入力して、月次レポートを受け取りましょう。";
-  const tx = loadTx().filter(t=>t.date && t.date.startsWith(targetMonth));
-  const daysInMonth = getDaysInMonth(targetMonth) || 0;
-  const daysWithEntry = new Set(tx.map(t=>t.date)).size;
-  const pct = daysInMonth > 0 ? Math.round((daysWithEntry / daysInMonth) * 100) : 0;
 
   if(readyMonth){
     wrap.innerHTML = `
-      <div class="sectionCard monthlyGateCard ${opened ? "" : "isReady"}">
+      <div class="sectionCard monthlyGateCard">
         <div class="sectionHead">
-          <div><div class="sectionName">月次レポート</div><div class="sectionHint">${escapeHtml(targetMonth)} 分が届いています</div></div>
-          <div class="sectionScore">${statusBadge}</div>
+          <div><div class="sectionName">マンスリーサマリー</div><div class="sectionHint">${escapeHtml(targetMonth)} 分が届いています</div></div>
         </div>
-        <div class="metricBlock" style="margin-top:10px;">
-          <div class="metricLabel">今月の記録進捗</div>
-          <div class="small" style="margin-bottom:6px;">${daysWithEntry}/${daysInMonth} 日</div>
-          <div class="dayProgressGrid">
-            ${(()=>{
-              const today = new Date();
-              const currentMonth = ym(today);
-              const cutoff = Number(today.getDate()) - 1;
-              const isPastMonth = targetMonth < currentMonth;
-              return Array.from({ length: daysInMonth }, (_, i)=>{
-                const dayNum = i + 1;
-                const isFilled = isPastMonth || (targetMonth === currentMonth && dayNum <= cutoff);
-                return `<span class="dayDot ${isFilled ? "isOn" : ""}"></span>`;
-              }).join("");
-            })()}
-          </div>
-        </div>
-        <div class="small muted" style="margin-top:8px;">${readyHint}</div>
-        <button class="primary" type="button" style="width:100%; margin-top:10px;" onclick="showMonthlyScore()">月次レポートを見る</button>
+        <button class="primary" type="button" style="width:100%; margin-top:10px;" onclick="showMonthlyScore()">マンスリーサマリーを見る</button>
       </div>
     `;
     return;
@@ -2985,27 +3405,9 @@ function renderMonthlyGate(){
   wrap.innerHTML = `
     <div class="sectionCard">
       <div class="sectionHead">
-        <div><div class="sectionName">月次レポート</div><div class="sectionHint">月が切り替わると届きます</div></div>
-        <div class="sectionScore">${statusBadge}</div>
+        <div><div class="sectionName">マンスリーサマリー</div><div class="sectionHint">${escapeHtml(targetMonth)} を準備中</div></div>
       </div>
-      <div class="metricBlock" style="margin-top:10px;">
-        <div class="metricLabel">今月の記録進捗</div>
-        <div class="small" style="margin-bottom:6px;">${daysWithEntry}/${daysInMonth} 日</div>
-        <div class="dayProgressGrid">
-          ${(()=>{
-            const today = new Date();
-            const currentMonth = ym(today);
-            const cutoff = Number(today.getDate()) - 1;
-            const isPastMonth = targetMonth < currentMonth;
-            return Array.from({ length: daysInMonth }, (_, i)=>{
-              const dayNum = i + 1;
-              const isFilled = isPastMonth || (targetMonth === currentMonth && dayNum <= cutoff);
-              return `<span class="dayDot ${isFilled ? "isOn" : ""}"></span>`;
-            }).join("");
-          })()}
-        </div>
-      </div>
-      <div class="small muted" style="margin-top:8px;">月の入力完了を押すと、月次レポートを受け取れます。</div>
+      <button class="ghost" type="button" style="width:100%; margin-top:10px;" onclick="openScreen('report')">レポート画面を見る</button>
     </div>
   `;
 }
@@ -3016,7 +3418,7 @@ function completeMonthFromCalendar(){
   if(!confirm(`${monthStr} の入力を完了しますか？`)) return;
   markMonthlyReady(monthStr);
   renderMonthlyGate();
-  toast("月次レポートが届きました");
+  toast("マンスリーサマリーが届きました");
 }
 window.completeMonthFromCalendar = completeMonthFromCalendar;
 
@@ -3165,6 +3567,7 @@ function saveSavingModal(){
   const saving = Number(savingRaw || 0);
   const invest = Number(investRaw || 0);
   setSavingForMonth(m, saving, invest);
+  syncSafely(()=> syncMonthlySettingsToSupabase(m));
   refreshSavingLabel();
   closeModal("savingModal");
   if(PENDING_MONTHLY){
@@ -3176,6 +3579,13 @@ window.saveSavingModal = saveSavingModal;
 
 function showMonthlyScore(){
   const m = $("scoreMonth")?.value || ym(new Date());
+  if(!isPremiumUser() && m !== ym(new Date())){
+    openPremiumModal({
+      title: `${m} のマンスリーサマリー`,
+      message: "先月以前のマンスリーサマリー詳細はプレミアムで解放されます。"
+    });
+    return;
+  }
   markMonthlyReview(m);
   const result = buildMonthlyResult();
   if(result.missingSaving){
@@ -3197,10 +3607,14 @@ window.showMonthlyScore = showMonthlyScore;
 function buildMonthlyResult(){
   const m = $("scoreMonth").value;
   const saved = getSavingForMonth(m);
+  const incomeInputRaw = String($("incomeYen")?.value ?? "").trim();
+  const incomeInputVal = Number(incomeInputRaw || 0);
   const missing = getMonthlyMissingFields();
   if(!saved || missing.length){
     const incomeStored = getIncomeForMonth(m);
-    const income = (incomeStored != null) ? Number(incomeStored||0) : Number($("incomeYen").value||0);
+    const income = incomeInputRaw !== ""
+      ? incomeInputVal
+      : ((incomeStored != null) ? Number(incomeStored||0) : 0);
     const fixed = {
       housingYen: Number($("housingYen").value||0),
       utilityYen: Number($("utilityYen").value||0),
@@ -3234,6 +3648,7 @@ function buildMonthlyResult(){
     const mortgagePrincipal = Number(fixed.mortgagePrincipalYen || 0);
     const surplusBase = saving + ((prof.housingType === "mortgage") ? mortgagePrincipal : 0);
     const surplusRateActual = income>0 ? (surplusBase / income) : null;
+    const surplusRateTarget = calcSurplusTargetRate(prof, income);
     const foodRateActual = publicRates.userRates.FOOD;
     const housingRateActual = income>0 ? (fixed.housingYen / income) : null;
     const housingRateTarget = prof.regionType === "metro" ? 0.30
@@ -3242,7 +3657,7 @@ function buildMonthlyResult(){
     const consumptionRateActual = income>0 ? ((fixedSum + varSpend) / income) : null;
     const consumptionRateTarget = targetBudget ? (1 - targetBudget.target.surplusRate) : null;
     const benchmarkItems = [
-      { key:"surplus", you:surplusRateActual, target:targetBudget?.target.surplusRate, mode:"higher", weight:3 },
+      { key:"surplus", you:surplusRateActual, target:surplusRateTarget, mode:"higher", weight:3 },
       { key:"food", you:foodRateActual, target:targetBudget?.target.foodRate, mode:"close", weight:3 },
       { key:"housing", you:housingRateActual, target:housingRateTarget, mode:"lower", weight:3 },
       { key:"consumption", you:consumptionRateActual, target:consumptionRateTarget, mode:"lower", weight:1 },
@@ -3269,7 +3684,9 @@ function buildMonthlyResult(){
     };
   }
   const incomeStored = getIncomeForMonth(m);
-  const income = (incomeStored != null) ? Number(incomeStored||0) : Number($("incomeYen").value||0);
+  const income = incomeInputRaw !== ""
+    ? incomeInputVal
+    : ((incomeStored != null) ? Number(incomeStored||0) : 0);
   const saving = Number(saved.saving||0) + Number(saved.invest||0);
 
   const fixed = {
@@ -3338,17 +3755,18 @@ function buildMonthlyResult(){
     : BENCH_PUBLIC_2024.housingMedian;
   const consumptionRateActual = income>0 ? ((fixedSum + varSpend) / income) : null;
   const consumptionRateTarget = targetBudget ? (1 - targetBudget.target.surplusRate) : null;
+  const surplusRateTarget = calcSurplusTargetRate(prof, income);
   const benchmarkItems = [
-    { key:"surplus", label:"黒字率（貯蓄余力）", you:surplusRateActual, target:targetBudget?.target.surplusRate, mode:"higher", weight:3, kind:"saving" },
-    { key:"food", label:"食費率（エンゲル係数）", you:foodRateActual, target:targetBudget?.target.foodRate, mode:"close", weight:3, kind:"cost" },
-    { key:"housing", label:"住居費率", you:housingRateActual, target:housingRateTarget, mode:"lower", weight:3, kind:"cost" },
-    { key:"consumption", label:"家計全体の消費支出率", you:consumptionRateActual, target:consumptionRateTarget, mode:"lower", weight:1, kind:"cost" },
-    { key:"leisure", label:"教養娯楽費率（趣味・レジャー）", you:extraPublicRates.userRates.leisure, target:extraPublicRates.benchRates.leisure, mode:"close", weight:1, kind:"cost" },
-    { key:"transComm", label:"交通・通信費率", you:extraPublicRates.userRates.transComm, target:extraPublicRates.benchRates.transComm, mode:"close", weight:1, kind:"cost" },
-    { key:"utilities", label:"光熱費率", you:extraPublicRates.userRates.utilities, target:extraPublicRates.benchRates.utilities, mode:"close", weight:1, kind:"cost" },
-    { key:"daily", label:"日用品・雑費率", you:extraPublicRates.userRates.daily, target:extraPublicRates.benchRates.daily, mode:"close", weight:1, kind:"cost" },
-    { key:"medical", label:"医療・保険率", you:extraPublicRates.userRates.medical, target:extraPublicRates.benchRates.medical, mode:"close", weight:1, kind:"cost" },
-    { key:"education", label:"教育費率", you:extraPublicRates.userRates.education, target:extraPublicRates.benchRates.education, mode:"close", weight:1, kind:"cost" },
+    { key:"surplus", label:"黒字率（貯蓄余力）", you:surplusRateActual, target:surplusRateTarget, mode:"higher", weight:3, kind:"saving", source:"custom" },
+    { key:"food", label:"食費率（エンゲル係数）", you:foodRateActual, target:targetBudget?.target.foodRate, mode:"close", weight:3, kind:"cost", source:"base" },
+    { key:"housing", label:"住居費率", you:housingRateActual, target:housingRateTarget, mode:"lower", weight:3, kind:"cost", source:"base" },
+    { key:"consumption", label:"家計全体の消費支出率", you:consumptionRateActual, target:consumptionRateTarget, mode:"lower", weight:1, kind:"cost", source:"custom" },
+    { key:"leisure", label:"教養娯楽費率（趣味・レジャー）", you:extraPublicRates.userRates.leisure, target:extraPublicRates.benchRates.leisure, mode:"close", weight:1, kind:"cost", source:"public" },
+    { key:"transComm", label:"交通・通信費率", you:extraPublicRates.userRates.transComm, target:extraPublicRates.benchRates.transComm, mode:"close", weight:1, kind:"cost", source:"public" },
+    { key:"utilities", label:"光熱費率", you:extraPublicRates.userRates.utilities, target:extraPublicRates.benchRates.utilities, mode:"close", weight:1, kind:"cost", source:"public" },
+    { key:"daily", label:"日用品・雑費率", you:extraPublicRates.userRates.daily, target:extraPublicRates.benchRates.daily, mode:"close", weight:1, kind:"cost", source:"custom" },
+    { key:"medical", label:"医療・保険率", you:extraPublicRates.userRates.medical, target:extraPublicRates.benchRates.medical, mode:"close", weight:1, kind:"cost", source:"custom" },
+    { key:"education", label:"教育費率", you:extraPublicRates.userRates.education, target:extraPublicRates.benchRates.education, mode:"close", weight:1, kind:"cost", source:"custom" },
   ];
 
   const benchmarkScores = benchmarkItems.map(item=> ({
@@ -3357,49 +3775,74 @@ function buildMonthlyResult(){
   }));
   const stabilityScore = calcWeightedScore(benchmarkScores);
 
-  const benchmarkBlocksAll = benchmarkScores.map(item=>{
-    const scoreText = item.score == null ? "—" : `${item.score}/100`;
-    const zone = benchZone(item.score);
-    const comment = benchComment(item.you, item.target);
+  const renderBenchComparisonCard = (item)=>{
     const youText = fmtPct(item.you);
     const benchText = fmtPct(item.target);
-    const labelNote = item.key === "housing"
-      ? "（都市部30% / 地方25%補正）"
-      : item.key === "consumption"
-      ? "（黒字率目標から逆算）"
-      : "";
-    return `
-      <details class="benchCard">
-        <summary>
+      const diffPt = (Number.isFinite(item.you) && Number.isFinite(item.target))
+        ? Math.round((item.you - item.target) * 100)
+        : null;
+      const diffText = Number.isFinite(diffPt)
+        ? `${diffPt > 0 ? "+" : ""}${diffPt}pt`
+        : "—";
+      const positionText = !Number.isFinite(diffPt)
+        ? "比較データ不足"
+        : Math.abs(diffPt) <= 2
+          ? "目安とほぼ同水準"
+          : diffPt > 0
+            ? `目安より高め（${diffText}）`
+            : `目安より低め（${diffText}）`;
+      const statusClass = item.score >= 80 ? "is-blue" : item.score >= 60 ? "is-yellow" : "is-red";
+      const statusLabel = item.score >= 80 ? "目安内" : item.score >= 60 ? "注意" : "要改善";
+      const sourceLabel = item.source === "public"
+        ? "公的指標"
+        : item.source === "base"
+          ? "公的ベース"
+          : "独自指標";
+      return `
+        <div class="benchCard ${statusClass}">
           <div class="benchTop">
-            <div class="benchTitle">${item.label}${labelNote}</div>
-            <div class="benchScore">${scoreText}</div>
+            <div class="benchTitle">${item.label}</div>
+            <div class="benchBadges">
+              <span class="benchSource ${
+                item.source === "public" ? "public" : (item.source === "base" ? "base" : "custom")
+              }">${sourceLabel}</span>
+              <span class="benchZone ${item.score >= 80 ? "good" : item.score >= 60 ? "mid" : "low"}">${statusLabel}</span>
+            </div>
           </div>
-          <div class="benchMeta">
-            <span class="benchZone ${zone.tone}">${zone.label}</span>
-            <span class="benchComment">${comment}</span>
+          <div class="benchNumbers">
+            <span>あなた <strong>${youText}</strong></span>
+            <span>目安 <strong>${benchText}</strong></span>
           </div>
-          <div class="miniBar" style="margin-top:8px;"><div style="--w:${item.score == null ? 0 : item.score}%;"></div></div>
-        </summary>
-        <div class="benchDetail">
-          <div class="benchStats">
-            <div><span class="benchKey">あなた</span><span class="benchVal">${youText}</span></div>
-            <div><span class="benchKey">同属性平均</span><span class="benchVal">${benchText}</span></div>
-            <div><span class="benchKey">目安ライン</span><span class="benchVal">${benchText}</span></div>
-          </div>
-          <div class="benchExplain">${comment}</div>
           ${renderBenchCompareBar(item.you, item.target)}
+          <div class="benchPositionText">${positionText}</div>
         </div>
-      </details>
-    `;
-  }).join("");
+      `;
+  };
+  const benchmarkTop3Html = benchmarkScores
+    .slice()
+    .sort((a,b)=> (Number(b.weight || 0) - Number(a.weight || 0)))
+    .slice(0,3)
+    .map(renderBenchComparisonCard)
+    .join("");
+  const benchmarkOthersHtml = benchmarkScores
+    .slice()
+    .sort((a,b)=> (Number(b.weight || 0) - Number(a.weight || 0)))
+    .slice(3)
+    .map(renderBenchComparisonCard)
+    .join("");
+  const comparableScores = benchmarkScores.filter(item=> Number.isFinite(item.score));
+  const countBlue = comparableScores.filter(item=> item.score >= 80).length;
+  const countYellow = comparableScores.filter(item=> item.score >= 60 && item.score < 80).length;
+  const countRed = comparableScores.filter(item=> item.score < 60).length;
+  const stabilityPositionSummary = comparableScores.length
+    ? `公的指標と比較できる ${comparableScores.length}項目中、目安内 ${countBlue} / 注意 ${countYellow} / 要改善 ${countRed}`
+    : "比較できるデータが増えると、現在地の精度が上がります。";
   const benchmarkIntroHtml = targetBudget ? `
     <div class="small muted" style="margin-top:6px; margin-bottom:10px;">
       基準：${targetBudget.ageBandLabel} / 世帯${targetBudget.householdSize}人 / 年収${fmtYen(targetBudget.annualIncomeGross)}円（手取り換算）
-      ・目安手取り月収 ${fmtYen(Math.round(targetBudget.monthlyNetTarget))}円
     </div>
-    <div class="small muted" style="margin-bottom:10px;">
-      黒字率/食費/光熱/交通通信/教養娯楽は公的指標ベース。日用品・医療/保険・教育はプロ視点の目安値です。
+    <div class="small muted" style="margin-top:-4px; margin-bottom:10px;">
+      ※ 公的指標 / 公的ベース / 独自指標 をラベルで区別しています
     </div>
   ` : `
     <div class="small muted" style="margin-top:6px;">
@@ -3421,62 +3864,31 @@ function buildMonthlyResult(){
 
   const summaryMonthly = buildSummaryTextMonthly({ satisfactionScore, stabilityScore });
 
-  const trendMonths = (()=> {
-    const base = m ? new Date(`${m}-01T00:00:00`) : new Date();
-    const labels = [];
-    for(let i=2;i>=0;i--){
-      const d = new Date(base);
-      d.setMonth(d.getMonth() - i);
-      labels.push(`${d.getMonth()+1}月`);
-    }
-    return labels;
-  })();
-  const trendSat = [
-    clamp(satisfactionScore - 8, 0, 100),
-    clamp(satisfactionScore - 3, 0, 100),
-    satisfactionScore
-  ];
-  const trendStable = [
-    clamp(stabilityScore - 6, 0, 100),
-    clamp(stabilityScore - 2, 0, 100),
-    stabilityScore
-  ];
-  const satDelta = clamp(trendSat[2] - trendSat[1], -100, 100);
-  const stableDelta = clamp(trendStable[2] - trendStable[1], -100, 100);
-  const trendPoints = (values, w=320, h=140, pad=16)=>{
-    const plotW = w - pad * 2;
-    const plotH = h - pad * 2;
-    return values.map((v, i)=>{
-      const x = pad + (plotW / (values.length - 1)) * i;
-      const y = pad + (1 - (v / 100)) * plotH;
-      return { x, y };
-    });
-  };
-  const satPoints = trendPoints(trendSat);
-  const stablePoints = trendPoints(trendStable);
-  const pointsToPath = pts => pts.map((p,i)=> `${i===0?"M":"L"}${p.x},${p.y}`).join(" ");
-  const satPath = pointsToPath(satPoints);
-  const stablePath = pointsToPath(stablePoints);
-  const satLast = satPoints[satPoints.length - 1];
-  const stableLast = stablePoints[stablePoints.length - 1];
-  const gaugeValue = 63;
-  const compareAvg = 50;
-  const compareDiff = gaugeValue - compareAvg;
-  const zScore = (gaugeValue - 50) / 10;
-  const comparePct = clamp(Math.round((1 - normalCdf(zScore)) * 100), 1, 99);
-  const compareText = `あなたは同年代上位 ${comparePct}%`;
+  const monthlyCharacter = buildCharacterSnapshot(m);
+  const monthlyMood = monthlyCharacter.tier === "めっちゃ良い" ? "🤩"
+    : monthlyCharacter.tier === "良い" ? "😄"
+    : monthlyCharacter.tier === "悪い" ? "😟"
+    : monthlyCharacter.tier === "めっちゃ悪い" ? "🥶"
+    : "🙂";
 
   const html = `
     <div class="resultWrap monthlyResult">
         <div class="summaryCard animIn a1">
-          <div class="summaryTitle">月次レポート：${escapeHtml(m)}</div>
+          <div class="summaryTitle">マンスリーサマリー：${escapeHtml(m)}</div>
           <div class="summaryLead">${escapeHtml(summaryMonthly)}</div>
-          <div class="monthlyAxisTabs" role="tablist" aria-label="月次レポート表示切り替え">
+          <div class="monthlySummaryCharacter">
+            <div class="monthlySummaryCharacterAvatar">${homeAvatarHTML(monthlyCharacter.category, monthlyCharacter.tier, monthlyMood)}</div>
+            <div class="monthlySummaryCharacterMeta">
+              <div class="monthlySummaryCharacterName">${escapeHtml(monthlyCharacter.name)}</div>
+              <div class="monthlySummaryCharacterSub">${escapeHtml(monthlyCharacter.tier)}</div>
+              <div class="monthlySummaryCharacterNote">この月のお金の使い方の傾向から判定しています</div>
+            </div>
+          </div>
+          <div class="monthlyAxisTabs" role="tablist" aria-label="マンスリーサマリー表示切り替え">
             <button class="monthlyAxisBtn active" data-main="sat" onclick="switchMonthlyMainTab('sat')" role="tab" aria-controls="monthlyAxisPanel-sat" aria-selected="true">家計納得度スコア</button>
             <button class="monthlyAxisBtn" data-main="stable" onclick="switchMonthlyMainTab('stable')" role="tab" aria-controls="monthlyAxisPanel-stable" aria-selected="false">家計安定度スコア</button>
-            <button class="monthlyAxisBtn" data-main="trend" onclick="switchMonthlyMainTab('trend')" role="tab" aria-controls="monthlyDetail-trend" aria-selected="false">3ヶ月推移</button>
             <button class="monthlyAxisBtn" data-main="map" onclick="switchMonthlyMainTab('map')" role="tab" aria-controls="monthlyDetail-map" aria-selected="false">2軸分布図</button>
-            <button class="monthlyAxisBtn" data-main="compare" onclick="switchMonthlyMainTab('compare')" role="tab" aria-controls="monthlyDetail-compare" aria-selected="false">偏差値比較</button>
+            <button class="monthlyAxisBtn is-soon" data-main="compare" onclick="switchMonthlyMainTab('compare')" role="tab" aria-controls="monthlyDetail-compare" aria-selected="false">比較（準備中）</button>
           </div>
         </div>
       <div class="monthlyAxisPane animIn a2" id="monthlyAxisPanel-sat" data-monthly-axis="sat" role="tabpanel" aria-hidden="false">
@@ -3561,40 +3973,15 @@ function buildMonthlyResult(){
           <div class="sectionScore">${stabilityScore}/100</div>
         </div>
           <div>
+            <div class="benchPositionSummary">${stabilityPositionSummary}</div>
+            <div class="benchLegend">
+              <span class="benchLegendPill blue">青: 目安内</span>
+              <span class="benchLegendPill yellow">黄: 注意</span>
+              <span class="benchLegendPill red">赤: 要改善</span>
+            </div>
             ${benchmarkIntroHtml}
-            ${targetBudget ? benchmarkBlocksAll : ""}
-          </div>
-        </div>
-      </div>
-
-      <div class="monthlyDetailPane animIn a3" id="monthlyDetail-trend" data-detail="trend" role="tabpanel" aria-hidden="true" style="display:none;">
-        <div class="sectionCard">
-          <div class="sectionHead">
-            <div><div class="sectionName">3ヶ月推移</div><div class="sectionHint">家計納得度 / 家計安定度</div></div>
-            <div class="sectionScore">推移</div>
-          </div>
-          <div class="trendCards">
-            <div class="trendCard sat">
-              <div class="trendLabel">家計納得度</div>
-              <div class="trendValue">${satisfactionScore}</div>
-              <div class="trendDelta ${satDelta >= 0 ? "up" : "down"}">${satDelta >= 0 ? "▲" : "▼"} ${Math.abs(satDelta)}</div>
-            </div>
-            <div class="trendCard stable">
-              <div class="trendLabel">家計安定度</div>
-              <div class="trendValue">${stabilityScore}</div>
-              <div class="trendDelta ${stableDelta >= 0 ? "up" : "down"}">${stableDelta >= 0 ? "▲" : "▼"} ${Math.abs(stableDelta)}</div>
-            </div>
-          </div>
-          <div class="trendChart">
-            <svg viewBox="0 0 320 140" role="img" aria-label="3ヶ月推移ラインチャート">
-              <path class="trendLine sat" d="${satPath}"></path>
-              <path class="trendLine stable" d="${stablePath}"></path>
-              ${satPoints.map((p,i)=>`<circle class="trendDot sat ${i===2?"latest":""}" cx="${p.x}" cy="${p.y}" r="${i===2?5:3}"></circle>`).join("")}
-              ${stablePoints.map((p,i)=>`<circle class="trendDot stable ${i===2?"latest":""}" cx="${p.x}" cy="${p.y}" r="${i===2?5:3}"></circle>`).join("")}
-            </svg>
-            <div class="trendAxis">
-              ${trendMonths.map(label=> `<span>${label}</span>`).join("")}
-            </div>
+            ${targetBudget ? benchmarkTop3Html : ""}
+            ${targetBudget ? `<details class="benchCard benchMoreWrap" style="margin-top:10px;"><summary><div class="benchTop"><div class="benchTitle">その他の指標</div></div></summary><div class="benchDetail">${benchmarkOthersHtml}</div></details>` : ""}
           </div>
         </div>
       </div>
@@ -3613,7 +4000,23 @@ function buildMonthlyResult(){
 
       <div class="monthlyDetailPane animIn a3" id="monthlyDetail-compare" data-detail="compare" role="tabpanel" aria-hidden="true" style="display:none;">
         <div class="sectionCard">
-          ${renderDevScoreCard(gaugeValue, compareDiff, compareText, compareAvg)}
+          <div class="sectionHead">
+            <div><div class="sectionName">比較機能（準備中）</div><div class="sectionHint">データが溜まり次第、同属性比較を表示</div></div>
+            <div class="sectionScore"><span class="benchSource custom">準備中</span></div>
+          </div>
+          <div class="comparePreviewGrid">
+            <div class="comparePreviewCard">
+              <div class="comparePreviewLabel">表示予定</div>
+              <div class="comparePreviewValue">同属性内の現在地</div>
+              <div class="small muted">年齢帯・世帯人数・年収帯などを反映</div>
+            </div>
+            <div class="comparePreviewCard">
+              <div class="comparePreviewLabel">表示予定</div>
+              <div class="comparePreviewValue">平均との差と推移</div>
+              <div class="small muted">月ごとの変化を比較しやすく表示</div>
+            </div>
+          </div>
+          <div class="small muted" style="margin-top:8px;">今は精度担保のため非表示です。十分なデータが集まり次第リリースします。</div>
         </div>
       </div>
 
@@ -3636,7 +4039,7 @@ function buildMonthlyResult(){
   `;
 
   const text =
-`月次レポート：${m}
+`マンスリーサマリー：${m}
 
 家計納得度スコア：${satisfactionScore}/100
 - 主観納得度スコア：${subjectiveScore==null?"—":subjectiveScore+"/100"}
@@ -3807,8 +4210,11 @@ function clearMonthTx(){
   const target = input && input.value ? input.value : ym(CAL_ANCHOR);
   if(!confirm(`${target} のデータを削除しますか？（元に戻せません）`)) return;
 
-  const next = loadTx().filter(t=> !(t.date && t.date.startsWith(target)));
+  const current = loadTx();
+  const toDelete = current.filter(t=> t.date && t.date.startsWith(target));
+  const next = current.filter(t=> !(t.date && t.date.startsWith(target)));
   saveTx(next);
+  toDelete.forEach(t=> syncSafely(()=> syncTransactionToSupabase({ ...t, isDeleted:true })));
 
   toast("月データを削除しました");
   renderList();
@@ -3979,6 +4385,7 @@ function saveProfile(){
   saveJSON(LS_PROFILE, prof);
   const m = $("settingsMonth")?.value || ym(new Date());
   saveMonthlySettings(m);
+  syncSafely(()=> syncProfileToSupabase());
   toast("保存しました");
   loadProfileToUI();
 }
@@ -4402,6 +4809,8 @@ function finishSurvey(){
       : 0,
   };
   saveJSON(LS_FIXED, fixedAll);
+  syncSafely(()=> syncProfileToSupabase());
+  syncSafely(()=> syncMonthlySettingsToSupabase(m));
 
   loadProfileToUI();
   $("settingsMonth") && ($("settingsMonth").value = m);
@@ -4460,7 +4869,7 @@ function init(){
   $("tab-profile")?.addEventListener("click", ()=> updateScreenHeader("profile"));
   $("scoreQuickBtn")?.addEventListener("click", ()=> updateScreenHeader("score"));
 
-  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{
@@ -4495,6 +4904,11 @@ function init(){
     const current = localStorage.getItem(LS_HOME_PREVIEW_CATEGORY) || "auto";
     $("homePreviewCategory").value = CATEGORIES.includes(current) ? current : "auto";
   }
+  syncPremiumModeDevUI();
+  const supa = getSupabaseConfig();
+  if($("supabaseUrl")) $("supabaseUrl").value = supa.url || "";
+  if($("supabaseAnonKey")) $("supabaseAnonKey").value = supa.anonKey || "";
+  setSupabaseStatus(supa.url && supa.anonKey ? "接続情報あり（未テスト）" : "未接続");
 
   loadProfileToUI();
   [1,2,3,4,5].forEach(i=>{
