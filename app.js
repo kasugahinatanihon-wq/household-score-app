@@ -1874,7 +1874,13 @@ function renderMonthlyReport(){
       quickMoM.classList.add("is-nodata");
     }
   }
-  if(quickTopCat) quickTopCat.textContent = topCat;
+  if(quickTopCat){
+    if(topCat === "未設定" || total <= 0){
+      quickTopCat.textContent = "未設定";
+    }else{
+      quickTopCat.textContent = `${topCat} ${fmtYen(Math.round(topCatAmount))}円 (${topCatShare}%)`;
+    }
+  }
   if(quickInsight) quickInsight.textContent = insight;
   if(actionBox){
     const mission1 = momDiff > 0
