@@ -666,6 +666,119 @@ function setActiveHouseholdId(householdId){
     localStorage.removeItem(LS_ACTIVE_HOUSEHOLD);
   }
 }
+function isHouseholdSharedMode(){
+  return !!(getAuthUserId() && getActiveHouseholdId());
+}
+let HOUSEHOLD_PULL_TIMER = null;
+function applyHouseholdRowsToLocal(rows){
+  const txRows = Array.isArray(rows.txRows) ? rows.txRows : [];
+  const settingRows = Array.isArray(rows.settingRows) ? rows.settingRows : [];
+  const profileRow = rows.profileRow || null;
+
+  const tx = txRows.map(r=>({
+    id: r.id,
+    date: r.occurred_on,
+    category: r.category,
+    amount: Number(r.amount_yen || 0),
+    satisfaction: r.sat == null ? null : Number(r.sat),
+    valueTag: r.value_tag || null,
+    memo: r.memo || "",
+    trigMemo: r.memo || "",
+    isDeleted: !!r.is_deleted
+  }));
+  saveTx(tx);
+
+  const fixedMap = {};
+  const incomeMap = {};
+  const savingMap = {};
+  for(const r of settingRows){
+    const month = String(r.month || "").slice(0, 7);
+    if(!month) continue;
+    if(!fixedMap[month]){
+      fixedMap[month] = { housingYen:0, utilityYen:0, netYen:0, subYen:0, mortgagePrincipalYen:0 };
+      incomeMap[month] = 0;
+      savingMap[month] = { saving:0, invest:0 };
+    }
+    fixedMap[month].housingYen += Number(r.housing_yen || 0);
+    fixedMap[month].utilityYen += Number(r.utility_yen || 0);
+    fixedMap[month].netYen += Number(r.net_yen || 0);
+    fixedMap[month].subYen += Number(r.sub_yen || 0);
+    fixedMap[month].mortgagePrincipalYen += Number(r.mortgage_principal_yen || 0);
+    incomeMap[month] += Number(r.income_yen || 0);
+    savingMap[month].saving += Number(r.saving_yen || 0);
+    savingMap[month].invest += Number(r.invest_yen || 0);
+  }
+  saveJSON(LS_FIXED, fixedMap);
+  saveIncomeMap(incomeMap);
+  saveSavingMap(savingMap);
+
+  if(profileRow){
+    const profile = {
+      household: profileRow.household_size ? String(profileRow.household_size) : "unknown",
+      householdSize: Number(profileRow.household_size || 0) || "",
+      age: Number(profileRow.age || 0) || "",
+      annualIncomeGross: Number(profileRow.annual_income_gross_yen || 0) || "",
+      housingType: profileRow.housing_type || "unknown",
+      regionType: profileRow.region_type || "unknown",
+      workType: profileRow.work_type || "unknown",
+      valueCats: [
+        profileRow.value_cat_1 || "",
+        profileRow.value_cat_2 || "",
+        profileRow.value_cat_3 || "",
+        profileRow.value_cat_4 || "",
+        profileRow.value_cat_5 || "",
+      ],
+      valueTop3: [
+        profileRow.value_top_1 || "",
+        profileRow.value_top_2 || "",
+        profileRow.value_top_3 || "",
+      ].filter(Boolean),
+    };
+    saveJSON(LS_PROFILE, profile);
+  }
+}
+async function pullHouseholdDataToLocal({ silent = false } = {}){
+  if(!isHouseholdSharedMode()) return false;
+  const householdId = getActiveHouseholdId();
+  if(!householdId) return false;
+  const hid = encodeURIComponent(householdId);
+  try{
+    if(!silent) setHouseholdStatus("世帯データ読み込み中...");
+    const [txRows, settingRows, profileRows] = await Promise.all([
+      supabaseRequest(`transactions?household_id=eq.${hid}&is_deleted=eq.false&select=id,occurred_on,category,amount_yen,sat,value_tag,memo,is_deleted,updated_at&order=occurred_on.desc,updated_at.desc&limit=10000`),
+      supabaseRequest(`monthly_settings?household_id=eq.${hid}&select=month,income_yen,saving_yen,invest_yen,housing_yen,utility_yen,net_yen,sub_yen,mortgage_principal_yen`),
+      supabaseRequest(`user_profiles?household_id=eq.${hid}&select=household_size,age,annual_income_gross_yen,housing_type,region_type,work_type,value_cat_1,value_cat_2,value_cat_3,value_cat_4,value_cat_5,value_top_1,value_top_2,value_top_3,effective_month,created_at&order=effective_month.desc,created_at.desc&limit=1`)
+    ]);
+    applyHouseholdRowsToLocal({ txRows, settingRows, profileRow: profileRows?.[0] || null });
+    renderCalendar();
+    renderList();
+    renderMonthlyReport();
+    renderWeeklyInline();
+    renderMonthlyGate();
+    loadProfileToUI();
+    if(!silent) setHouseholdStatus("世帯データを更新しました");
+    return true;
+  }catch(err){
+    console.error(err);
+    if(!silent) setHouseholdStatus(`読み込み失敗: ${err.message}`, true);
+    return false;
+  }
+}
+function startHouseholdPulling(){
+  if(HOUSEHOLD_PULL_TIMER){
+    clearInterval(HOUSEHOLD_PULL_TIMER);
+    HOUSEHOLD_PULL_TIMER = null;
+  }
+  if(!isHouseholdSharedMode()) return;
+  HOUSEHOLD_PULL_TIMER = setInterval(()=>{
+    pullHouseholdDataToLocal({ silent:true });
+  }, 30000);
+}
+async function pullHouseholdNow(){
+  const ok = await pullHouseholdDataToLocal();
+  toast(ok ? "世帯データを再読み込みしました" : "世帯データの読み込みに失敗しました");
+}
+window.pullHouseholdNow = pullHouseholdNow;
 async function supabaseAuthRequest(path, { method = "POST", body = null } = {}){
   const cfg = getSupabaseConfig();
   if(!cfg.url || !cfg.anonKey) throw new Error("Supabase未設定");
@@ -700,6 +813,8 @@ async function signUpWithEmail(){
       saveAuthSession(session);
       await ensureRemoteUser();
       await refreshHouseholdState();
+      await pullHouseholdDataToLocal({ silent:true });
+      startHouseholdPulling();
       setAuthStatus(`ログイン中: ${email}`);
       toast("登録してログインしました");
       return;
@@ -727,6 +842,8 @@ async function signInWithEmail(){
     saveAuthSession(session);
     await ensureRemoteUser();
     await refreshHouseholdState();
+    await pullHouseholdDataToLocal({ silent:true });
+    startHouseholdPulling();
     setAuthStatus(`ログイン中: ${email}`);
     toast("ログインしました");
   }catch(err){
@@ -739,6 +856,10 @@ window.signInWithEmail = signInWithEmail;
 function signOutAccount(){
   saveAuthSession(null);
   setActiveHouseholdId("");
+  if(HOUSEHOLD_PULL_TIMER){
+    clearInterval(HOUSEHOLD_PULL_TIMER);
+    HOUSEHOLD_PULL_TIMER = null;
+  }
   setAuthStatus("未ログイン");
   setHouseholdStatus("世帯未参加");
   toast("ログアウトしました");
@@ -774,6 +895,8 @@ async function createHousehold(){
       prefer: "resolution=merge-duplicates,return=minimal"
     });
     setActiveHouseholdId(household.id);
+    await pullHouseholdDataToLocal({ silent:true });
+    startHouseholdPulling();
     setHouseholdStatus(`参加中: ${household.name} / コード ${household.invite_code}`);
     toast("世帯を作成しました");
   }catch(err){
@@ -804,6 +927,8 @@ async function joinHousehold(){
       prefer: "resolution=merge-duplicates,return=minimal"
     });
     setActiveHouseholdId(household.id);
+    await pullHouseholdDataToLocal({ silent:true });
+    startHouseholdPulling();
     setHouseholdStatus(`参加中: ${household.name} / コード ${household.invite_code}`);
     toast("世帯に参加しました");
   }catch(err){
@@ -824,10 +949,12 @@ async function refreshHouseholdState(){
     const member = members?.[0];
     if(!member?.household_id){
       setActiveHouseholdId("");
+      startHouseholdPulling();
       setHouseholdStatus("世帯未参加");
       return;
     }
     setActiveHouseholdId(member.household_id);
+    startHouseholdPulling();
     const households = await supabaseRequest(`households?id=eq.${encodeURIComponent(member.household_id)}&select=id,name,invite_code&limit=1`);
     const h = households?.[0];
     setHouseholdStatus(h?.name ? `参加中: ${h.name} / コード ${h.invite_code}` : "世帯参加中");
@@ -1046,6 +1173,7 @@ async function syncAllToSupabase(){
     for(const row of tx){
       await syncTransactionToSupabase(row);
     }
+    await pullHouseholdDataToLocal({ silent:true });
     setSupabaseStatus(`同期完了: ${tx.length}件`);
     toast("Supabase同期完了");
   }catch(err){
@@ -5179,7 +5307,10 @@ function init(){
   const auth = loadAuthSession();
   if($("authEmail") && auth?.user?.email) $("authEmail").value = auth.user.email;
   setAuthStatus(auth?.user?.email ? `ログイン中: ${auth.user.email}` : "未ログイン");
-  refreshHouseholdState();
+  refreshHouseholdState().then(()=>{
+    pullHouseholdDataToLocal({ silent:true });
+    startHouseholdPulling();
+  });
 
   loadProfileToUI();
   [1,2,3,4,5].forEach(i=>{

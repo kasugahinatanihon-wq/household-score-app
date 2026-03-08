@@ -41,6 +41,7 @@ psql "$DATABASE_URL" -f db/migrations/0003_auth_household_model.sql
   - Email/password sign-up and sign-in (Supabase Auth)
   - Household create (invite code issuance)
   - Household join by invite code
+  - Household data pull (shared report view across members)
 
 ### App to Supabase wiring (current)
 1. Open `設定` → `Supabase連携（本番データ収集）`
