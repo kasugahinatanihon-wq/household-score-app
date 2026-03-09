@@ -13,6 +13,7 @@ psql "$DATABASE_URL" -f db/migrations/0003_auth_household_model.sql
 psql "$DATABASE_URL" -f db/migrations/0004_fix_household_members_rls_recursion.sql
 psql "$DATABASE_URL" -f db/migrations/0005_fix_household_rls_auth_mismatch.sql
 psql "$DATABASE_URL" -f db/migrations/0006_household_rpc_create_join.sql
+psql "$DATABASE_URL" -f db/migrations/0007_household_rpc_bootstrap_user.sql
 ```
 
 ## Notes

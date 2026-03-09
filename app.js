@@ -944,7 +944,6 @@ async function createHousehold(){
     return;
   }
   try{
-    await ensureRemoteUser();
     const created = await supabaseRequest("rpc/create_household_with_membership", {
       method: "POST",
       body: { p_name: name },
@@ -980,7 +979,6 @@ async function joinHousehold(){
     return;
   }
   try{
-    await ensureRemoteUser();
     const joined = await supabaseRequest("rpc/join_household_by_code", {
       method: "POST",
       body: { p_invite_code: code },
