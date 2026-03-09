@@ -944,20 +944,14 @@ async function createHousehold(){
     return;
   }
   try{
-    const userId = await ensureRemoteUser();
-    const code = makeInviteCode(6);
-    const created = await supabaseRequest("households?select=id,name,invite_code", {
+    await ensureRemoteUser();
+    const created = await supabaseRequest("rpc/create_household_with_membership", {
       method: "POST",
-      body: { name, invite_code: code, created_by: userId },
+      body: { p_name: name },
       prefer: "return=representation"
     });
     const household = created?.[0];
     if(!household?.id) throw new Error("世帯作成に失敗しました");
-    await supabaseRequest("household_members?on_conflict=household_id,user_id", {
-      method: "POST",
-      body: { household_id: household.id, user_id: userId, role: "owner" },
-      prefer: "resolution=merge-duplicates,return=minimal"
-    });
     setActiveHouseholdId(household.id);
     setActiveHouseholdCode(household.invite_code || "");
     await pullHouseholdDataToLocal({ silent:true });
@@ -986,15 +980,14 @@ async function joinHousehold(){
     return;
   }
   try{
-    const userId = await ensureRemoteUser();
-    const found = await supabaseRequest(`households?invite_code=eq.${encodeURIComponent(code)}&select=id,name,invite_code&limit=1`);
-    const household = found?.[0];
-    if(!household?.id) throw new Error("参加コードが見つかりません");
-    await supabaseRequest("household_members?on_conflict=household_id,user_id", {
+    await ensureRemoteUser();
+    const joined = await supabaseRequest("rpc/join_household_by_code", {
       method: "POST",
-      body: { household_id: household.id, user_id: userId, role: "member" },
-      prefer: "resolution=merge-duplicates,return=minimal"
+      body: { p_invite_code: code },
+      prefer: "return=representation"
     });
+    const household = joined?.[0];
+    if(!household?.id) throw new Error("参加コードが見つかりません");
     setActiveHouseholdId(household.id);
     setActiveHouseholdCode(household.invite_code || "");
     await pullHouseholdDataToLocal({ silent:true });
