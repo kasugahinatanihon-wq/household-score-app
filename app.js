@@ -736,6 +736,18 @@ function openProfileAuthGate(){
   openModal("profileAuthGateModal");
 }
 window.openProfileAuthGate = openProfileAuthGate;
+function openOpeningModal(){
+  const modal = $("openingModal");
+  if(!modal) return;
+  modal.dataset.locked = "1";
+  openModal("openingModal");
+}
+window.openOpeningModal = openOpeningModal;
+function startAuthEntryFlow(){
+  closeModal("openingModal");
+  openProfileAuthGate();
+}
+window.startAuthEntryFlow = startAuthEntryFlow;
 function closeProfileAuthGate(){
   const modal = $("profileAuthGateModal");
   if(modal?.dataset.locked === "1") return;
@@ -1036,7 +1048,7 @@ function signOutAccount(){
   setHouseholdStatus("未参加");
   toast("ログアウトしました");
   AUTH_GATE_NEXT_SCREEN = "score";
-  openProfileAuthGate();
+  openOpeningModal();
 }
 window.signOutAccount = signOutAccount;
 async function createHousehold(){
@@ -1760,7 +1772,13 @@ function updateScreenHeader(name){
 function switchScreen(name){
   if(!getAuthAccessToken()){
     AUTH_GATE_NEXT_SCREEN = name || "score";
-    openProfileAuthGate();
+    if($("profileAuthGateModal")?.classList.contains("isOpen")){
+      return;
+    }
+    if($("openingModal")?.classList.contains("isOpen")){
+      return;
+    }
+    openOpeningModal();
     return;
   }
   const map = { input:"screen-input", list:"screen-list", report:"screen-report", score:"screen-score", profile:"screen-profile" };
@@ -5481,13 +5499,14 @@ function init(){
   $("tab-profile")?.addEventListener("click", ()=> updateScreenHeader("profile"));
   $("scoreQuickBtn")?.addEventListener("click", ()=> updateScreenHeader("score"));
 
-  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","profileAuthGateModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","profileAuthGateModal","openingModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{
       if(e.target !== ov) return;
       if(id === "surveyModal" && ov.dataset.locked === "1") return;
       if(id === "profileAuthGateModal" && ov.dataset.locked === "1") return;
+      if(id === "openingModal" && ov.dataset.locked === "1") return;
       closeModal(id);
     });
   });
@@ -5558,7 +5577,8 @@ function init(){
   readyState.lastSeenMonth = nowMonth;
   saveMonthlyReady(readyState);
 
-  if(!localStorage.getItem(LS_ONBOARD)){
+  const loggedIn = !!getAuthAccessToken();
+  if(loggedIn && !localStorage.getItem(LS_ONBOARD)){
     nextSlide(1);
     openModal("onboardingModal");
   }else{
@@ -5572,8 +5592,13 @@ function init(){
   renderWeeklyInline();
   renderMonthlyGate();
   loadMonthlySettings($("settingsMonth")?.value || ym(new Date()));
-  switchScreen("score");
-  updateScreenHeader("score");
+  if(loggedIn){
+    switchScreen("score");
+    updateScreenHeader("score");
+  }else{
+    AUTH_GATE_NEXT_SCREEN = "score";
+    openOpeningModal();
+  }
 }
 
 init();
