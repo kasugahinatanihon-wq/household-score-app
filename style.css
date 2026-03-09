@@ -1436,6 +1436,53 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   width:min(540px, 90vw);
   overflow:visible;
 }
+.openingBody{
+  padding:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.openingCard{
+  width:100%;
+  background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(240,249,255,.9));
+  border:1px solid rgba(15,23,42,.1);
+  border-radius:24px;
+  box-shadow:0 20px 42px rgba(15,23,42,.12);
+  padding:32px 24px 24px;
+  text-align:center;
+}
+.openingIcon{
+  margin-bottom:14px;
+}
+.openingTitle{
+  color:#0f172a;
+  margin:0 0 12px;
+  font-size:26px;
+  line-height:1.35;
+}
+.openingLead{
+  margin:0;
+  color:#475569;
+  font-size:14px;
+  line-height:1.85;
+}
+.openingStartBtn{
+  width:100%;
+  margin-top:22px;
+  min-height:48px;
+}
+@media (max-width:720px){
+  .openingBody{
+    padding:16px;
+  }
+  .openingCard{
+    border-radius:20px;
+    padding:26px 18px 18px;
+  }
+  .openingTitle{
+    font-size:22px;
+  }
+}
 #profileAuthGateModal{
   z-index:10001;
   background:
@@ -1654,6 +1701,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .homeHeroHeader{
   display:flex;
   align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
   margin-bottom:10px;
 }
 .homeHeroEyebrow{
@@ -1683,6 +1732,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   min-width:0;
 }
 .homeAvatar{
+  position:relative;
   width:72px;
   height:72px;
   border-radius:20px;
@@ -1693,12 +1743,23 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:rgba(8,145,178,.12);
   border:1px solid rgba(8,145,178,.25);
 }
+.homeAvatarAura{
+  position:absolute;
+  inset:-4px;
+  border-radius:24px;
+  border:1px solid transparent;
+  pointer-events:none;
+  display:none;
+}
 .homeAvatarImg{
   width:100%;
   height:100%;
   object-fit:cover;
   border-radius:18px;
   display:block;
+}
+.homeAvatarImg.is-live{
+  animation:homeAvatarBreath 4.6s ease-in-out infinite;
 }
 .homeAvatarFallback{
   width:100%;
@@ -1707,6 +1768,26 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:center;
   justify-content:center;
   font-size:34px;
+}
+.homeAvatarFallback.is-live{
+  animation:homeAvatarBob 2.6s ease-in-out infinite;
+}
+.homeAvatar.is-live .homeAvatarAura.is-live{
+  display:block;
+  border-color:rgba(8,145,178,.28);
+  animation:homeAvatarAura 2.8s ease-in-out infinite;
+}
+.homeAvatar.is-jump .homeAvatarImg,
+.homeAvatar.is-jump .homeAvatarFallback{
+  animation:homeAvatarJump .68s cubic-bezier(.2,.75,.25,1);
+}
+.homeAvatar.is-spark::after{
+  content:"✨";
+  position:absolute;
+  top:-8px;
+  right:-6px;
+  font-size:14px;
+  animation:homeAvatarSpark .85s ease-out;
 }
 .homeStateTitle{
   font-size:14px;
@@ -1750,6 +1831,46 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-size:12px;
   line-height:1.5;
 }
+.homeSpeech.is-live{
+  animation:homeSpeechPop .28s ease-out;
+}
+.homeSpeech.is-live.good{
+  border-color:rgba(16,185,129,.3);
+  background:rgba(236,253,245,.9);
+}
+.homeSpeech.is-live.warn{
+  border-color:rgba(245,158,11,.3);
+  background:rgba(255,251,235,.94);
+}
+.homeSpeech.is-live.neutral{
+  border-color:rgba(14,116,144,.2);
+}
+.homeLiveBadge{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  color:#334155;
+  background:rgba(148,163,184,.14);
+  border:1px solid rgba(148,163,184,.24);
+}
+.homeLiveBadge.good{
+  color:#0f766e;
+  background:rgba(16,185,129,.14);
+  border-color:rgba(16,185,129,.25);
+}
+.homeLiveBadge.warn{
+  color:#b45309;
+  background:rgba(245,158,11,.14);
+  border-color:rgba(245,158,11,.25);
+}
+.homeLiveBadge.report{
+  color:#0c4a6e;
+  background:rgba(14,165,233,.12);
+  border-color:rgba(14,165,233,.25);
+}
 .homeRecordMeta{
   margin-top:12px;
   display:flex;
@@ -1766,6 +1887,32 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:#4b5d73;
   background:rgba(148,163,184,.14);
   border:1px solid rgba(148,163,184,.24);
+}
+@keyframes homeAvatarBreath{
+  0%,100%{ transform:translateY(0) scale(1); }
+  50%{ transform:translateY(-2px) scale(1.02); }
+}
+@keyframes homeAvatarBob{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-3px); }
+}
+@keyframes homeAvatarAura{
+  0%,100%{ opacity:.45; transform:scale(1); }
+  50%{ opacity:.9; transform:scale(1.03); }
+}
+@keyframes homeSpeechPop{
+  0%{ opacity:.2; transform:translateY(5px) scale(.98); }
+  100%{ opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes homeAvatarJump{
+  0%{ transform:translateY(0) scale(1); }
+  45%{ transform:translateY(-8px) scale(1.03); }
+  100%{ transform:translateY(0) scale(1); }
+}
+@keyframes homeAvatarSpark{
+  0%{ opacity:0; transform:translateY(4px) scale(.8); }
+  30%{ opacity:1; transform:translateY(-3px) scale(1); }
+  100%{ opacity:0; transform:translateY(-10px) scale(1.05); }
 }
 .homeTrendGrid{
   margin-top:12px;

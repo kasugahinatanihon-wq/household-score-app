@@ -20,6 +20,8 @@ const LS_AUTH_SESSION = "supabase_auth_session_v1";
 const LS_ACTIVE_HOUSEHOLD = "active_household_id_v1";
 const LS_ACTIVE_HOUSEHOLD_CODE = "active_household_code_v1";
 const LS_ACTIVE_HOUSEHOLD_NAME = "active_household_name_v1";
+const LS_HOME_REACTION = "home_reaction_v1";
+const LS_HOUSEHOLD_VALUE_PROMPTED = "household_value_prompted_v1";
 const LS_HOUSEHOLD_ONBOARDING_DONE = "household_onboarding_done_v1";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
@@ -800,6 +802,43 @@ function getInviteCodeFromUrl(){
 function isHouseholdSharedMode(){
   return !!(getAuthUserId() && getActiveHouseholdId());
 }
+function loadHouseholdValuePromptedMap(){
+  return loadJSON(LS_HOUSEHOLD_VALUE_PROMPTED, {});
+}
+function markHouseholdValuePrompted(householdId){
+  if(!householdId) return;
+  const map = loadHouseholdValuePromptedMap();
+  map[householdId] = Date.now();
+  saveJSON(LS_HOUSEHOLD_VALUE_PROMPTED, map);
+}
+function wasHouseholdValuePrompted(householdId){
+  if(!householdId) return false;
+  const map = loadHouseholdValuePromptedMap();
+  return !!map[householdId];
+}
+async function maybePromptHouseholdValueAlignment(){
+  const householdId = getActiveHouseholdId();
+  if(!householdId || !getAuthUserId()) return;
+  if(wasHouseholdValuePrompted(householdId)) return;
+  try{
+    const members = await supabaseRequest(`household_members?household_id=eq.${encodeURIComponent(householdId)}&select=user_id`);
+    const memberCount = Array.isArray(members) ? members.length : 0;
+    if(memberCount >= 2){
+      markHouseholdValuePrompted(householdId);
+      openModal("householdValueModal");
+    }
+  }catch(err){
+    console.error(err);
+  }
+}
+function openHouseholdValueSetup(){
+  closeModal("householdValueModal");
+  switchScreen("profile");
+  const section = $("settingsValueSection");
+  if(section) section.open = true;
+  setTimeout(()=> $("valueCat1")?.focus(), 0);
+}
+window.openHouseholdValueSetup = openHouseholdValueSetup;
 let HOUSEHOLD_PULL_TIMER = null;
 function applyHouseholdRowsToLocal(rows){
   const txRows = Array.isArray(rows.txRows) ? rows.txRows : [];
@@ -1081,6 +1120,7 @@ async function createHousehold(){
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
     setHouseholdStatus(`参加中: ${householdName || "世帯"} / コード ${inviteCode || "-"}`);
+    await maybePromptHouseholdValueAlignment();
     toast("世帯を作成しました");
   }catch(err){
     console.error(err);
@@ -1120,6 +1160,7 @@ async function joinHousehold(){
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
     setHouseholdStatus(`参加中: ${householdName || "世帯"} / コード ${inviteCode || "-"}`);
+    await maybePromptHouseholdValueAlignment();
     toast("世帯に参加しました");
   }catch(err){
     console.error(err);
@@ -1152,6 +1193,7 @@ async function refreshHouseholdState(){
     setActiveHouseholdCode(h?.invite_code || "");
     setActiveHouseholdName(h?.name || "");
     setHouseholdStatus(h?.name ? `参加中: ${h.name} / コード ${h.invite_code}` : "世帯参加中");
+    await maybePromptHouseholdValueAlignment();
   }catch(err){
     console.error(err);
     setHouseholdStatus(`世帯状態取得失敗: ${err.message}`, true);
@@ -1485,6 +1527,14 @@ function getLatestReadyMonth(){
   const state = loadMonthlyReady();
   const months = Object.keys(state.ready || {}).sort();
   return months.length ? months[months.length - 1] : null;
+}
+function canViewMonthlySummaryOnFree(monthStr){
+  if(!monthStr) return false;
+  const currentMonth = ym(new Date());
+  if(monthStr === currentMonth) return true;
+  const latestReady = getLatestReadyMonth();
+  if(latestReady && monthStr === latestReady) return true;
+  return false;
 }
 function markWeeklyReview(dateStr){
   if(!dateStr) return;
@@ -2079,12 +2129,12 @@ function saveEntry(){
   if(!dt || !cat){
     $("entryMsg").textContent = "カテゴリを選択してください";
     toast("カテゴリを選んでね");
-    return false;
+    return null;
   }
   if(!(amt > 0)){
     $("entryMsg").textContent = "支出を1円以上で入力してください";
     toast("支出を入力してね");
-    return false;
+    return null;
   }
 
   const sat = $("entrySat").value ? Number($("entrySat").value) : null;
@@ -2099,7 +2149,7 @@ function saveEntry(){
   saveTx(tx);
   syncSafely(()=> syncTransactionToSupabase(row));
   localStorage.setItem("last_cat", cat);
-  return true;
+  return row;
 }
 
 function handleEntryPrimary(){
@@ -2129,12 +2179,14 @@ function handleEntryPrimary(){
     return;
   }
 
-  if(saveEntry()) afterEntrySaved();
+  const savedRow = saveEntry();
+  if(savedRow) afterEntrySaved(savedRow);
 }
 
-function afterEntrySaved(){
+function afterEntrySaved(savedRow){
   const beforeXP = getTotalXP();
   const afterXP = addDailyXP(SELECTED_DATE, 2);
+  setHomeReaction(savedRow);
   toast("入力完了");
   closeModal("entryModal");
   renderCalendar();
@@ -2940,14 +2992,69 @@ function getHomeCharacterAsset(category, tier){
   const categoryKey = getHomeCategoryKey(category);
   return `assets/characters/home/${categoryKey}_${tierKey}.png`;
 }
-function homeAvatarHTML(category, tier, mood){
+function homeAvatarHTML(category, tier, mood, opts = {}){
+  const extraClass = opts.extraClass ? ` ${opts.extraClass}` : "";
+  const imgClass = opts.imgClass ? ` ${opts.imgClass}` : "";
+  const fallbackClass = opts.fallbackClass ? ` ${opts.fallbackClass}` : "";
   const src = getHomeCharacterAsset(category, tier);
   const alt = `${category || "バランス"} / ${tier} キャラクター`;
   return `
-    <img class="homeAvatarImg" src="${src}" alt="${escapeHtml(alt)}"
+    <img class="homeAvatarImg${imgClass}" src="${src}" alt="${escapeHtml(alt)}"
       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-    <span class="homeAvatarFallback">${mood}</span>
+    <span class="homeAvatarFallback${fallbackClass}">${mood}</span>
+    <span class="homeAvatarAura${extraClass}" aria-hidden="true"></span>
   `;
+}
+function buildHomeReactionFromEntry(row){
+  if(!row || typeof row !== "object") return null;
+  const sat = Number(row.satisfaction || 0);
+  const amt = Number(row.amount || 0);
+  const hasValueTag = !!String(row.valueTag || "").trim();
+  const cat = String(row.category || "支出");
+  let mood = "🙂";
+  let tone = "neutral";
+  let text = `${cat}を記録したよ。続けるほど育つよ。`;
+  if(sat >= 5){
+    mood = "🤩";
+    tone = "good";
+    text = `${cat}、すごく納得の選択！この調子で育てよう。`;
+  }else if(sat >= 4){
+    mood = "😄";
+    tone = "good";
+    text = `${cat}、いい感じ！今日も一歩前進。`;
+  }else if(sat === 3){
+    mood = "🙂";
+    tone = "neutral";
+    text = `${cat}を記録完了。次はもっと納得の使い方を探そう。`;
+  }else if(sat > 0){
+    mood = "😟";
+    tone = "warn";
+    text = `${cat}、少し気になるかも。次は気持ちよく使える形に。`;
+  }
+  if(amt >= 10000 && tone !== "warn"){
+    text = `${cat}で大きめの支出を記録。全体バランスも一緒に見てみよう。`;
+  }
+  if(hasValueTag && tone !== "warn"){
+    text = `${cat}は価値観「${row.valueTag}」につながるね。いい選択！`;
+  }
+  return {
+    mood,
+    tone,
+    text,
+    at: Date.now()
+  };
+}
+function setHomeReaction(row){
+  const reaction = buildHomeReactionFromEntry(row);
+  if(!reaction) return;
+  saveJSON(LS_HOME_REACTION, reaction);
+}
+function getHomeReaction(){
+  const reaction = loadJSON(LS_HOME_REACTION, null);
+  if(!reaction || typeof reaction !== "object") return null;
+  const at = Number(reaction.at || 0);
+  if(!at || (Date.now() - at) > (1000 * 60 * 60 * 12)) return null;
+  return reaction;
 }
 
 const ENABLE_GROWTH_LOG = false;
@@ -3948,22 +4055,35 @@ function renderWeeklyInline(){
         : tier === "悪い"
           ? "使い方に少しブレがあります。内訳を見て1カテゴリだけ整えましょう。"
           : "後悔につながる使い方が目立っています。今月は先に上限を決めて使うのが安全です。";
+  const reaction = getHomeReaction();
+  const displayMood = reaction?.mood || mood;
+  const displaySpeech = reaction?.text || speech;
+  const reactionToneClass = reaction?.tone === "good"
+    ? "good"
+    : reaction?.tone === "warn"
+      ? "warn"
+      : "neutral";
+  const readyMonth = getLatestReadyMonth();
+  const reportBadge = readyMonth ? `<span class="homeLiveBadge report">📄 マンスリー便りあり</span>` : "";
+  const reactionBadge = reaction ? `<span class="homeLiveBadge ${reactionToneClass}">${reaction.mood} いまの気分</span>` : "";
 
   wrap.innerHTML = `
     <div class="homeHeroCard">
       <div class="homeHeroHeader">
         <span class="homeHeroEyebrow">今月のキャラクター</span>
+        ${reactionBadge}
+        ${reportBadge}
       </div>
       <div class="homeHeroTop">
         <div class="homeAvatarWrap">
-          <div class="homeAvatar">${homeAvatarHTML(displayCategory, tier, mood)}</div>
+          <div class="homeAvatar is-live" id="homeAvatarLive">${homeAvatarHTML(displayCategory, tier, displayMood, { extraClass:"is-live", imgClass:"is-live", fallbackClass:"is-live" })}</div>
         </div>
         <div class="homeStateBlock">
           <div class="homeStateTitle">${escapeHtml(archetype)} <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span></div>
           <div class="homeStateSub">${displayCategory !== "未設定" ? `主カテゴリ: ${escapeHtml(displayCategory)} (${displayShare}%)` : "主カテゴリ判定中"}${Number.isFinite(characterScore) ? ` / 判定スコア ${characterScore}` : ""}</div>
         </div>
       </div>
-      <div class="homeSpeech">${speech}</div>
+      <div class="homeSpeech ${reaction ? `is-live ${reactionToneClass}` : ""}">${displaySpeech}</div>
       <div class="homeRecordMeta">
         <span class="homeRecordPill">今月の記録あり: ${daysWithEntry}日</span>
         <span class="homeRecordPill">最終記録: ${latestEntryLabel}</span>
@@ -3992,6 +4112,35 @@ function setHomePreviewCategory(category){
   toast(`カテゴリ確認: ${value === "auto" ? "自動" : value}`);
 }
 window.setHomePreviewCategory = setHomePreviewCategory;
+function setHomeReactionPreview(type){
+  const map = {
+    good: { mood:"😄", tone:"good", text:"今日の使い方、かなりいい感じ！このまま育てよう。" },
+    neutral: { mood:"🙂", tone:"neutral", text:"順調に記録できています。次の一手を見つけよう。" },
+    warn: { mood:"😟", tone:"warn", text:"少しブレあり。次の支出は納得感を意識してみよう。" },
+  };
+  const payload = map[type];
+  if(!payload) return;
+  saveJSON(LS_HOME_REACTION, { ...payload, at: Date.now() });
+  renderWeeklyInline();
+  toast("気分リアクションを反映しました");
+}
+window.setHomeReactionPreview = setHomeReactionPreview;
+function clearHomeReactionPreview(){
+  localStorage.removeItem(LS_HOME_REACTION);
+  renderWeeklyInline();
+  toast("自動表示に戻しました");
+}
+window.clearHomeReactionPreview = clearHomeReactionPreview;
+function triggerHomeAvatarAction(action){
+  const avatar = $("homeAvatarLive");
+  if(!avatar) return;
+  const cls = action === "spark" ? "is-spark" : "is-jump";
+  avatar.classList.remove("is-jump", "is-spark");
+  void avatar.offsetWidth;
+  avatar.classList.add(cls);
+  setTimeout(()=> avatar.classList.remove(cls), action === "spark" ? 900 : 700);
+}
+window.triggerHomeAvatarAction = triggerHomeAvatarAction;
 
 function animateGrowth(scope){
   const root = scope || document;
@@ -4215,10 +4364,10 @@ window.saveSavingModal = saveSavingModal;
 
 function showMonthlyScore(){
   const m = $("scoreMonth")?.value || ym(new Date());
-  if(!isPremiumUser() && m !== ym(new Date())){
+  if(!isPremiumUser() && !canViewMonthlySummaryOnFree(m)){
     openPremiumModal({
       title: `${m} のマンスリーサマリー`,
-      message: "先月以前のマンスリーサマリー詳細はプレミアムで解放されます。"
+      message: "過去のマンスリーサマリー詳細はプレミアムで解放されます。"
     });
     return;
   }
@@ -5474,9 +5623,9 @@ function resetToFirstRunLocal(){
   [
     LS_TX, LS_FIXED, LS_INCOME, LS_PROFILE, LS_ONBOARD, LS_SAT_SCALE, LS_SAVING,
     LS_REVIEW, LS_MONTHLY_READY, LS_MONTHLY_AVG, LS_TOTAL_XP, LS_XP_MONTHS,
-    LS_DAILY_XP, LS_HOME_PREVIEW, LS_HOME_PREVIEW_CATEGORY, LS_PREMIUM,
+    LS_DAILY_XP, LS_HOME_PREVIEW, LS_HOME_PREVIEW_CATEGORY, LS_PREMIUM, LS_HOME_REACTION,
     LS_REMOTE_USER, LS_AUTH_SESSION, LS_ACTIVE_HOUSEHOLD, LS_ACTIVE_HOUSEHOLD_CODE,
-    LS_ACTIVE_HOUSEHOLD_NAME, LS_HOUSEHOLD_ONBOARDING_DONE, LS_EVOLUTION
+    LS_ACTIVE_HOUSEHOLD_NAME, LS_HOUSEHOLD_VALUE_PROMPTED, LS_HOUSEHOLD_ONBOARDING_DONE, LS_EVOLUTION
   ].forEach((k)=> localStorage.removeItem(k));
   location.reload();
 }
@@ -5519,7 +5668,7 @@ function init(){
   $("tab-profile")?.addEventListener("click", ()=> updateScreenHeader("profile"));
   $("scoreQuickBtn")?.addEventListener("click", ()=> updateScreenHeader("score"));
 
-  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","profileAuthGateModal","openingModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","householdValueModal","profileAuthGateModal","openingModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{

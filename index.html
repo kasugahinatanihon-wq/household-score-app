@@ -251,17 +251,39 @@
   </div>
 </div>
 
+<!-- Household Value Alignment Modal -->
+<div class="modalOverlay hidden" id="householdValueModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">価値観を2人でそろえましょう</div>
+      <button class="ghost" onclick="closeModal('householdValueModal')">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="small" style="line-height:1.8;">
+        世帯共有を始めたら、価値観カテゴリをもう一度相談して決めるのがおすすめです。<br>
+        この設定があると、「満足につながる支出」と「見直す支出」を2人で同じ基準で見られます。
+      </div>
+      <div class="bar" style="margin-top:14px; gap:10px; justify-content:flex-end;">
+        <button class="ghost" type="button" onclick="closeModal('householdValueModal')">あとで</button>
+        <button class="primary" type="button" onclick="openHouseholdValueSetup()">今すぐ設定する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Opening -->
 <div class="modalOverlay hidden" id="openingModal">
   <div class="modal">
-    <div class="modalBody" style="padding:30px 24px; text-align:center;">
-      <div style="margin-bottom:12px;"><span class="emojiWarm lg">🏠</span></div>
-      <h2 style="color:var(--primary); margin-bottom:10px;">家計診断アプリへようこそ</h2>
-      <p class="small muted" style="line-height:1.8; margin:0 0 22px;">
-        支出の記録と分析を、あなたに合った形で続けられるアプリです。<br>
-        まずはログインしてはじめましょう。
-      </p>
-      <button class="primary" style="width:100%;" type="button" onclick="startAuthEntryFlow()">はじめる</button>
+    <div class="modalBody openingBody">
+      <div class="openingCard">
+        <div class="openingIcon"><span class="emojiWarm lg">🏠</span></div>
+        <h2 class="openingTitle">家計診断アプリへようこそ</h2>
+        <p class="openingLead">
+          支出の記録と分析を、あなたに合った形で続けられるアプリです。<br>
+          まずはログインしてはじめましょう。
+        </p>
+        <button class="primary openingStartBtn" type="button" onclick="startAuthEntryFlow()">はじめる</button>
+      </div>
     </div>
   </div>
 </div>
@@ -486,7 +508,7 @@
     </div>
     <div class="modalBody" style="padding:16px;">
       <div class="small" style="line-height:1.7;">
-        先月以前のマンスリーサマリー詳細を確認できます。
+        過去のマンスリーサマリー詳細を確認できます。
       </div>
       <div class="sectionCard" style="margin-top:10px;">
         <div class="sectionHead">
@@ -497,7 +519,7 @@
           <div class="sectionScore">予定</div>
         </div>
         <div class="small" style="line-height:1.7;">
-          ・先月以前のマンスリーサマリー詳細<br>
+          ・過去のマンスリーサマリー詳細<br>
           ・将来の成長ログ機能<br>
           ・履歴の深掘り表示
         </div>
@@ -664,6 +686,22 @@
           <button class="ghost" type="button" onclick="setHomePreviewMode('bad')">悪い</button>
           <button class="ghost" type="button" onclick="setHomePreviewMode('verybad')">めっちゃ悪い</button>
         </div>
+        <div class="homePreviewRow" style="margin-top:10px;">
+          <label class="small muted">気分リアクション確認</label>
+          <div class="homePreviewBtns">
+            <button class="ghost" type="button" onclick="setHomeReactionPreview('good')">ごきげん</button>
+            <button class="ghost" type="button" onclick="setHomeReactionPreview('neutral')">ふつう</button>
+            <button class="ghost" type="button" onclick="setHomeReactionPreview('warn')">注意</button>
+            <button class="ghost" type="button" onclick="clearHomeReactionPreview()">自動に戻す</button>
+          </div>
+        </div>
+        <div class="homePreviewRow" style="margin-top:10px;">
+          <label class="small muted">アクション確認</label>
+          <div class="homePreviewBtns">
+            <button class="ghost" type="button" onclick="triggerHomeAvatarAction('jump')">ジャンプ</button>
+            <button class="ghost" type="button" onclick="triggerHomeAvatarAction('spark')">きらめき</button>
+          </div>
+        </div>
       </details>
       <div id="monthlyGate" style="margin-top:12px;"></div>
       <input type="hidden" id="scoreMonth">
@@ -735,7 +773,7 @@
         </div>
       </details>
 
-      <details class="settingsSection">
+      <details class="settingsSection" id="settingsValueSection">
         <summary>価値観カテゴリ</summary>
         <div class="settingsBody">
           <div class="small">何にお金を使うと満足しやすいかを設定します。下の候補はタップで入力できます。</div>
