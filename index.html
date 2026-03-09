@@ -255,12 +255,13 @@
 <div class="modalOverlay hidden" id="profileAuthGateModal">
   <div class="modal">
     <div class="modalHeader">
-      <div class="modalTitle">ログインして設定を開く</div>
-      <button class="ghost" onclick="closeProfileAuthGate()">✕</button>
+      <div class="modalTitle">ログイン</div>
+      <button class="ghost" id="authGateCloseBtn" onclick="closeProfileAuthGate()">✕</button>
     </div>
     <div class="modalBody" style="padding:16px;">
       <div class="small" style="line-height:1.8;">
-        設定画面の共有機能を使うにはログインが必要です。
+        アカウントでログインして利用を開始してください。<br>
+        未登録の場合は新規登録をお願いします。
       </div>
       <div class="row" style="margin-top:12px;">
         <label>メールアドレス
@@ -782,11 +783,10 @@
       <details class="settingsSection" id="settingsHouseholdSection">
         <summary>アカウント・世帯共有</summary>
         <div class="settingsBody">
-          <div class="small">共有する場合は「アカウント」→「世帯共有」の順で進めます。</div>
-          <div class="small" id="householdGuide" style="margin-top:8px; line-height:1.7;">
-            Step1: ログイン / Step2: 世帯を作成または参加
-          </div>
-          <div class="small" style="margin-top:10px; font-weight:700;">Step1 アカウント</div>
+          <div class="small">世帯を設定すると、家族で同じ家計データを共有できます。</div>
+          <div class="small" id="householdGuide" style="margin-top:8px; line-height:1.7;">世帯の状態を確認中...</div>
+
+          <div class="small" style="margin-top:10px; font-weight:700;">アカウント</div>
           <div class="row" style="margin-top:12px;">
             <label>メールアドレス
               <input type="email" id="authEmail" placeholder="example@mail.com">
@@ -802,21 +802,36 @@
           </div>
           <div class="small" id="authStatus" style="margin-top:8px; font-weight:700;">ログイン状態: 未ログイン</div>
 
-          <div class="small" style="margin-top:16px; font-weight:700;">Step2 世帯共有</div>
-          <div class="row" style="margin-top:14px;">
-            <label>新しい世帯名
-              <input type="text" id="householdName" placeholder="例：田中家">
-            </label>
-            <label>参加コード
-              <input type="text" id="joinHouseholdCode" placeholder="例：AB12CD">
-            </label>
+          <div class="small" style="margin-top:16px; font-weight:700;">世帯共有</div>
+          <div id="householdCreateJoinArea">
+            <div class="small muted" style="margin-top:8px;">「世帯を作成」または「招待コードで参加」を選択してください。</div>
+            <div class="small" style="margin-top:12px; font-weight:700;">1) 新しく世帯を作る</div>
+            <div class="row" style="margin-top:8px;">
+              <label>新しい世帯名
+                <input type="text" id="householdName" placeholder="例：田中家">
+              </label>
+            </div>
+            <div class="bar" style="margin-top:8px; justify-content:flex-end;">
+              <button class="primary" type="button" id="createHouseholdBtn" onclick="createHousehold()">世帯を作成</button>
+            </div>
+            <div class="small" style="margin-top:14px; font-weight:700;">2) 招待コードで参加する</div>
+            <div class="row" style="margin-top:8px;">
+              <label>参加コード
+                <input type="text" id="joinHouseholdCode" placeholder="例：AB12CD">
+              </label>
+            </div>
+            <div class="bar" style="margin-top:8px; justify-content:flex-end;">
+              <button class="dark" type="button" id="joinHouseholdBtn" onclick="joinHousehold()">コードで参加</button>
+            </div>
           </div>
-          <div class="small muted" style="margin-top:8px;">作成する人: 世帯名を入れて「世帯を作成」 / 参加する人: コードを入れて「コードで参加」</div>
-          <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
-            <button class="ghost" type="button" id="createHouseholdBtn" onclick="createHousehold()">世帯を作成</button>
-            <button class="dark" type="button" id="joinHouseholdBtn" onclick="joinHousehold()">コードで参加</button>
-            <button class="ghost" type="button" id="pullHouseholdBtn" onclick="pullHouseholdNow()">世帯データ再読み込み</button>
-            <button class="ghost" type="button" id="copyInviteBtn" onclick="copyHouseholdInvite()">招待をコピー</button>
+
+          <div id="householdJoinedArea" style="display:none; margin-top:12px;">
+            <div class="small" id="householdJoinedSummary" style="font-weight:700;">世帯に参加中</div>
+            <div class="small muted" style="margin-top:6px;">この世帯でデータ共有中です。招待は下のボタンから送れます。</div>
+            <div class="bar" style="margin-top:10px; gap:8px; justify-content:flex-end;">
+              <button class="primary" type="button" id="copyInviteBtn" onclick="copyHouseholdInvite()">招待をコピー</button>
+              <button class="ghost" type="button" id="pullHouseholdBtn" onclick="pullHouseholdNow()">最新データを取得</button>
+            </div>
           </div>
           <div class="small" id="householdStatus" style="margin-top:8px; font-weight:700;">世帯状態: 未参加</div>
         </div>

@@ -19,6 +19,7 @@ const LS_REMOTE_USER = "remote_user_v1";
 const LS_AUTH_SESSION = "supabase_auth_session_v1";
 const LS_ACTIVE_HOUSEHOLD = "active_household_id_v1";
 const LS_ACTIVE_HOUSEHOLD_CODE = "active_household_code_v1";
+const LS_ACTIVE_HOUSEHOLD_NAME = "active_household_name_v1";
 const LS_HOUSEHOLD_ONBOARDING_DONE = "household_onboarding_done_v1";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
@@ -200,6 +201,7 @@ const MASCOT_STAGE_COLORS = [
 ];
 
 const $ = (id)=>document.getElementById(id);
+let AUTH_GATE_NEXT_SCREEN = "score";
 
 function ensureToast(){
   if($("toast")) return;
@@ -681,10 +683,15 @@ function setHouseholdStatus(msg, isError = false){
 function refreshHouseholdControls(){
   const loggedIn = !!getAuthAccessToken();
   const hasHousehold = !!getActiveHouseholdId();
+  const householdName = getActiveHouseholdName();
+  const householdCode = getActiveHouseholdCode();
   const createBtn = $("createHouseholdBtn");
   const joinBtn = $("joinHouseholdBtn");
   const pullBtn = $("pullHouseholdBtn");
   const copyBtn = $("copyInviteBtn");
+  const createJoinArea = $("householdCreateJoinArea");
+  const joinedArea = $("householdJoinedArea");
+  const joinedSummary = $("householdJoinedSummary");
   const signOutBtn = $("signOutBtn");
   const signInBtn = $("signInBtn");
   const signUpBtn = $("signUpBtn");
@@ -692,25 +699,36 @@ function refreshHouseholdControls(){
   if(createBtn) createBtn.disabled = !loggedIn;
   if(joinBtn) joinBtn.disabled = !loggedIn;
   if(pullBtn) pullBtn.disabled = !(loggedIn && hasHousehold);
-  if(copyBtn) copyBtn.disabled = !(loggedIn && hasHousehold && !!getActiveHouseholdCode());
+  if(copyBtn) copyBtn.disabled = !(loggedIn && hasHousehold && !!householdCode);
   if(signOutBtn) signOutBtn.disabled = !loggedIn;
   if(signInBtn) signInBtn.style.display = loggedIn ? "none" : "";
   if(signUpBtn) signUpBtn.style.display = loggedIn ? "none" : "";
   if(signOutBtn) signOutBtn.style.display = loggedIn ? "" : "none";
-  if(createBtn && hasHousehold) createBtn.textContent = "世帯を作成済み";
-  else if(createBtn) createBtn.textContent = "世帯を作成";
-  if(joinBtn && hasHousehold) joinBtn.textContent = "参加済み";
-  else if(joinBtn) joinBtn.textContent = "コードで参加";
+  if(createJoinArea) createJoinArea.style.display = loggedIn && !hasHousehold ? "" : "none";
+  if(joinedArea) joinedArea.style.display = loggedIn && hasHousehold ? "" : "none";
+  if(joinedSummary){
+    const safeName = householdName || "世帯";
+    const safeCode = householdCode || "-";
+    joinedSummary.textContent = `参加中の世帯: ${safeName}（コード: ${safeCode}）`;
+  }
   if(guide){
-    if(!loggedIn) guide.textContent = "Step1: メールとパスワードでログイン";
-    else if(!hasHousehold) guide.textContent = "Step2: 世帯を作成 または 参加コードで参加";
-    else guide.textContent = "共有中: 招待をコピーして相手に送ってください";
+    if(!loggedIn) guide.textContent = "ログインすると世帯共有を設定できます。";
+    else if(!hasHousehold) guide.textContent = "「世帯を作成」または「招待コードで参加」を選択してください。";
+    else guide.textContent = "世帯を共有中です。招待コピーから家族を追加できます。";
   }
 }
 function openProfileAuthGate(){
   if(getAuthAccessToken()){
-    switchScreen("profile");
+    switchScreen(AUTH_GATE_NEXT_SCREEN || "score");
     return;
+  }
+  const modal = $("profileAuthGateModal");
+  const closeBtn = $("authGateCloseBtn");
+  if(modal){
+    modal.dataset.locked = "1";
+  }
+  if(closeBtn){
+    closeBtn.style.display = "none";
   }
   if($("authGateEmail") && $("authEmail")?.value) $("authGateEmail").value = $("authEmail").value;
   if($("authGatePassword")) $("authGatePassword").value = "";
@@ -719,6 +737,8 @@ function openProfileAuthGate(){
 }
 window.openProfileAuthGate = openProfileAuthGate;
 function closeProfileAuthGate(){
+  const modal = $("profileAuthGateModal");
+  if(modal?.dataset.locked === "1") return;
   closeModal("profileAuthGateModal");
 }
 window.closeProfileAuthGate = closeProfileAuthGate;
@@ -741,6 +761,16 @@ function setActiveHouseholdCode(code){
 }
 function getActiveHouseholdCode(){
   return String(localStorage.getItem(LS_ACTIVE_HOUSEHOLD_CODE) || "");
+}
+function setActiveHouseholdName(name){
+  if(name){
+    localStorage.setItem(LS_ACTIVE_HOUSEHOLD_NAME, name);
+  }else{
+    localStorage.removeItem(LS_ACTIVE_HOUSEHOLD_NAME);
+  }
+}
+function getActiveHouseholdName(){
+  return String(localStorage.getItem(LS_ACTIVE_HOUSEHOLD_NAME) || "");
 }
 function getInviteCodeFromUrl(){
   try{
@@ -910,8 +940,12 @@ async function signUpWithEmailCore(email, password, { fromGate = false } = {}){
         if($("authEmail")) $("authEmail").value = email;
         if($("authPassword")) $("authPassword").value = password;
         setAuthGateStatus("");
+        const modal = $("profileAuthGateModal");
+        if(modal) modal.dataset.locked = "";
+        const closeBtn = $("authGateCloseBtn");
+        if(closeBtn) closeBtn.style.display = "";
         closeProfileAuthGate();
-        switchScreen("profile");
+        switchScreen(AUTH_GATE_NEXT_SCREEN || "score");
       }
       toast("登録してログインしました");
       return true;
@@ -965,8 +999,12 @@ async function signInWithEmailCore(email, password, { fromGate = false } = {}){
       if($("authEmail")) $("authEmail").value = email;
       if($("authPassword")) $("authPassword").value = password;
       setAuthGateStatus("");
+      const modal = $("profileAuthGateModal");
+      if(modal) modal.dataset.locked = "";
+      const closeBtn = $("authGateCloseBtn");
+      if(closeBtn) closeBtn.style.display = "";
       closeProfileAuthGate();
-      switchScreen("profile");
+      switchScreen(AUTH_GATE_NEXT_SCREEN || "score");
     }
     toast("ログインしました");
     return true;
@@ -989,6 +1027,7 @@ function signOutAccount(){
   saveAuthSession(null);
   setActiveHouseholdId("");
   setActiveHouseholdCode("");
+  setActiveHouseholdName("");
   if(HOUSEHOLD_PULL_TIMER){
     clearInterval(HOUSEHOLD_PULL_TIMER);
     HOUSEHOLD_PULL_TIMER = null;
@@ -996,6 +1035,8 @@ function signOutAccount(){
   setAuthStatus("未ログイン");
   setHouseholdStatus("未参加");
   toast("ログアウトしました");
+  AUTH_GATE_NEXT_SCREEN = "score";
+  openProfileAuthGate();
 }
 window.signOutAccount = signOutAccount;
 async function createHousehold(){
@@ -1017,6 +1058,7 @@ async function createHousehold(){
     if(!householdId) throw new Error("世帯作成に失敗しました");
     setActiveHouseholdId(householdId);
     setActiveHouseholdCode(inviteCode || "");
+    setActiveHouseholdName(householdName || "");
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
     setHouseholdStatus(`参加中: ${householdName || "世帯"} / コード ${inviteCode || "-"}`);
@@ -1055,6 +1097,7 @@ async function joinHousehold(){
     if(!householdId) throw new Error("参加コードが見つかりません");
     setActiveHouseholdId(householdId);
     setActiveHouseholdCode(inviteCode || "");
+    setActiveHouseholdName(householdName || "");
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
     setHouseholdStatus(`参加中: ${householdName || "世帯"} / コード ${inviteCode || "-"}`);
@@ -1078,6 +1121,7 @@ async function refreshHouseholdState(){
     if(!member?.household_id){
       setActiveHouseholdId("");
       setActiveHouseholdCode("");
+      setActiveHouseholdName("");
       startHouseholdPulling();
       setHouseholdStatus("世帯未参加");
       return;
@@ -1087,6 +1131,7 @@ async function refreshHouseholdState(){
     const households = await supabaseRequest(`households?id=eq.${encodeURIComponent(member.household_id)}&select=id,name,invite_code&limit=1`);
     const h = households?.[0];
     setActiveHouseholdCode(h?.invite_code || "");
+    setActiveHouseholdName(h?.name || "");
     setHouseholdStatus(h?.name ? `参加中: ${h.name} / コード ${h.invite_code}` : "世帯参加中");
   }catch(err){
     console.error(err);
@@ -1713,7 +1758,8 @@ function updateScreenHeader(name){
 }
 
 function switchScreen(name){
-  if(name === "profile" && !getAuthAccessToken()){
+  if(!getAuthAccessToken()){
+    AUTH_GATE_NEXT_SCREEN = name || "score";
     openProfileAuthGate();
     return;
   }
@@ -5441,6 +5487,7 @@ function init(){
     ov.addEventListener("click", (e)=>{
       if(e.target !== ov) return;
       if(id === "surveyModal" && ov.dataset.locked === "1") return;
+      if(id === "profileAuthGateModal" && ov.dataset.locked === "1") return;
       closeModal(id);
     });
   });
