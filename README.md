@@ -27,6 +27,7 @@ psql "$DATABASE_URL" -f db/migrations/0006_household_rpc_create_join.sql
 psql "$DATABASE_URL" -f db/migrations/0007_household_rpc_bootstrap_user.sql
 psql "$DATABASE_URL" -f db/migrations/0008_fix_household_rpc_ambiguous_id.sql
 psql "$DATABASE_URL" -f db/migrations/0009_recreate_household_rpc_without_id_collision.sql
+psql "$DATABASE_URL" -f db/migrations/0010_fix_household_rpc_conflict_columns.sql
 ```
 
 ### Security hardening (prod-like)

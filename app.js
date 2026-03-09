@@ -942,9 +942,9 @@ async function createHousehold(){
       prefer: "return=representation"
     });
     const household = created?.[0] || {};
-    const householdId = household.id || household.household_id;
-    const householdName = household.name || household.household_name;
-    const inviteCode = household.invite_code || household.household_invite_code;
+    const householdId = household.id || household.household_id || household.out_household_id;
+    const householdName = household.name || household.household_name || household.out_household_name;
+    const inviteCode = household.invite_code || household.household_invite_code || household.out_household_invite_code;
     if(!householdId) throw new Error("世帯作成に失敗しました");
     setActiveHouseholdId(householdId);
     setActiveHouseholdCode(inviteCode || "");
@@ -980,9 +980,9 @@ async function joinHousehold(){
       prefer: "return=representation"
     });
     const household = joined?.[0] || {};
-    const householdId = household.id || household.household_id;
-    const householdName = household.name || household.household_name;
-    const inviteCode = household.invite_code || household.household_invite_code;
+    const householdId = household.id || household.household_id || household.out_household_id;
+    const householdName = household.name || household.household_name || household.out_household_name;
+    const inviteCode = household.invite_code || household.household_invite_code || household.out_household_invite_code;
     if(!householdId) throw new Error("参加コードが見つかりません");
     setActiveHouseholdId(householdId);
     setActiveHouseholdCode(inviteCode || "");
