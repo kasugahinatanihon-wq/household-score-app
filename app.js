@@ -680,6 +680,11 @@ function setHouseholdStatus(msg, isError = false){
   el.style.color = isError ? "#b91c1c" : "";
   refreshHouseholdControls();
 }
+function launchOnboardingIfNeeded(){
+  if(localStorage.getItem(LS_ONBOARD)) return;
+  nextSlide(1);
+  openModal("onboardingModal");
+}
 function refreshHouseholdControls(){
   const loggedIn = !!getAuthAccessToken();
   const hasHousehold = !!getActiveHouseholdId();
@@ -948,6 +953,7 @@ async function signUpWithEmailCore(email, password, { fromGate = false } = {}){
       await pullHouseholdDataToLocal({ silent:true });
       startHouseholdPulling();
       setAuthStatus(`ログイン中: ${email}`);
+      launchOnboardingIfNeeded();
       if(fromGate){
         if($("authEmail")) $("authEmail").value = email;
         if($("authPassword")) $("authPassword").value = password;
@@ -1007,6 +1013,7 @@ async function signInWithEmailCore(email, password, { fromGate = false } = {}){
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
     setAuthStatus(`ログイン中: ${email}`);
+    launchOnboardingIfNeeded();
     if(fromGate){
       if($("authEmail")) $("authEmail").value = email;
       if($("authPassword")) $("authPassword").value = password;
@@ -5461,6 +5468,19 @@ function resetOnboarding(){
   openModal("onboardingModal");
 }
 window.resetOnboarding = resetOnboarding;
+function resetToFirstRunLocal(){
+  const ok = window.confirm("この端末のログイン状態とローカルデータを初期化します。実行しますか？");
+  if(!ok) return;
+  [
+    LS_TX, LS_FIXED, LS_INCOME, LS_PROFILE, LS_ONBOARD, LS_SAT_SCALE, LS_SAVING,
+    LS_REVIEW, LS_MONTHLY_READY, LS_MONTHLY_AVG, LS_TOTAL_XP, LS_XP_MONTHS,
+    LS_DAILY_XP, LS_HOME_PREVIEW, LS_HOME_PREVIEW_CATEGORY, LS_PREMIUM,
+    LS_REMOTE_USER, LS_AUTH_SESSION, LS_ACTIVE_HOUSEHOLD, LS_ACTIVE_HOUSEHOLD_CODE,
+    LS_ACTIVE_HOUSEHOLD_NAME, LS_HOUSEHOLD_ONBOARDING_DONE, LS_EVOLUTION
+  ].forEach((k)=> localStorage.removeItem(k));
+  location.reload();
+}
+window.resetToFirstRunLocal = resetToFirstRunLocal;
 
 /* ===== Utils ===== */
 function escapeHtml(str){
