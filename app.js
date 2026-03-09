@@ -929,14 +929,6 @@ function signOutAccount(){
   toast("ログアウトしました");
 }
 window.signOutAccount = signOutAccount;
-function makeInviteCode(len = 6){
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for(let i = 0; i < len; i += 1){
-    out += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return out;
-}
 async function createHousehold(){
   const name = String($("householdName")?.value || "").trim() || "わが家";
   if(!getAuthAccessToken() || !getAuthUserId()){
@@ -949,13 +941,16 @@ async function createHousehold(){
       body: { p_name: name },
       prefer: "return=representation"
     });
-    const household = created?.[0];
-    if(!household?.id) throw new Error("世帯作成に失敗しました");
-    setActiveHouseholdId(household.id);
-    setActiveHouseholdCode(household.invite_code || "");
+    const household = created?.[0] || {};
+    const householdId = household.id || household.household_id;
+    const householdName = household.name || household.household_name;
+    const inviteCode = household.invite_code || household.household_invite_code;
+    if(!householdId) throw new Error("世帯作成に失敗しました");
+    setActiveHouseholdId(householdId);
+    setActiveHouseholdCode(inviteCode || "");
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
-    setHouseholdStatus(`参加中: ${household.name} / コード ${household.invite_code}`);
+    setHouseholdStatus(`参加中: ${householdName || "世帯"} / コード ${inviteCode || "-"}`);
     toast("世帯を作成しました");
   }catch(err){
     console.error(err);
@@ -984,13 +979,16 @@ async function joinHousehold(){
       body: { p_invite_code: code },
       prefer: "return=representation"
     });
-    const household = joined?.[0];
-    if(!household?.id) throw new Error("参加コードが見つかりません");
-    setActiveHouseholdId(household.id);
-    setActiveHouseholdCode(household.invite_code || "");
+    const household = joined?.[0] || {};
+    const householdId = household.id || household.household_id;
+    const householdName = household.name || household.household_name;
+    const inviteCode = household.invite_code || household.household_invite_code;
+    if(!householdId) throw new Error("参加コードが見つかりません");
+    setActiveHouseholdId(householdId);
+    setActiveHouseholdCode(inviteCode || "");
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
-    setHouseholdStatus(`参加中: ${household.name} / コード ${household.invite_code}`);
+    setHouseholdStatus(`参加中: ${householdName || "世帯"} / コード ${inviteCode || "-"}`);
     toast("世帯に参加しました");
   }catch(err){
     console.error(err);

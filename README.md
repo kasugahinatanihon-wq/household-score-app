@@ -26,6 +26,7 @@ psql "$DATABASE_URL" -f db/migrations/0005_fix_household_rls_auth_mismatch.sql
 psql "$DATABASE_URL" -f db/migrations/0006_household_rpc_create_join.sql
 psql "$DATABASE_URL" -f db/migrations/0007_household_rpc_bootstrap_user.sql
 psql "$DATABASE_URL" -f db/migrations/0008_fix_household_rpc_ambiguous_id.sql
+psql "$DATABASE_URL" -f db/migrations/0009_recreate_household_rpc_without_id_collision.sql
 ```
 
 ### Security hardening (prod-like)
@@ -51,11 +52,8 @@ psql "$DATABASE_URL" -f db/migrations/0008_fix_household_rpc_ambiguous_id.sql
   - First tutorial branch: solo or shared setup
 
 ### App to Supabase wiring (current)
-1. Open `設定` → `Supabase連携（本番データ収集）`
-2. Set:
-   - Supabase URL (`https://<project-ref>.supabase.co`)
-   - Supabase Anon Key (Project Settings → API)
-3. Click `接続情報を保存` → `接続テスト` → `今すぐ同期`
+- Supabase URL / Publishable key are embedded in app config for auto-connect.
+- No manual settings required for end users.
 
 Synced tables:
 - `users`
