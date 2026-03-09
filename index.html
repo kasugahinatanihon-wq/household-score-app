@@ -251,6 +251,34 @@
   </div>
 </div>
 
+<!-- Profile Login Gate Modal -->
+<div class="modalOverlay hidden" id="profileAuthGateModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">ログインして設定を開く</div>
+      <button class="ghost" onclick="closeProfileAuthGate()">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="small" style="line-height:1.8;">
+        設定画面の共有機能を使うにはログインが必要です。
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>メールアドレス
+          <input type="email" id="authGateEmail" placeholder="example@mail.com">
+        </label>
+        <label>パスワード
+          <input type="password" id="authGatePassword" placeholder="8文字以上">
+        </label>
+      </div>
+      <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
+        <button class="primary" type="button" onclick="signInFromGate()">ログイン</button>
+        <button class="ghost" type="button" onclick="signUpFromGate()">新規登録</button>
+      </div>
+      <div class="small" id="authGateStatus" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Entry Modal -->
 <div class="modalOverlay" id="entryModal">
   <div class="modal modal-like-app" id="entryModalCard">
@@ -751,29 +779,6 @@
         </div>
       </details>
 
-      <details class="settingsSection" style="display:none;">
-        <summary>Supabase連携（本番データ収集）</summary>
-        <div class="settingsBody">
-          <div class="small">Project Settings → API の URL と anon key を入力します。</div>
-          <div class="row" style="margin-top:12px;">
-            <label>Supabase URL
-              <input type="text" id="supabaseUrl" placeholder="https://xxxx.supabase.co">
-            </label>
-          </div>
-          <div class="row" style="margin-top:12px;">
-            <label>Supabase Anon Key
-              <input type="password" id="supabaseAnonKey" placeholder="eyJ...">
-            </label>
-          </div>
-          <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
-            <button class="ghost" type="button" onclick="saveSupabaseConfig()">接続情報を保存</button>
-            <button class="ghost" type="button" onclick="testSupabaseConnection()">接続テスト</button>
-            <button class="dark" type="button" onclick="syncAllToSupabase()">今すぐ同期</button>
-          </div>
-          <div class="small muted" id="supabaseSyncStatus" style="margin-top:8px;">未接続</div>
-        </div>
-      </details>
-
       <details class="settingsSection" id="settingsHouseholdSection">
         <summary>アカウント・世帯共有</summary>
         <div class="settingsBody">
@@ -791,8 +796,8 @@
             </label>
           </div>
           <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
-            <button class="primary" type="button" onclick="signInWithEmail()">ログイン</button>
-            <button class="ghost" type="button" onclick="signUpWithEmail()">新規登録</button>
+            <button class="primary" type="button" id="signInBtn" onclick="signInWithEmail()">ログイン</button>
+            <button class="ghost" type="button" id="signUpBtn" onclick="signUpWithEmail()">新規登録</button>
             <button class="danger" type="button" id="signOutBtn" onclick="signOutAccount()">ログアウト</button>
           </div>
           <div class="small" id="authStatus" style="margin-top:8px; font-weight:700;">ログイン状態: 未ログイン</div>

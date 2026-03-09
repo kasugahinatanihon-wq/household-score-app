@@ -665,6 +665,12 @@ function setAuthStatus(msg, isError = false){
   el.style.color = isError ? "#b91c1c" : "";
   refreshHouseholdControls();
 }
+function setAuthGateStatus(msg, isError = false){
+  const el = $("authGateStatus");
+  if(!el) return;
+  el.textContent = msg || "";
+  el.style.color = isError ? "#b91c1c" : "";
+}
 function setHouseholdStatus(msg, isError = false){
   const el = $("householdStatus");
   if(!el) return;
@@ -680,12 +686,17 @@ function refreshHouseholdControls(){
   const pullBtn = $("pullHouseholdBtn");
   const copyBtn = $("copyInviteBtn");
   const signOutBtn = $("signOutBtn");
+  const signInBtn = $("signInBtn");
+  const signUpBtn = $("signUpBtn");
   const guide = $("householdGuide");
   if(createBtn) createBtn.disabled = !loggedIn;
   if(joinBtn) joinBtn.disabled = !loggedIn;
   if(pullBtn) pullBtn.disabled = !(loggedIn && hasHousehold);
   if(copyBtn) copyBtn.disabled = !(loggedIn && hasHousehold && !!getActiveHouseholdCode());
   if(signOutBtn) signOutBtn.disabled = !loggedIn;
+  if(signInBtn) signInBtn.style.display = loggedIn ? "none" : "";
+  if(signUpBtn) signUpBtn.style.display = loggedIn ? "none" : "";
+  if(signOutBtn) signOutBtn.style.display = loggedIn ? "" : "none";
   if(createBtn && hasHousehold) createBtn.textContent = "世帯を作成済み";
   else if(createBtn) createBtn.textContent = "世帯を作成";
   if(joinBtn && hasHousehold) joinBtn.textContent = "参加済み";
@@ -696,6 +707,21 @@ function refreshHouseholdControls(){
     else guide.textContent = "共有中: 招待をコピーして相手に送ってください";
   }
 }
+function openProfileAuthGate(){
+  if(getAuthAccessToken()){
+    switchScreen("profile");
+    return;
+  }
+  if($("authGateEmail") && $("authEmail")?.value) $("authGateEmail").value = $("authEmail").value;
+  if($("authGatePassword")) $("authGatePassword").value = "";
+  setAuthGateStatus("");
+  openModal("profileAuthGateModal");
+}
+window.openProfileAuthGate = openProfileAuthGate;
+function closeProfileAuthGate(){
+  closeModal("profileAuthGateModal");
+}
+window.closeProfileAuthGate = closeProfileAuthGate;
 function getActiveHouseholdId(){
   return String(localStorage.getItem(LS_ACTIVE_HOUSEHOLD) || "");
 }
@@ -859,9 +885,14 @@ async function supabaseAuthRequest(path, { method = "POST", body = null } = {}){
 async function signUpWithEmail(){
   const email = String($("authEmail")?.value || "").trim();
   const password = String($("authPassword")?.value || "");
+  return signUpWithEmailCore(email, password, { fromGate:false });
+}
+async function signUpWithEmailCore(email, password, { fromGate = false } = {}){
   if(!email || !password){
-    toast("メールアドレスとパスワードを入力してください");
-    return;
+    const msg = "メールアドレスとパスワードを入力してください";
+    toast(msg);
+    if(fromGate) setAuthGateStatus(msg, true);
+    return false;
   }
   try{
     const raw = await supabaseAuthRequest("signup", {
@@ -875,24 +906,46 @@ async function signUpWithEmail(){
       await pullHouseholdDataToLocal({ silent:true });
       startHouseholdPulling();
       setAuthStatus(`ログイン中: ${email}`);
+      if(fromGate){
+        if($("authEmail")) $("authEmail").value = email;
+        if($("authPassword")) $("authPassword").value = password;
+        setAuthGateStatus("");
+        closeProfileAuthGate();
+        switchScreen("profile");
+      }
       toast("登録してログインしました");
-      return;
+      return true;
     }
     setAuthStatus("確認メールを送信しました。メール確認後にログインしてください");
+    if(fromGate) setAuthGateStatus("確認メールを送信しました。メール確認後にログインしてください");
     toast("確認メールを送信しました");
+    return true;
   }catch(err){
     console.error(err);
     setAuthStatus(`登録失敗: ${err.message}`, true);
+    if(fromGate) setAuthGateStatus(`登録失敗: ${err.message}`, true);
     toast("登録失敗");
+    return false;
   }
 }
 window.signUpWithEmail = signUpWithEmail;
+async function signUpFromGate(){
+  const email = String($("authGateEmail")?.value || "").trim();
+  const password = String($("authGatePassword")?.value || "");
+  await signUpWithEmailCore(email, password, { fromGate:true });
+}
+window.signUpFromGate = signUpFromGate;
 async function signInWithEmail(){
   const email = String($("authEmail")?.value || "").trim();
   const password = String($("authPassword")?.value || "");
+  return signInWithEmailCore(email, password, { fromGate:false });
+}
+async function signInWithEmailCore(email, password, { fromGate = false } = {}){
   if(!email || !password){
-    toast("メールアドレスとパスワードを入力してください");
-    return;
+    const msg = "メールアドレスとパスワードを入力してください";
+    toast(msg);
+    if(fromGate) setAuthGateStatus(msg, true);
+    return false;
   }
   try{
     const raw = await supabaseAuthRequest("token?grant_type=password", {
@@ -908,14 +961,30 @@ async function signInWithEmail(){
     await pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
     setAuthStatus(`ログイン中: ${email}`);
+    if(fromGate){
+      if($("authEmail")) $("authEmail").value = email;
+      if($("authPassword")) $("authPassword").value = password;
+      setAuthGateStatus("");
+      closeProfileAuthGate();
+      switchScreen("profile");
+    }
     toast("ログインしました");
+    return true;
   }catch(err){
     console.error(err);
     setAuthStatus(`ログイン失敗: ${err.message}`, true);
+    if(fromGate) setAuthGateStatus(`ログイン失敗: ${err.message}`, true);
     toast("ログイン失敗");
+    return false;
   }
 }
 window.signInWithEmail = signInWithEmail;
+async function signInFromGate(){
+  const email = String($("authGateEmail")?.value || "").trim();
+  const password = String($("authGatePassword")?.value || "");
+  await signInWithEmailCore(email, password, { fromGate:true });
+}
+window.signInFromGate = signInFromGate;
 function signOutAccount(){
   saveAuthSession(null);
   setActiveHouseholdId("");
@@ -1644,6 +1713,10 @@ function updateScreenHeader(name){
 }
 
 function switchScreen(name){
+  if(name === "profile" && !getAuthAccessToken()){
+    openProfileAuthGate();
+    return;
+  }
   const map = { input:"screen-input", list:"screen-list", report:"screen-report", score:"screen-score", profile:"screen-profile" };
   if(!map[name]) name = "score";
   Object.values(map).forEach(id=>{
@@ -5362,7 +5435,7 @@ function init(){
   $("tab-profile")?.addEventListener("click", ()=> updateScreenHeader("profile"));
   $("scoreQuickBtn")?.addEventListener("click", ()=> updateScreenHeader("score"));
 
-  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","profileAuthGateModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{
