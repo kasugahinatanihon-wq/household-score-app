@@ -204,6 +204,7 @@ const MASCOT_STAGE_COLORS = [
 
 const $ = (id)=>document.getElementById(id);
 let AUTH_GATE_NEXT_SCREEN = "score";
+let AUTH_GATE_BUSY = false;
 
 function ensureToast(){
   if($("toast")) return;
@@ -674,6 +675,26 @@ function setAuthGateStatus(msg, isError = false){
   if(!el) return;
   el.textContent = msg || "";
   el.style.color = isError ? "#b91c1c" : "";
+  el.classList.toggle("is-error", !!isError);
+  el.classList.toggle("is-success", !isError && !!msg);
+}
+function setAuthGateBusy(isBusy, mode = ""){
+  AUTH_GATE_BUSY = !!isBusy;
+  const signInBtn = $("authGateSignInBtn");
+  const signUpBtn = $("authGateSignUpBtn");
+  const emailEl = $("authGateEmail");
+  const passEl = $("authGatePassword");
+  if(signInBtn) signInBtn.disabled = !!isBusy;
+  if(signUpBtn) signUpBtn.disabled = !!isBusy;
+  if(emailEl) emailEl.disabled = !!isBusy;
+  if(passEl) passEl.disabled = !!isBusy;
+  if(isBusy){
+    if(mode === "signup"){
+      setAuthGateStatus("新規登録を処理しています…");
+    }else if(mode === "signin"){
+      setAuthGateStatus("ログインを処理しています…");
+    }
+  }
 }
 function setHouseholdStatus(msg, isError = false){
   const el = $("householdStatus");
@@ -739,6 +760,7 @@ function openProfileAuthGate(){
   }
   if($("authGateEmail") && $("authEmail")?.value) $("authGateEmail").value = $("authEmail").value;
   if($("authGatePassword")) $("authGatePassword").value = "";
+  setAuthGateBusy(false);
   setAuthGateStatus("");
   openModal("profileAuthGateModal");
 }
@@ -1007,8 +1029,8 @@ async function signUpWithEmailCore(email, password, { fromGate = false } = {}){
       toast("登録してログインしました");
       return true;
     }
-    setAuthStatus("確認メールを送信しました。メール確認後にログインしてください");
-    if(fromGate) setAuthGateStatus("確認メールを送信しました。メール確認後にログインしてください");
+    setAuthStatus("確認メールを送信しました。メール認証後にログインしてください");
+    if(fromGate) setAuthGateStatus("確認メールを送信しました。メールのリンクを開いた後、この画面でログインしてください。");
     toast("確認メールを送信しました");
     return true;
   }catch(err){
@@ -1021,9 +1043,15 @@ async function signUpWithEmailCore(email, password, { fromGate = false } = {}){
 }
 window.signUpWithEmail = signUpWithEmail;
 async function signUpFromGate(){
+  if(AUTH_GATE_BUSY) return;
   const email = String($("authGateEmail")?.value || "").trim();
   const password = String($("authGatePassword")?.value || "");
-  await signUpWithEmailCore(email, password, { fromGate:true });
+  setAuthGateBusy(true, "signup");
+  try{
+    await signUpWithEmailCore(email, password, { fromGate:true });
+  }finally{
+    setAuthGateBusy(false);
+  }
 }
 window.signUpFromGate = signUpFromGate;
 async function signInWithEmail(){
@@ -1068,17 +1096,27 @@ async function signInWithEmailCore(email, password, { fromGate = false } = {}){
     return true;
   }catch(err){
     console.error(err);
-    setAuthStatus(`ログイン失敗: ${err.message}`, true);
-    if(fromGate) setAuthGateStatus(`ログイン失敗: ${err.message}`, true);
+    const rawMsg = String(err?.message || "");
+    const friendlyMsg = /email.*confirm|confirmed|verify/i.test(rawMsg)
+      ? "メール認証が未完了です。届いたメールのリンクを開いてからログインしてください。"
+      : `ログイン失敗: ${rawMsg}`;
+    setAuthStatus(friendlyMsg, true);
+    if(fromGate) setAuthGateStatus(friendlyMsg, true);
     toast("ログイン失敗");
     return false;
   }
 }
 window.signInWithEmail = signInWithEmail;
 async function signInFromGate(){
+  if(AUTH_GATE_BUSY) return;
   const email = String($("authGateEmail")?.value || "").trim();
   const password = String($("authGatePassword")?.value || "");
-  await signInWithEmailCore(email, password, { fromGate:true });
+  setAuthGateBusy(true, "signin");
+  try{
+    await signInWithEmailCore(email, password, { fromGate:true });
+  }finally{
+    setAuthGateBusy(false);
+  }
 }
 window.signInFromGate = signInFromGate;
 function signOutAccount(){

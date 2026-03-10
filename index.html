@@ -309,8 +309,11 @@
         </label>
       </div>
       <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
-        <button class="primary" type="button" onclick="signInFromGate()">ログイン</button>
-        <button class="ghost" type="button" onclick="signUpFromGate()">新規登録</button>
+        <button class="primary" type="button" id="authGateSignInBtn" onclick="signInFromGate()">ログイン</button>
+        <button class="ghost" type="button" id="authGateSignUpBtn" onclick="signUpFromGate()">新規登録</button>
+      </div>
+      <div class="small muted" style="margin-top:10px; line-height:1.7;">
+        初めての方: 「新規登録」→ メールのリンクを開く → この画面で「ログイン」
       </div>
       <div class="small" id="authGateStatus" style="margin-top:8px;"></div>
     </div>
