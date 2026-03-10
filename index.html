@@ -876,18 +876,24 @@
           <div class="small" id="householdGuide" style="margin-top:8px; line-height:1.7;">世帯の状態を確認中...</div>
 
           <div class="small" style="margin-top:10px; font-weight:700;">アカウント</div>
+          <div class="small muted" id="authGuide" style="margin-top:6px; line-height:1.7;">
+            ゲストのままでも使えます。世帯共有・招待を使うときだけログインしてください。
+          </div>
           <div class="row" style="margin-top:12px;">
             <label>メールアドレス
               <input type="email" id="authEmail" placeholder="example@mail.com">
             </label>
-            <label>パスワード
+            <label id="authPasswordWrapSettings">パスワード（ログイン時のみ）
               <input type="password" id="authPassword" placeholder="8文字以上">
             </label>
           </div>
           <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
             <button class="primary" type="button" id="signInBtn" onclick="signInWithEmail()">ログイン</button>
-            <button class="ghost" type="button" id="signUpBtn" onclick="signUpWithEmail()">新規登録</button>
+            <button class="ghost" type="button" id="signUpBtn" onclick="signUpWithEmail()">確認メールを送信</button>
             <button class="danger" type="button" id="signOutBtn" onclick="signOutAccount()">ログアウト</button>
+          </div>
+          <div class="small muted" id="authRegisterHint" style="margin-top:8px; line-height:1.7;">
+            初めての方: メールアドレス入力 → 確認メールを送信 → メール内リンクからパスワード設定
           </div>
           <div class="small" id="authStatus" style="margin-top:8px; font-weight:700;">ログイン状態: 未ログイン</div>
 

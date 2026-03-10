@@ -681,9 +681,19 @@ function refreshAuthControls(){
   const signInBtn = $("signInBtn");
   const signUpBtn = $("signUpBtn");
   const signOutBtn = $("signOutBtn");
+  const authGuide = $("authGuide");
+  const authRegisterHint = $("authRegisterHint");
+  const authPasswordWrapSettings = $("authPasswordWrapSettings");
   if(signInBtn) signInBtn.style.display = loggedIn ? "none" : "";
   if(signUpBtn) signUpBtn.style.display = loggedIn ? "none" : "";
   if(signOutBtn) signOutBtn.style.display = loggedIn ? "" : "none";
+  if(authRegisterHint) authRegisterHint.style.display = loggedIn ? "none" : "";
+  if(authPasswordWrapSettings) authPasswordWrapSettings.style.display = loggedIn ? "" : "";
+  if(authGuide){
+    authGuide.textContent = loggedIn
+      ? "ログイン中です。世帯を作成するか、招待コードで参加すると共有を開始できます。"
+      : "ゲストのままでも使えます。世帯共有・招待を使うときだけログインしてください。";
+  }
 }
 function setAuthGateStatus(msg, isError = false){
   const el = $("authGateStatus");
@@ -995,6 +1005,7 @@ function startGuestEntryFlow(){
   closeModal("openingModal");
   closeModal("profileAuthGateModal");
   switchScreen(AUTH_GATE_NEXT_SCREEN || "score");
+  launchOnboardingIfNeeded();
 }
 window.startGuestEntryFlow = startGuestEntryFlow;
 function closeProfileAuthGate(){
@@ -6004,7 +6015,9 @@ async function init(){
   saveMonthlyReady(readyState);
 
   const loggedIn = !!getAuthAccessToken();
-  if(loggedIn && localStorage.getItem(LS_PASSWORD_SETUP_REQUIRED) !== "1" && !localStorage.getItem(LS_ONBOARD)){
+  const entryMode = localStorage.getItem(LS_ENTRY_MODE);
+  const canShowOnboarding = localStorage.getItem(LS_PASSWORD_SETUP_REQUIRED) !== "1" && !localStorage.getItem(LS_ONBOARD);
+  if(canShowOnboarding && (loggedIn || entryMode === "guest")){
     nextSlide(1);
     openModal("onboardingModal");
   }else{
@@ -6021,7 +6034,6 @@ async function init(){
   switchScreen("score");
   updateScreenHeader("score");
   if(!loggedIn){
-    const entryMode = localStorage.getItem(LS_ENTRY_MODE);
     AUTH_GATE_NEXT_SCREEN = "score";
     if(entryMode !== "guest"){
       openOpeningModal();
