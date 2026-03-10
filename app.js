@@ -24,6 +24,7 @@ const LS_HOME_REACTION = "home_reaction_v1";
 const LS_HOUSEHOLD_VALUE_PROMPTED = "household_value_prompted_v1";
 const LS_PASSWORD_SETUP_REQUIRED = "password_setup_required_v1";
 const LS_SIGNUP_EMAIL_LAST_SENT_AT = "signup_email_last_sent_at_v1";
+const LS_ENTRY_MODE = "entry_mode_v1";
 const LS_HOUSEHOLD_ONBOARDING_DONE = "household_onboarding_done_v1";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
@@ -672,7 +673,17 @@ function setAuthStatus(msg, isError = false){
   if(!el) return;
   el.textContent = `ログイン状態: ${msg}`;
   el.style.color = isError ? "#b91c1c" : "";
+  refreshAuthControls();
   refreshHouseholdControls();
+}
+function refreshAuthControls(){
+  const loggedIn = !!getAuthAccessToken();
+  const signInBtn = $("signInBtn");
+  const signUpBtn = $("signUpBtn");
+  const signOutBtn = $("signOutBtn");
+  if(signInBtn) signInBtn.style.display = loggedIn ? "none" : "";
+  if(signUpBtn) signUpBtn.style.display = loggedIn ? "none" : "";
+  if(signOutBtn) signOutBtn.style.display = loggedIn ? "" : "none";
 }
 function setAuthGateStatus(msg, isError = false){
   const el = $("authGateStatus");
@@ -943,7 +954,9 @@ function refreshHouseholdControls(){
     else guide.textContent = "世帯を共有中です。招待コピーから家族を追加できます。";
   }
 }
-function openProfileAuthGate(){
+function openProfileAuthGate(opts = {}){
+  const locked = !!opts.locked;
+  if(opts.nextScreen) AUTH_GATE_NEXT_SCREEN = opts.nextScreen;
   if(getAuthAccessToken()){
     switchScreen(AUTH_GATE_NEXT_SCREEN || "score");
     return;
@@ -951,16 +964,16 @@ function openProfileAuthGate(){
   const modal = $("profileAuthGateModal");
   const closeBtn = $("authGateCloseBtn");
   if(modal){
-    modal.dataset.locked = "1";
+    modal.dataset.locked = locked ? "1" : "0";
   }
   if(closeBtn){
-    closeBtn.style.display = "none";
+    closeBtn.style.display = locked ? "none" : "";
   }
   if($("authGateEmail") && $("authEmail")?.value) $("authGateEmail").value = $("authEmail").value;
   if($("authGatePassword")) $("authGatePassword").value = "";
   setAuthGateMode("login");
   setAuthGateBusy(false);
-  setAuthGateStatus("");
+  setAuthGateStatus(opts.message || "");
   openModal("profileAuthGateModal");
 }
 window.openProfileAuthGate = openProfileAuthGate;
@@ -973,15 +986,31 @@ function openOpeningModal(){
 window.openOpeningModal = openOpeningModal;
 function startAuthEntryFlow(){
   closeModal("openingModal");
-  openProfileAuthGate();
+  localStorage.setItem(LS_ENTRY_MODE, "auth");
+  openProfileAuthGate({ locked:false, nextScreen: AUTH_GATE_NEXT_SCREEN || "score" });
 }
 window.startAuthEntryFlow = startAuthEntryFlow;
+function startGuestEntryFlow(){
+  localStorage.setItem(LS_ENTRY_MODE, "guest");
+  closeModal("openingModal");
+  closeModal("profileAuthGateModal");
+  switchScreen(AUTH_GATE_NEXT_SCREEN || "score");
+}
+window.startGuestEntryFlow = startGuestEntryFlow;
 function closeProfileAuthGate(){
   const modal = $("profileAuthGateModal");
   if(modal?.dataset.locked === "1") return;
   closeModal("profileAuthGateModal");
 }
 window.closeProfileAuthGate = closeProfileAuthGate;
+function ensureAuthForFeature(featureLabel = "この操作"){
+  if(getAuthAccessToken() && getAuthUserId()) return true;
+  const msg = `${featureLabel}はログインすると使えます`;
+  setHouseholdStatus(msg, true);
+  toast("ログインしてからお試しください");
+  openProfileAuthGate({ locked:false, nextScreen:"profile", message: msg });
+  return false;
+}
 function getActiveHouseholdId(){
   return String(localStorage.getItem(LS_ACTIVE_HOUSEHOLD) || "");
 }
@@ -1276,6 +1305,7 @@ async function signInWithEmailCore(email, password, { fromGate = false } = {}){
       throw new Error("ログインセッションの取得に失敗しました");
     }
     saveAuthSession(session);
+    localStorage.setItem(LS_ENTRY_MODE, "auth");
     await ensureRemoteUser();
     await refreshHouseholdState();
     await pullHouseholdDataToLocal({ silent:true });
@@ -1322,6 +1352,7 @@ async function signInFromGate(){
 window.signInFromGate = signInFromGate;
 function signOutAccount(){
   saveAuthSession(null);
+  localStorage.removeItem(LS_ENTRY_MODE);
   setActiveHouseholdId("");
   setActiveHouseholdCode("");
   setActiveHouseholdName("");
@@ -1338,10 +1369,7 @@ function signOutAccount(){
 window.signOutAccount = signOutAccount;
 async function createHousehold(){
   const name = String($("householdName")?.value || "").trim() || "わが家";
-  if(!getAuthAccessToken() || !getAuthUserId()){
-    toast("先にログインしてください");
-    return;
-  }
+  if(!ensureAuthForFeature("世帯作成")) return;
   try{
     const created = await supabaseRequest("rpc/create_household_with_membership", {
       method: "POST",
@@ -1378,10 +1406,7 @@ async function joinHousehold(){
     toast("参加コードを入力してください");
     return;
   }
-  if(!getAuthAccessToken() || !getAuthUserId()){
-    toast("先にログインしてください");
-    return;
-  }
+  if(!ensureAuthForFeature("世帯参加")) return;
   try{
     const joined = await supabaseRequest("rpc/join_household_by_code", {
       method: "POST",
@@ -1439,6 +1464,7 @@ async function refreshHouseholdState(){
   }
 }
 async function copyHouseholdInvite(){
+  if(!ensureAuthForFeature("招待コードの共有")) return;
   const code = getActiveHouseholdCode();
   if(!code){
     toast("世帯コードがありません");
@@ -2066,17 +2092,6 @@ function updateScreenHeader(name){
 }
 
 function switchScreen(name){
-  if(!getAuthAccessToken()){
-    AUTH_GATE_NEXT_SCREEN = name || "score";
-    if($("profileAuthGateModal")?.classList.contains("isOpen")){
-      return;
-    }
-    if($("openingModal")?.classList.contains("isOpen")){
-      return;
-    }
-    openOpeningModal();
-    return;
-  }
   const map = { input:"screen-input", list:"screen-list", report:"screen-report", score:"screen-score", profile:"screen-profile" };
   if(!map[name]) name = "score";
   Object.values(map).forEach(id=>{
@@ -5956,6 +5971,7 @@ async function init(){
   const auth = loadAuthSession();
   if($("authEmail") && auth?.user?.email) $("authEmail").value = auth.user.email;
   setAuthStatus(auth?.user?.email ? `${auth.user.email} でログイン中` : "未ログイン");
+  refreshAuthControls();
   const inviteCode = getInviteCodeFromUrl();
   if(inviteCode && $("joinHouseholdCode")){
     $("joinHouseholdCode").value = inviteCode;
@@ -6002,12 +6018,14 @@ async function init(){
   renderWeeklyInline();
   renderMonthlyGate();
   loadMonthlySettings($("settingsMonth")?.value || ym(new Date()));
-  if(loggedIn){
-    switchScreen("score");
-    updateScreenHeader("score");
-  }else{
+  switchScreen("score");
+  updateScreenHeader("score");
+  if(!loggedIn){
+    const entryMode = localStorage.getItem(LS_ENTRY_MODE);
     AUTH_GATE_NEXT_SCREEN = "score";
-    openOpeningModal();
+    if(entryMode !== "guest"){
+      openOpeningModal();
+    }
   }
 }
 

@@ -1471,6 +1471,18 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   margin-top:22px;
   min-height:48px;
 }
+.openingActions{
+  margin-top:22px;
+  display:grid;
+  gap:10px;
+}
+.openingActions .openingStartBtn{
+  margin-top:0;
+}
+.openingAuthBtn{
+  width:100%;
+  min-height:44px;
+}
 @media (max-width:720px){
   .openingBody{
     padding:16px;

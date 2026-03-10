@@ -280,9 +280,12 @@
         <h2 class="openingTitle">家計診断アプリへようこそ</h2>
         <p class="openingLead">
           支出の記録と分析を、あなたに合った形で続けられるアプリです。<br>
-          まずはログインしてはじめましょう。
+          まずはゲストで試すか、ログインしてはじめましょう。
         </p>
-        <button class="primary openingStartBtn" type="button" onclick="startAuthEntryFlow()">はじめる</button>
+        <div class="openingActions">
+          <button class="primary openingStartBtn" type="button" onclick="startGuestEntryFlow()">ゲストで試す</button>
+          <button class="ghost openingAuthBtn" type="button" onclick="startAuthEntryFlow()">ログイン / 新規登録</button>
+        </div>
       </div>
     </div>
   </div>
