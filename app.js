@@ -23,10 +23,12 @@ const LS_ACTIVE_HOUSEHOLD_NAME = "active_household_name_v1";
 const LS_HOME_REACTION = "home_reaction_v1";
 const LS_HOUSEHOLD_VALUE_PROMPTED = "household_value_prompted_v1";
 const LS_PASSWORD_SETUP_REQUIRED = "password_setup_required_v1";
+const LS_SIGNUP_EMAIL_LAST_SENT_AT = "signup_email_last_sent_at_v1";
 const LS_HOUSEHOLD_ONBOARDING_DONE = "household_onboarding_done_v1";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
 const SAT_SCALE_VERSION = 2;
+const SIGNUP_EMAIL_COOLDOWN_MS = 60 * 1000;
 
 const CATEGORIES = [
   "食費","外食費","日用品","衣服","美容","交際費","医療費","教育費",
@@ -725,6 +727,33 @@ function setAuthGateMode(mode){
   setAuthGateStatus("");
 }
 window.setAuthGateMode = setAuthGateMode;
+function getSignupEmailLastSentAtMap(){
+  try{
+    const raw = localStorage.getItem(LS_SIGNUP_EMAIL_LAST_SENT_AT);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  }catch(_e){
+    return {};
+  }
+}
+function setSignupEmailLastSentAt(email, atMs = Date.now()){
+  const key = String(email || "").trim().toLowerCase();
+  if(!key) return;
+  const map = getSignupEmailLastSentAtMap();
+  map[key] = Number(atMs) || Date.now();
+  localStorage.setItem(LS_SIGNUP_EMAIL_LAST_SENT_AT, JSON.stringify(map));
+}
+function getSignupEmailCooldownRemainingMs(email){
+  const key = String(email || "").trim().toLowerCase();
+  if(!key) return 0;
+  const map = getSignupEmailLastSentAtMap();
+  const lastAt = Number(map[key] || 0);
+  if(!lastAt) return 0;
+  return Math.max(0, (lastAt + SIGNUP_EMAIL_COOLDOWN_MS) - Date.now());
+}
+function formatCooldownSeconds(ms){
+  return Math.max(1, Math.ceil((Number(ms) || 0) / 1000));
+}
 function getAppAuthRedirectUrl(flow = ""){
   const u = new URL(window.location.href);
   const redirect = new URL(`${u.origin}${u.pathname}`);
@@ -1171,6 +1200,15 @@ async function signUpWithEmailCore(email, { fromGate = false } = {}){
     if(fromGate) setAuthGateStatus(msg, true);
     return false;
   }
+  const cooldownMs = getSignupEmailCooldownRemainingMs(email);
+  if(cooldownMs > 0){
+    const sec = formatCooldownSeconds(cooldownMs);
+    const msg = `確認メールは ${sec} 秒後に再送できます`;
+    setAuthStatus(msg, true);
+    if(fromGate) setAuthGateStatus(msg, true);
+    toast(msg);
+    return false;
+  }
   try{
     await supabaseAuthRequest("otp", {
       body: {
@@ -1179,6 +1217,7 @@ async function signUpWithEmailCore(email, { fromGate = false } = {}){
         email_redirect_to: getAppAuthRedirectUrl("signup_email")
       }
     });
+    setSignupEmailLastSentAt(email);
     setAuthStatus("確認メールを送信しました。メールのリンクを開いてパスワードを設定してください");
     if(fromGate){
       if($("authEmail")) $("authEmail").value = email;
@@ -1188,8 +1227,18 @@ async function signUpWithEmailCore(email, { fromGate = false } = {}){
     return true;
   }catch(err){
     console.error(err);
-    setAuthStatus(`登録失敗: ${err.message}`, true);
-    if(fromGate) setAuthGateStatus(`登録失敗: ${err.message}`, true);
+    const rawMsg = String(err?.message || "");
+    const isRateLimit = /rate limit|security purposes|too many requests/i.test(rawMsg);
+    if(isRateLimit){
+      setSignupEmailLastSentAt(email);
+      const msg = "送信回数が上限に達しました。60秒ほど待ってから再送してください";
+      setAuthStatus(msg, true);
+      if(fromGate) setAuthGateStatus(msg, true);
+      toast("少し待ってから再送してください");
+      return false;
+    }
+    setAuthStatus(`登録失敗: ${rawMsg}`, true);
+    if(fromGate) setAuthGateStatus(`登録失敗: ${rawMsg}`, true);
     toast("登録失敗");
     return false;
   }
