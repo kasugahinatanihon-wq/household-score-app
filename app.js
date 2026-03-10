@@ -5516,9 +5516,14 @@ const SURVEY_STEPS = [
 ];
 let surveyStepIndex = 0;
 
-function getSurveyStepsForCurrentHousing(){
+function getSurveyStepsForCurrentContext(){
   const housingType = $("surveyHousingType")?.value || "unknown";
-  return SURVEY_STEPS.filter(step=> !step.mortgageOnly || housingType === "mortgage");
+  const householdSize = Number($("surveyHousehold")?.value || 0);
+  return SURVEY_STEPS.filter((step)=>{
+    if(step.mortgageOnly && housingType !== "mortgage") return false;
+    if(step.fieldId === "surveyWorkType" && householdSize === 1) return false;
+    return true;
+  });
 }
 
 function updateSurveyProgress(current, total){
@@ -5527,7 +5532,7 @@ function updateSurveyProgress(current, total){
 }
 
 function renderSurveyStep(){
-  const steps = getSurveyStepsForCurrentHousing();
+  const steps = getSurveyStepsForCurrentContext();
   if(surveyStepIndex > steps.length - 1) surveyStepIndex = Math.max(steps.length - 1, 0);
   steps.forEach((step, i)=>{
     const el = $(step.stepId);
@@ -5557,7 +5562,7 @@ function renderSurveyStep(){
 }
 
 function getCurrentSurveyStep(){
-  const steps = getSurveyStepsForCurrentHousing();
+  const steps = getSurveyStepsForCurrentContext();
   return steps[surveyStepIndex] || null;
 }
 
@@ -5593,7 +5598,7 @@ function validateSurveyStep(step){
 function nextSurveyStep(){
   const step = getCurrentSurveyStep();
   if(!validateSurveyStep(step)) return;
-  const steps = getSurveyStepsForCurrentHousing();
+  const steps = getSurveyStepsForCurrentContext();
   if(surveyStepIndex < steps.length - 1){
     surveyStepIndex += 1;
     renderSurveyStep();
@@ -5713,16 +5718,39 @@ function updateSurveyHousingFields(){
   renderSurveyStep();
 }
 
+function ensureSurveyFieldVisible(el){
+  if(!el) return;
+  try{
+    const body = el.closest(".modalBody");
+    if(body){
+      const bodyRect = body.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const offset = (elRect.top - bodyRect.top) + body.scrollTop - 92;
+      body.scrollTo({ top: Math.max(0, offset), behavior:"smooth" });
+      return;
+    }
+    const rect = el.getBoundingClientRect();
+    const targetTop = Math.max(0, window.scrollY + rect.top - 120);
+    window.scrollTo({ top: targetTop, behavior:"smooth" });
+  }catch(_e){
+    // no-op
+  }
+}
+
 function focusCurrentSurveyField(){
   const step = getCurrentSurveyStep();
   const id = step?.fieldId;
   const el = id ? $(id) : null;
   if(!el) return;
   setTimeout(()=>{
-    el.focus();
     if(el instanceof HTMLInputElement && (el.type === "number" || el.type === "text")){
+      el.focus();
       const len = el.value?.length || 0;
       el.setSelectionRange(len, len);
+      ensureSurveyFieldVisible(el);
+    }else if(el instanceof HTMLTextAreaElement){
+      el.focus();
+      ensureSurveyFieldVisible(el);
     }
   }, 0);
 }
@@ -5743,7 +5771,7 @@ function handleSurveyEnterKey(e){
         $(nextId)?.focus();
         return;
       }
-      const steps = getSurveyStepsForCurrentHousing();
+      const steps = getSurveyStepsForCurrentContext();
       if(surveyStepIndex >= steps.length - 1){
         finishSurvey();
       }else{
@@ -5754,7 +5782,7 @@ function handleSurveyEnterKey(e){
   }
   if(step.fieldId && $(step.fieldId) === target){
     e.preventDefault();
-    const steps = getSurveyStepsForCurrentHousing();
+    const steps = getSurveyStepsForCurrentContext();
     if(surveyStepIndex >= steps.length - 1){
       finishSurvey();
     }else{
@@ -5769,6 +5797,9 @@ function bindSurveyKeyboardFlow(){
     const el = $(id);
     if(!el) return;
     el.addEventListener("keydown", handleSurveyEnterKey);
+    if(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement){
+      el.addEventListener("focus", ()=> ensureSurveyFieldVisible(el));
+    }
     if(el instanceof HTMLSelectElement){
       el.addEventListener("change", ()=>{
         const step = getCurrentSurveyStep();
@@ -5791,8 +5822,11 @@ function finishSurvey(){
     { id:"surveySub", label:"サブスク", type:"input" },
     { id:"surveyHousingType", label:"住居形態", type:"select" },
     { id:"surveyRegionType", label:"居住地域", type:"select" },
-    { id:"surveyWorkType", label:"就業形態", type:"select" },
   ];
+  const householdSize = Number($("surveyHousehold")?.value || 0);
+  if(householdSize > 1){
+    requiredFields.push({ id:"surveyWorkType", label:"就業形態", type:"select" });
+  }
   const housingType = $("surveyHousingType")?.value || "unknown";
   const housingLabel = housingType === "rent"
     ? "家賃"
@@ -5826,17 +5860,17 @@ function finishSurvey(){
   }
   const ageRaw = Number($("surveyAge")?.value || 0);
   const annualIncomeGross = Number(normalizeAnnualIncomeYen($("surveyAnnualIncome")?.value) || 0);
-  const householdSize = Number($("surveyHousehold")?.value || 0);
+  const householdSizeForProfile = Number($("surveyHousehold")?.value || 0);
   const valueCats = normalizeValueCats(collectSurveyValueCats());
   const valueTop3 = dedupeList(valueCats.filter(Boolean)).slice(0,3);
   const prof = {
     household: $("surveyHousehold")?.value || "unknown",
-    householdSize: Number.isFinite(householdSize) && householdSize > 0 ? householdSize : "",
+    householdSize: Number.isFinite(householdSizeForProfile) && householdSizeForProfile > 0 ? householdSizeForProfile : "",
     age: Number.isFinite(ageRaw) && ageRaw > 0 ? ageRaw : "",
     annualIncomeGross: annualIncomeGross > 0 ? annualIncomeGross : "",
     housingType: $("surveyHousingType")?.value || "unknown",
     regionType: $("surveyRegionType")?.value || "unknown",
-    workType: $("surveyWorkType")?.value || "unknown",
+    workType: householdSizeForProfile === 1 ? "unknown" : ($("surveyWorkType")?.value || "unknown"),
     valueCats,
     valueTop3,
   };
