@@ -1505,6 +1505,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-color:rgba(16,185,129,.24);
   background:rgba(236,253,245,.9);
 }
+#authGateInputRow.is-signup{
+  grid-template-columns:1fr;
+}
 
 .modal{
   width:min(980px, 96vw);

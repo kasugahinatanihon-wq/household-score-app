@@ -22,6 +22,7 @@ const LS_ACTIVE_HOUSEHOLD_CODE = "active_household_code_v1";
 const LS_ACTIVE_HOUSEHOLD_NAME = "active_household_name_v1";
 const LS_HOME_REACTION = "home_reaction_v1";
 const LS_HOUSEHOLD_VALUE_PROMPTED = "household_value_prompted_v1";
+const LS_PASSWORD_SETUP_REQUIRED = "password_setup_required_v1";
 const LS_HOUSEHOLD_ONBOARDING_DONE = "household_onboarding_done_v1";
 const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
@@ -205,6 +206,7 @@ const MASCOT_STAGE_COLORS = [
 const $ = (id)=>document.getElementById(id);
 let AUTH_GATE_NEXT_SCREEN = "score";
 let AUTH_GATE_BUSY = false;
+let AUTH_GATE_MODE = "login";
 
 function ensureToast(){
   if($("toast")) return;
@@ -696,6 +698,172 @@ function setAuthGateBusy(isBusy, mode = ""){
     }
   }
 }
+function setAuthGateMode(mode){
+  AUTH_GATE_MODE = (mode === "signup") ? "signup" : "login";
+  const inputRow = $("authGateInputRow");
+  const loginBtn = $("authModeLoginBtn");
+  const signupBtn = $("authModeSignupBtn");
+  const signInBtn = $("authGateSignInBtn");
+  const signUpBtn = $("authGateSignUpBtn");
+  const leadLogin = $("authGateLeadLogin");
+  const leadSignup = $("authGateLeadSignup");
+  const passWrap = $("authGatePasswordWrap");
+  if(loginBtn) loginBtn.classList.toggle("primary", AUTH_GATE_MODE === "login");
+  if(loginBtn) loginBtn.classList.toggle("ghost", AUTH_GATE_MODE !== "login");
+  if(signupBtn) signupBtn.classList.toggle("primary", AUTH_GATE_MODE === "signup");
+  if(signupBtn) signupBtn.classList.toggle("ghost", AUTH_GATE_MODE !== "signup");
+  if(signInBtn) signInBtn.style.display = AUTH_GATE_MODE === "login" ? "" : "none";
+  if(signUpBtn){
+    signUpBtn.style.display = AUTH_GATE_MODE === "signup" ? "" : "none";
+    signUpBtn.classList.toggle("primary", AUTH_GATE_MODE === "signup");
+    signUpBtn.classList.toggle("ghost", AUTH_GATE_MODE !== "signup");
+  }
+  if(leadLogin) leadLogin.style.display = AUTH_GATE_MODE === "login" ? "" : "none";
+  if(leadSignup) leadSignup.style.display = AUTH_GATE_MODE === "signup" ? "" : "none";
+  if(passWrap) passWrap.style.display = AUTH_GATE_MODE === "login" ? "" : "none";
+  if(inputRow) inputRow.classList.toggle("is-signup", AUTH_GATE_MODE === "signup");
+  setAuthGateStatus("");
+}
+window.setAuthGateMode = setAuthGateMode;
+function getAppAuthRedirectUrl(flow = ""){
+  const u = new URL(window.location.href);
+  const redirect = new URL(`${u.origin}${u.pathname}`);
+  const invite = String(u.searchParams.get("invite") || "").trim();
+  if(invite) redirect.searchParams.set("invite", invite);
+  if(flow) redirect.searchParams.set("authFlow", flow);
+  return redirect.toString();
+}
+function parseAuthCallbackFromHash(){
+  const raw = String(window.location.hash || "");
+  if(!raw.startsWith("#")) return null;
+  const params = new URLSearchParams(raw.slice(1));
+  const accessToken = params.get("access_token");
+  if(!accessToken) return null;
+  return {
+    access_token: accessToken,
+    refresh_token: params.get("refresh_token") || "",
+    token_type: params.get("token_type") || "bearer",
+    expires_in: Number(params.get("expires_in") || 0) || 0,
+    type: params.get("type") || "",
+  };
+}
+async function fetchAuthUser(accessToken){
+  const cfg = getSupabaseConfig();
+  if(!cfg.url || !cfg.anonKey || !accessToken) return null;
+  const res = await fetch(`${cfg.url}/auth/v1/user`, {
+    method: "GET",
+    headers: {
+      apikey: cfg.anonKey,
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+  if(!res.ok) return null;
+  return res.json();
+}
+async function consumeAuthCallbackIfPresent(){
+  const callback = parseAuthCallbackFromHash();
+  if(!callback) return false;
+  const params = new URLSearchParams(window.location.search || "");
+  const flow = String(params.get("authFlow") || "");
+  const invite = String(params.get("invite") || "").trim();
+  if(flow === "signup_email"){
+    localStorage.setItem(LS_PASSWORD_SETUP_REQUIRED, "1");
+  }
+  const session = {
+    access_token: callback.access_token,
+    refresh_token: callback.refresh_token,
+    token_type: callback.token_type,
+    expires_in: callback.expires_in,
+    expires_at: callback.expires_in ? (Math.floor(Date.now() / 1000) + callback.expires_in) : null,
+    user: null,
+  };
+  try{
+    const user = await fetchAuthUser(callback.access_token);
+    if(user && typeof user === "object"){
+      session.user = user;
+    }
+  }catch(err){
+    console.error(err);
+  }
+  saveAuthSession(session);
+  const cleanUrl = new URL(`${window.location.origin}${window.location.pathname}`);
+  if(invite) cleanUrl.searchParams.set("invite", invite);
+  const clean = cleanUrl.toString();
+  history.replaceState({}, "", clean);
+  return true;
+}
+async function maybeOpenPasswordSetupModal(){
+  if(localStorage.getItem(LS_PASSWORD_SETUP_REQUIRED) !== "1") return;
+  if(!getAuthAccessToken()) return;
+  if($("authSetPasswordStatus")) $("authSetPasswordStatus").textContent = "";
+  if($("authNewPassword")) $("authNewPassword").value = "";
+  if($("authNewPasswordConfirm")) $("authNewPasswordConfirm").value = "";
+  openModal("setPasswordModal");
+}
+async function updateAuthPassword(newPassword){
+  const cfg = getSupabaseConfig();
+  const accessToken = getAuthAccessToken();
+  if(!cfg.url || !cfg.anonKey || !accessToken) throw new Error("ログイン状態が必要です");
+  const res = await fetch(`${cfg.url}/auth/v1/user`, {
+    method: "PUT",
+    headers: {
+      apikey: cfg.anonKey,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ password: newPassword })
+  });
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : {};
+  if(!res.ok){
+    throw new Error(json?.msg || json?.error_description || json?.error || `Auth error ${res.status}`);
+  }
+  return json;
+}
+async function submitNewPassword(){
+  const pw = String($("authNewPassword")?.value || "");
+  const pw2 = String($("authNewPasswordConfirm")?.value || "");
+  const status = $("authSetPasswordStatus");
+  const btn = $("authSetPasswordBtn");
+  if(!pw || pw.length < 8){
+    if(status){
+      status.textContent = "8文字以上のパスワードを入力してください";
+      status.style.color = "#b91c1c";
+    }
+    return;
+  }
+  if(pw !== pw2){
+    if(status){
+      status.textContent = "確認用パスワードが一致しません";
+      status.style.color = "#b91c1c";
+    }
+    return;
+  }
+  if(btn) btn.disabled = true;
+  if(status){
+    status.textContent = "パスワードを設定しています…";
+    status.style.color = "";
+  }
+  try{
+    await updateAuthPassword(pw);
+    localStorage.removeItem(LS_PASSWORD_SETUP_REQUIRED);
+    if(status){
+      status.textContent = "設定が完了しました。今後はメールアドレスとパスワードでログインできます。";
+      status.style.color = "#0f766e";
+    }
+    toast("パスワードを設定しました");
+    setTimeout(()=> closeModal("setPasswordModal"), 500);
+  }catch(err){
+    console.error(err);
+    if(status){
+      status.textContent = `設定失敗: ${err.message}`;
+      status.style.color = "#b91c1c";
+    }
+  }finally{
+    if(btn) btn.disabled = false;
+  }
+}
+window.submitNewPassword = submitNewPassword;
 function setHouseholdStatus(msg, isError = false){
   const el = $("householdStatus");
   if(!el) return;
@@ -704,6 +872,7 @@ function setHouseholdStatus(msg, isError = false){
   refreshHouseholdControls();
 }
 function launchOnboardingIfNeeded(){
+  if(localStorage.getItem(LS_PASSWORD_SETUP_REQUIRED) === "1") return;
   if(localStorage.getItem(LS_ONBOARD)) return;
   nextSlide(1);
   openModal("onboardingModal");
@@ -760,6 +929,7 @@ function openProfileAuthGate(){
   }
   if($("authGateEmail") && $("authEmail")?.value) $("authGateEmail").value = $("authEmail").value;
   if($("authGatePassword")) $("authGatePassword").value = "";
+  setAuthGateMode("login");
   setAuthGateBusy(false);
   setAuthGateStatus("");
   openModal("profileAuthGateModal");
@@ -992,45 +1162,28 @@ async function supabaseAuthRequest(path, { method = "POST", body = null } = {}){
 }
 async function signUpWithEmail(){
   const email = String($("authEmail")?.value || "").trim();
-  const password = String($("authPassword")?.value || "");
-  return signUpWithEmailCore(email, password, { fromGate:false });
+  return signUpWithEmailCore(email, { fromGate:false });
 }
-async function signUpWithEmailCore(email, password, { fromGate = false } = {}){
-  if(!email || !password){
-    const msg = "メールアドレスとパスワードを入力してください";
+async function signUpWithEmailCore(email, { fromGate = false } = {}){
+  if(!email){
+    const msg = "メールアドレスを入力してください";
     toast(msg);
     if(fromGate) setAuthGateStatus(msg, true);
     return false;
   }
   try{
-    const raw = await supabaseAuthRequest("signup", {
-      body: { email, password }
-    });
-    const session = normalizeAuthSessionPayload(raw);
-    if(session?.access_token){
-      saveAuthSession(session);
-      await ensureRemoteUser();
-      await refreshHouseholdState();
-      await pullHouseholdDataToLocal({ silent:true });
-      startHouseholdPulling();
-      setAuthStatus(`ログイン中: ${email}`);
-      launchOnboardingIfNeeded();
-      if(fromGate){
-        if($("authEmail")) $("authEmail").value = email;
-        if($("authPassword")) $("authPassword").value = password;
-        setAuthGateStatus("");
-        const modal = $("profileAuthGateModal");
-        if(modal) modal.dataset.locked = "";
-        const closeBtn = $("authGateCloseBtn");
-        if(closeBtn) closeBtn.style.display = "";
-        closeProfileAuthGate();
-        switchScreen(AUTH_GATE_NEXT_SCREEN || "score");
+    await supabaseAuthRequest("otp", {
+      body: {
+        email,
+        create_user: true,
+        email_redirect_to: getAppAuthRedirectUrl("signup_email")
       }
-      toast("登録してログインしました");
-      return true;
+    });
+    setAuthStatus("確認メールを送信しました。メールのリンクを開いてパスワードを設定してください");
+    if(fromGate){
+      if($("authEmail")) $("authEmail").value = email;
+      setAuthGateStatus("確認メールを送信しました。メールのリンクを開くと、パスワード設定画面が表示されます。");
     }
-    setAuthStatus("確認メールを送信しました。メール認証後にログインしてください");
-    if(fromGate) setAuthGateStatus("確認メールを送信しました。メールのリンクを開いた後、この画面でログインしてください。");
     toast("確認メールを送信しました");
     return true;
   }catch(err){
@@ -1045,10 +1198,9 @@ window.signUpWithEmail = signUpWithEmail;
 async function signUpFromGate(){
   if(AUTH_GATE_BUSY) return;
   const email = String($("authGateEmail")?.value || "").trim();
-  const password = String($("authGatePassword")?.value || "");
   setAuthGateBusy(true, "signup");
   try{
-    await signUpWithEmailCore(email, password, { fromGate:true });
+    await signUpWithEmailCore(email, { fromGate:true });
   }finally{
     setAuthGateBusy(false);
   }
@@ -5663,7 +5815,7 @@ function resetToFirstRunLocal(){
     LS_REVIEW, LS_MONTHLY_READY, LS_MONTHLY_AVG, LS_TOTAL_XP, LS_XP_MONTHS,
     LS_DAILY_XP, LS_HOME_PREVIEW, LS_HOME_PREVIEW_CATEGORY, LS_PREMIUM, LS_HOME_REACTION,
     LS_REMOTE_USER, LS_AUTH_SESSION, LS_ACTIVE_HOUSEHOLD, LS_ACTIVE_HOUSEHOLD_CODE,
-    LS_ACTIVE_HOUSEHOLD_NAME, LS_HOUSEHOLD_VALUE_PROMPTED, LS_HOUSEHOLD_ONBOARDING_DONE, LS_EVOLUTION
+    LS_ACTIVE_HOUSEHOLD_NAME, LS_HOUSEHOLD_VALUE_PROMPTED, LS_PASSWORD_SETUP_REQUIRED, LS_HOUSEHOLD_ONBOARDING_DONE, LS_EVOLUTION
   ].forEach((k)=> localStorage.removeItem(k));
   location.reload();
 }
@@ -5681,7 +5833,7 @@ function escapeHtml(str){
 
 
 /* ===== Init ===== */
-function init(){
+async function init(){
   migrateSatisfactionScale();
   buildCatCards();
   $("surveyHousingType")?.addEventListener("change", updateSurveyHousingFields);
@@ -5706,7 +5858,7 @@ function init(){
   $("tab-profile")?.addEventListener("click", ()=> updateScreenHeader("profile"));
   $("scoreQuickBtn")?.addEventListener("click", ()=> updateScreenHeader("score"));
 
-  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","householdValueModal","profileAuthGateModal","openingModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","householdValueModal","profileAuthGateModal","setPasswordModal","openingModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{
@@ -5751,6 +5903,7 @@ function init(){
   if($("supabaseUrl")) $("supabaseUrl").value = supa.url || "";
   if($("supabaseAnonKey")) $("supabaseAnonKey").value = supa.anonKey || "";
   setSupabaseStatus(supa.url && supa.anonKey ? "自動接続設定あり（未テスト）" : "未接続");
+  await consumeAuthCallbackIfPresent();
   const auth = loadAuthSession();
   if($("authEmail") && auth?.user?.email) $("authEmail").value = auth.user.email;
   setAuthStatus(auth?.user?.email ? `${auth.user.email} でログイン中` : "未ログイン");
@@ -5764,6 +5917,7 @@ function init(){
   refreshHouseholdState().then(()=>{
     pullHouseholdDataToLocal({ silent:true });
     startHouseholdPulling();
+    maybeOpenPasswordSetupModal();
   });
   refreshHouseholdControls();
 
@@ -5785,7 +5939,7 @@ function init(){
   saveMonthlyReady(readyState);
 
   const loggedIn = !!getAuthAccessToken();
-  if(loggedIn && !localStorage.getItem(LS_ONBOARD)){
+  if(loggedIn && localStorage.getItem(LS_PASSWORD_SETUP_REQUIRED) !== "1" && !localStorage.getItem(LS_ONBOARD)){
     nextSlide(1);
     openModal("onboardingModal");
   }else{

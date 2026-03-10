@@ -296,26 +296,56 @@
       <button class="ghost" id="authGateCloseBtn" onclick="closeProfileAuthGate()">✕</button>
     </div>
     <div class="modalBody" style="padding:16px;">
-      <div class="small" style="line-height:1.8;">
-        アカウントでログインして利用を開始してください。<br>
-        未登録の場合は新規登録をお願いします。
+      <div class="bar" style="gap:8px; margin-bottom:10px;">
+        <button class="ghost" type="button" id="authModeLoginBtn" onclick="setAuthGateMode('login')">ログイン</button>
+        <button class="ghost" type="button" id="authModeSignupBtn" onclick="setAuthGateMode('signup')">新規登録</button>
       </div>
-      <div class="row" style="margin-top:12px;">
+      <div class="small" style="line-height:1.8;">
+        <span id="authGateLeadLogin">アカウントでログインして利用を開始してください。</span>
+        <span id="authGateLeadSignup" style="display:none;">新規登録はメールアドレスのみで完了します。確認メールのリンクを開いた後にパスワードを設定します。</span>
+      </div>
+      <div class="row" style="margin-top:12px;" id="authGateInputRow">
         <label>メールアドレス
           <input type="email" id="authGateEmail" placeholder="example@mail.com">
         </label>
-        <label>パスワード
+        <label id="authGatePasswordWrap">パスワード
           <input type="password" id="authGatePassword" placeholder="8文字以上">
         </label>
       </div>
       <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
         <button class="primary" type="button" id="authGateSignInBtn" onclick="signInFromGate()">ログイン</button>
-        <button class="ghost" type="button" id="authGateSignUpBtn" onclick="signUpFromGate()">新規登録</button>
+        <button class="ghost" type="button" id="authGateSignUpBtn" onclick="signUpFromGate()">確認メールを送信</button>
       </div>
       <div class="small muted" style="margin-top:10px; line-height:1.7;">
-        初めての方: 「新規登録」→ メールのリンクを開く → この画面で「ログイン」
+        初めての方: 「新規登録」→ メールのリンクを開く → パスワード設定
       </div>
       <div class="small" id="authGateStatus" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modalOverlay hidden" id="setPasswordModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">パスワード設定</div>
+      <button class="ghost" onclick="closeModal('setPasswordModal')">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="small" style="line-height:1.8;">
+        メール認証が完了しました。今後のログインで使うパスワードを設定してください。
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>新しいパスワード
+          <input type="password" id="authNewPassword" placeholder="8文字以上">
+        </label>
+        <label>新しいパスワード（確認）
+          <input type="password" id="authNewPasswordConfirm" placeholder="再入力">
+        </label>
+      </div>
+      <div class="bar" style="margin-top:12px; justify-content:flex-end;">
+        <button class="primary" type="button" id="authSetPasswordBtn" onclick="submitNewPassword()">パスワードを設定</button>
+      </div>
+      <div class="small" id="authSetPasswordStatus" style="margin-top:8px;"></div>
     </div>
   </div>
 </div>
