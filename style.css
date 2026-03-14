@@ -1780,8 +1780,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:center;
   justify-content:center;
   font-size:34px;
-  background:rgba(245,158,122,.14);
-  border:1px solid rgba(214,120,75,.30);
+  background:transparent;
+  border:none;
 }
 .homeAvatarAura{
   position:absolute;
@@ -1814,7 +1814,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .homeAvatar.is-live .homeAvatarAura.is-live{
   display:block;
-  border-color:rgba(214,120,75,.32);
+  border-color:var(--primary-55);
   animation:homeAvatarAura 2.8s ease-in-out infinite;
 }
 .homeAvatar.is-jump .homeAvatarImg,
@@ -1846,14 +1846,14 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border:1px solid rgba(214,120,75,.28);
 }
 .homeStatePill.good{
-  color:#0f766e;
-  background:rgba(16,185,129,.14);
-  border-color:rgba(16,185,129,.26);
+  color:#8f4b2f;
+  background:var(--primary-18);
+  border-color:var(--primary-25);
 }
 .homeStatePill.warn{
-  color:#b45309;
-  background:rgba(245,158,11,.16);
-  border-color:rgba(245,158,11,.28);
+  color:#8f4b2f;
+  background:var(--primary-08);
+  border-color:var(--primary-25);
 }
 .homeStateSub{
   margin-top:4px;
@@ -1875,15 +1875,15 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   animation:homeSpeechPop .28s ease-out;
 }
 .homeSpeech.is-live.good{
-  border-color:rgba(16,185,129,.3);
-  background:rgba(236,253,245,.9);
+  border-color:var(--primary-25);
+  background:rgba(255,246,236,.94);
 }
 .homeSpeech.is-live.warn{
-  border-color:rgba(245,158,11,.3);
-  background:rgba(255,251,235,.94);
+  border-color:var(--primary-25);
+  background:rgba(255,246,236,.92);
 }
 .homeSpeech.is-live.neutral{
-  border-color:rgba(14,116,144,.2);
+  border-color:var(--primary-18);
 }
 .homeLiveBadge{
   display:inline-flex;
@@ -1892,24 +1892,24 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:999px;
   font-size:11px;
   font-weight:900;
-  color:#334155;
-  background:rgba(148,163,184,.14);
-  border:1px solid rgba(148,163,184,.24);
+  color:#8f4b2f;
+  background:var(--primary-08);
+  border:1px solid var(--primary-25);
 }
 .homeLiveBadge.good{
-  color:#0f766e;
-  background:rgba(16,185,129,.14);
-  border-color:rgba(16,185,129,.25);
+  color:#8f4b2f;
+  background:var(--primary-14);
+  border-color:var(--primary-25);
 }
 .homeLiveBadge.warn{
-  color:#b45309;
-  background:rgba(245,158,11,.14);
-  border-color:rgba(245,158,11,.25);
+  color:#8f4b2f;
+  background:var(--primary-12);
+  border-color:var(--primary-25);
 }
 .homeLiveBadge.report{
-  color:#0c4a6e;
-  background:rgba(14,165,233,.12);
-  border-color:rgba(14,165,233,.25);
+  color:#8f4b2f;
+  background:var(--primary-12);
+  border-color:var(--primary-25);
 }
 .homeRecordMeta{
   margin-top:12px;
@@ -2371,8 +2371,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .weeklyHeroArt::before{
   background:radial-gradient(circle at 30% 20%, rgba(255,255,255,.9), rgba(255,255,255,0) 45%),
-             radial-gradient(circle at 70% 30%, rgba(125,211,252,.25), rgba(255,255,255,0) 55%),
-             linear-gradient(180deg, #c6ddff 0%, #e4f3ff 100%);
+             radial-gradient(circle at 70% 30%, var(--primary-18), rgba(255,255,255,0) 55%),
+             linear-gradient(180deg, #ffe9d2 0%, #fff4e9 100%);
 }
 .heroGauge{
   display:flex;
@@ -2404,16 +2404,16 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   height:100%;
   width:0%;
   border-radius:999px;
-  background:linear-gradient(90deg, #f59e7a, #e58056);
+  background:linear-gradient(90deg, var(--primary), var(--accent));
   transition:width .45s ease;
 }
-.weeklyHero.lineage-gourmet .heroGaugeFill{ background:linear-gradient(90deg, #fb923c, #f97316); }
-.weeklyHero.lineage-selfcare .heroGaugeFill{ background:linear-gradient(90deg, #f59e7a, #f97316); }
-.weeklyHero.lineage-social .heroGaugeFill{ background:linear-gradient(90deg, #fb8a6d, #ef6a4a); }
-.weeklyHero.lineage-learning .heroGaugeFill{ background:linear-gradient(90deg, #f5b17a, #e58c56); }
-.weeklyHero.lineage-lifesupport .heroGaugeFill{ background:linear-gradient(90deg, #95c9a0, #6fbf9b); }
-.weeklyHero.lineage-mobility .heroGaugeFill{ background:linear-gradient(90deg, #efb17a, #df8b56); }
-.weeklyHero.lineage-convenience .heroGaugeFill{ background:linear-gradient(90deg, #fbbf24, #fb923c); }
+.weeklyHero.lineage-gourmet .heroGaugeFill{ background:linear-gradient(90deg, var(--primary), var(--accent)); }
+.weeklyHero.lineage-selfcare .heroGaugeFill{ background:linear-gradient(90deg, var(--primary), var(--accent)); }
+.weeklyHero.lineage-social .heroGaugeFill{ background:linear-gradient(90deg, var(--primary), var(--accent)); }
+.weeklyHero.lineage-learning .heroGaugeFill{ background:linear-gradient(90deg, var(--primary), var(--accent)); }
+.weeklyHero.lineage-lifesupport .heroGaugeFill{ background:linear-gradient(90deg, var(--primary), var(--accent)); }
+.weeklyHero.lineage-mobility .heroGaugeFill{ background:linear-gradient(90deg, var(--primary), var(--accent)); }
+.weeklyHero.lineage-convenience .heroGaugeFill{ background:linear-gradient(90deg, var(--primary), var(--accent)); }
 .heroGaugeMeta{
   font-size:11px;
   font-weight:900;
@@ -2497,23 +2497,23 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .mascotPet{
   width:150px;
   height:150px;
-  border-radius:36px;
+  border-radius:0;
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:92px;
   line-height:1;
-  background:linear-gradient(180deg, #fffaf5 0%, #ffeede 100%);
-  border:1px solid rgba(214,120,75,.22);
-  box-shadow:0 12px 24px rgba(114,72,57,.16);
-  filter:drop-shadow(0 10px 18px rgba(114,72,57,.16));
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  filter:drop-shadow(0 10px 16px rgba(114,72,57,.12));
   animation:mascotBreath 4.8s ease-in-out infinite;
 }
 .mascotPet.cat{
-  background:linear-gradient(180deg, #fff8f1 0%, #ffe8d4 100%);
+  background:transparent;
 }
 .mascotPet.dog{
-  background:linear-gradient(180deg, #fff8ef 0%, #ffe3c7 100%);
+  background:transparent;
 }
 .mascotBird{
   transform-origin:88px 30px;
@@ -2690,8 +2690,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:12px;
   overflow:hidden;
   flex:0 0 auto;
-  background:rgba(245,158,122,.16);
-  border:1px solid rgba(214,120,75,.24);
+  background:transparent;
+  border:none;
 }
 .monthlySummaryCharacterAvatar .homeAvatarImg{
   width:100%;
@@ -2723,7 +2723,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .monthlySummaryCharacterNote{
   margin-top:2px;
   font-size:10px;
-  color:#7b8ba1;
+  color:var(--muted);
   line-height:1.4;
 }
 .summaryRight{ display:flex; align-items:center; justify-content:center; }
