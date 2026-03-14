@@ -1721,11 +1721,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .homeHeroCard{
   position:relative;
   overflow:hidden;
-  border:1px solid rgba(8,145,178,.2);
+  border:1px solid rgba(214,120,75,.22);
   border-radius:20px;
   padding:14px;
-  background:linear-gradient(145deg, #ffffff 0%, #f0f9ff 52%, #e6f7ff 100%);
-  box-shadow:0 14px 30px rgba(15,23,42,.1);
+  background:linear-gradient(145deg, #ffffff 0%, #fff5ea 52%, #ffeddc 100%);
+  box-shadow:0 14px 30px rgba(114,72,57,.12);
 }
 .homeHeroCard::before{
   content:"";
@@ -1735,7 +1735,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   width:180px;
   height:180px;
   border-radius:50%;
-  background:radial-gradient(circle, rgba(14,165,233,.22) 0%, rgba(14,165,233,0) 70%);
+  background:radial-gradient(circle, rgba(245,158,122,.25) 0%, rgba(245,158,122,0) 70%);
   pointer-events:none;
 }
 .homeHeroHeader{
@@ -1753,9 +1753,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-size:11px;
   font-weight:900;
   letter-spacing:.02em;
-  color:#0c4a6e;
-  background:rgba(14,165,233,.14);
-  border:1px solid rgba(14,165,233,.24);
+  color:#8f4b2f;
+  background:rgba(245,158,122,.16);
+  border:1px solid rgba(214,120,75,.26);
 }
 .homeHeroTop{
   display:grid;
@@ -1780,8 +1780,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:center;
   justify-content:center;
   font-size:34px;
-  background:rgba(8,145,178,.12);
-  border:1px solid rgba(8,145,178,.25);
+  background:rgba(245,158,122,.14);
+  border:1px solid rgba(214,120,75,.30);
 }
 .homeAvatarAura{
   position:absolute;
@@ -1814,7 +1814,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .homeAvatar.is-live .homeAvatarAura.is-live{
   display:block;
-  border-color:rgba(8,145,178,.28);
+  border-color:rgba(214,120,75,.32);
   animation:homeAvatarAura 2.8s ease-in-out infinite;
 }
 .homeAvatar.is-jump .homeAvatarImg,
@@ -1832,7 +1832,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .homeStateTitle{
   font-size:14px;
   font-weight:900;
-  color:#0b1729;
+  color:#3b241e;
 }
 .homeStatePill{
   display:inline-flex;
@@ -1841,9 +1841,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:999px;
   font-size:12px;
   font-weight:900;
-  color:#0b6b84;
-  background:rgba(8,145,178,.12);
-  border:1px solid rgba(8,145,178,.25);
+  color:#8f4b2f;
+  background:rgba(245,158,122,.14);
+  border:1px solid rgba(214,120,75,.28);
 }
 .homeStatePill.good{
   color:#0f766e;
@@ -1857,15 +1857,15 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .homeStateSub{
   margin-top:4px;
-  color:#4b5d73;
+  color:#7a635d;
   font-size:12px;
   line-height:1.45;
 }
 .homeSpeech{
   margin-top:10px;
-  border:1px solid rgba(14,116,144,.16);
+  border:1px solid rgba(214,120,75,.20);
   background:rgba(255,255,255,.82);
-  color:#334155;
+  color:#5e4b44;
   border-radius:12px;
   padding:9px 10px;
   font-size:12px;
@@ -2239,11 +2239,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   gap:6px;
   padding:6px 10px;
   border-radius:999px;
-  background:rgba(59,130,246,.12);
-  border:1px solid rgba(59,130,246,.28);
+  background:rgba(245,158,122,.14);
+  border:1px solid rgba(214,120,75,.30);
   font-size:12px;
   font-weight:900;
-  color:#1d4ed8;
+  color:#8f4b2f;
 }
 .weeklyHeroArt{
   position:relative;
@@ -2258,6 +2258,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:center;
   justify-content:center;
   perspective:800px;
+}
+.weeklyHeroArt::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,239,219,.35), rgba(255,230,202,.24));
 }
 .heroHouse{
   display:none;
@@ -2390,27 +2397,27 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .heroGaugeTrack{
   height:10px;
   border-radius:999px;
-  background:rgba(15,23,42,.12);
+  background:rgba(133,94,80,.18);
   overflow:hidden;
 }
 .heroGaugeFill{
   height:100%;
   width:0%;
   border-radius:999px;
-  background:linear-gradient(90deg, #60a5fa, #34d399);
+  background:linear-gradient(90deg, #f59e7a, #e58056);
   transition:width .45s ease;
 }
 .weeklyHero.lineage-gourmet .heroGaugeFill{ background:linear-gradient(90deg, #fb923c, #f97316); }
-.weeklyHero.lineage-selfcare .heroGaugeFill{ background:linear-gradient(90deg, #f472b6, #a855f7); }
-.weeklyHero.lineage-social .heroGaugeFill{ background:linear-gradient(90deg, #fb7185, #f43f5e); }
-.weeklyHero.lineage-learning .heroGaugeFill{ background:linear-gradient(90deg, #60a5fa, #38bdf8); }
-.weeklyHero.lineage-lifesupport .heroGaugeFill{ background:linear-gradient(90deg, #34d399, #22c55e); }
-.weeklyHero.lineage-mobility .heroGaugeFill{ background:linear-gradient(90deg, #22d3ee, #0ea5e9); }
+.weeklyHero.lineage-selfcare .heroGaugeFill{ background:linear-gradient(90deg, #f59e7a, #f97316); }
+.weeklyHero.lineage-social .heroGaugeFill{ background:linear-gradient(90deg, #fb8a6d, #ef6a4a); }
+.weeklyHero.lineage-learning .heroGaugeFill{ background:linear-gradient(90deg, #f5b17a, #e58c56); }
+.weeklyHero.lineage-lifesupport .heroGaugeFill{ background:linear-gradient(90deg, #95c9a0, #6fbf9b); }
+.weeklyHero.lineage-mobility .heroGaugeFill{ background:linear-gradient(90deg, #efb17a, #df8b56); }
 .weeklyHero.lineage-convenience .heroGaugeFill{ background:linear-gradient(90deg, #fbbf24, #fb923c); }
 .heroGaugeMeta{
   font-size:11px;
   font-weight:900;
-  color:#1d4ed8;
+  color:#8f4b2f;
   text-align:right;
 }
 .heroGaugeReact{
@@ -2429,11 +2436,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   gap:6px;
   padding:4px 10px;
   border-radius:999px;
-  background:rgba(59,130,246,.12);
-  border:1px solid rgba(59,130,246,.28);
+  background:rgba(245,158,122,.14);
+  border:1px solid rgba(214,120,75,.30);
   font-size:12px;
   font-weight:900;
-  color:#1d4ed8;
+  color:#8f4b2f;
   margin-top:4px;
 }
 .toggleBtn{
@@ -2444,7 +2451,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .satCategoryWrap.isHidden{
   display:none;
 }
-.weeklyHeroArt::before{ display:none; }
+.weeklyHeroArt::before{ display:block; }
 .weeklyHeroArt::after{ display:none; }
 .weeklyHeroMascot{
   position:relative;
@@ -2674,8 +2681,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   gap:10px;
   padding:8px 10px;
   border-radius:12px;
-  background:rgba(226,244,255,.56);
-  border:1px solid rgba(8,145,178,.2);
+  background:rgba(255,239,223,.70);
+  border:1px solid rgba(214,120,75,.24);
 }
 .monthlySummaryCharacterAvatar{
   width:44px;
@@ -2683,8 +2690,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:12px;
   overflow:hidden;
   flex:0 0 auto;
-  background:rgba(8,145,178,.12);
-  border:1px solid rgba(8,145,178,.2);
+  background:rgba(245,158,122,.16);
+  border:1px solid rgba(214,120,75,.24);
 }
 .monthlySummaryCharacterAvatar .homeAvatarImg{
   width:100%;
