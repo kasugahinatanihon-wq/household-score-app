@@ -5056,9 +5056,9 @@ function buildMonthlyResult(){
           <div>
             <div class="benchPositionSummary">${stabilityPositionSummary}</div>
             <div class="benchLegend">
-              <span class="benchLegendPill blue">青: 目安内</span>
-              <span class="benchLegendPill yellow">黄: 注意</span>
-              <span class="benchLegendPill red">赤: 要改善</span>
+              <span class="benchLegendPill blue">目安に近い</span>
+              <span class="benchLegendPill yellow">やや差がある</span>
+              <span class="benchLegendPill red">差が大きい</span>
             </div>
             ${benchmarkIntroHtml}
             ${targetBudget ? benchmarkTop3Html : ""}
