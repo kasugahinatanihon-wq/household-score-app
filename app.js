@@ -3018,8 +3018,41 @@ function getTopCategory(txList){
   return top ? top[0] : null;
 }
 
+function getPetSpeciesByCategory(category){
+  const catSet = new Set(["食費","外食費","衣服","美容","カフェ","デート","趣味"]);
+  return catSet.has(String(category || "")) ? "cat" : "dog";
+}
+function getPetEmojiByMood(species, mood){
+  if(species === "cat"){
+    if(mood === "happy") return "😸";
+    if(mood === "sad") return "😿";
+    return "🐱";
+  }
+  if(mood === "happy") return "🐶";
+  if(mood === "sad") return "🐕";
+  return "🐶";
+}
+function getPetEmojiByTier(species, tier){
+  if(species === "cat"){
+    if(tier === "めっちゃ良い") return "😻";
+    if(tier === "良い") return "😺";
+    if(tier === "悪い") return "🙀";
+    if(tier === "めっちゃ悪い") return "😿";
+    return "🐱";
+  }
+  if(tier === "めっちゃ良い") return "🐶";
+  if(tier === "良い") return "🐕";
+  if(tier === "悪い") return "🦮";
+  if(tier === "めっちゃ悪い") return "🐕‍🦺";
+  return "🐶";
+}
 function mascotSvgHTML(stage = 1, opts = {}){
-  return `<img class="mascotImg" src="assets/characters/kozeni.png" alt="コゼニィ">`;
+  const category = opts.category || "";
+  const mood = opts.mood || "neutral";
+  const species = getPetSpeciesByCategory(category);
+  const emoji = getPetEmojiByMood(species, mood);
+  const alt = species === "cat" ? "猫キャラクター" : "犬キャラクター";
+  return `<span class="mascotPet ${species}" role="img" aria-label="${alt}">${emoji}</span>`;
 }
 
 function buildMonthlyReportItems(monthStr){
@@ -3263,10 +3296,12 @@ function homeAvatarHTML(category, tier, mood, opts = {}){
   const fallbackClass = opts.fallbackClass ? ` ${opts.fallbackClass}` : "";
   const src = getHomeCharacterAsset(category, tier);
   const alt = `${category || "バランス"} / ${tier} キャラクター`;
+  const species = getPetSpeciesByCategory(category);
+  const fallbackEmoji = getPetEmojiByTier(species, tier);
   return `
     <img class="homeAvatarImg${imgClass}" src="${src}" alt="${escapeHtml(alt)}"
       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-    <span class="homeAvatarFallback${fallbackClass}">${mood}</span>
+    <span class="homeAvatarFallback${fallbackClass}">${fallbackEmoji}</span>
     <span class="homeAvatarAura${extraClass}" aria-hidden="true"></span>
   `;
 }
@@ -4153,7 +4188,7 @@ function buildWeeklyResult(){
           <div class="weeklyHeroMascot" ${weeklyMascotCTA} onclick="playMascotFlip(event)">
             <div class="mascotCore">
               <div class="mascotBody">
-                ${mascotSvgHTML(weeklyStage, { tone: mascotTone, mood: mascotMood })}
+                ${mascotSvgHTML(weeklyStage, { tone: mascotTone, mood: mascotMood, category:(xpLevel < 25) ? weeklyTopCategory : (evoCategory || monthlyTopCategory) })}
               </div>
             </div>
           </div>
@@ -4915,11 +4950,7 @@ function buildMonthlyResult(){
   const summaryMonthly = buildSummaryTextMonthly({ satisfactionScore, stabilityScore });
 
   const monthlyCharacter = buildCharacterSnapshot(m);
-  const monthlyMood = monthlyCharacter.tier === "めっちゃ良い" ? "🤩"
-    : monthlyCharacter.tier === "良い" ? "😄"
-    : monthlyCharacter.tier === "悪い" ? "😟"
-    : monthlyCharacter.tier === "めっちゃ悪い" ? "🥶"
-    : "🙂";
+  const monthlyMood = getPetEmojiByTier(getPetSpeciesByCategory(monthlyCharacter.category), monthlyCharacter.tier);
 
   const html = `
     <div class="resultWrap monthlyResult">
