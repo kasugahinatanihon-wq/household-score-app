@@ -34,7 +34,7 @@ const SIGNUP_EMAIL_COOLDOWN_MS = 60 * 1000;
 const CATEGORIES = [
   "食費","外食費","コンビニ",
   "日用品","衣服","美容",
-  "交際費","カフェ","デート",
+  "交際費","プレゼント","カフェ","デート",
   "趣味","仕事","交通費",
   "医療費","教育費"
 ];
@@ -66,6 +66,7 @@ const SAT_LEVELS = [
 const CATEGORY_EMOJI = {
   "外食費":"🍽️",
   "交際費":"🤝",
+  "プレゼント":"🎁",
   "デート":"💑",
   "趣味":"🎯",
   "カフェ":"☕️",
@@ -171,6 +172,7 @@ const CATEGORY_TONE_KEY = {
   "衣服":"style",
   "美容":"style",
   "交際費":"social",
+  "プレゼント":"social",
   "デート":"social",
   "医療費":"care",
   "教育費":"learn",
@@ -184,6 +186,7 @@ const CATEGORY_LINEAGE_KEY = {
   "衣服":"selfcare",
   "美容":"selfcare",
   "交際費":"social",
+  "プレゼント":"social",
   "デート":"social",
   "教育費":"learning",
   "趣味":"learning",
@@ -2259,6 +2262,7 @@ function buildCatCards(){
     衣服: `<path d="M9 5h6l2 3-2.2 1.1L16 19H8l1.2-9.9L7 8z"/><path d="M10 12h4"/><path d="M11 15h2"/>`,
     美容: `<rect x="9" y="4" width="6" height="3.5" rx="1"/><path d="M10 7.5h4v8.5a2 2 0 0 1-4 0z"/><path d="M10 16h4"/><path d="M10 19h4"/>`,
     交際費: `<rect x="4" y="6" width="8" height="6" rx="2"/><path d="M8 12l-2 2v-2"/><rect x="12" y="10" width="8" height="6" rx="2"/><path d="M16 16l2 2v-2"/>`,
+    プレゼント: `<rect x="4.5" y="9" width="15" height="10" rx="2"/><path d="M12 9v10"/><path d="M4.5 13h15"/><path d="M12 9c0-2-1.1-3-2.7-3-1.2 0-2.1.8-2.1 1.9 0 1.3 1 2.1 2.5 2.1H12z"/><path d="M12 9c0-2 1.1-3 2.7-3 1.2 0 2.1.8 2.1 1.9 0 1.3-1 2.1-2.5 2.1H12z"/>`,
     医療費: `<circle cx="12" cy="12" r="7"/><path d="M12 9v6M9 12h6"/>`,
     教育費: `<path d="M4 7h7a2 2 0 0 1 2 2v10H6a2 2 0 0 0-2 2z"/><path d="M20 7h-7a2 2 0 0 0-2 2v10h7a2 2 0 0 1 2 2z"/>`,
     交通費: `<rect x="6" y="4" width="12" height="12" rx="2"/><path d="M6 9h12"/><circle cx="9" cy="16" r="1.5"/><circle cx="15" cy="16" r="1.5"/>`,
@@ -3060,7 +3064,7 @@ function getTopCategory(txList){
 }
 
 function getPetSpeciesByCategory(category){
-  const catSet = new Set(["食費","外食費","衣服","美容","カフェ","デート","趣味"]);
+  const catSet = new Set(["食費","外食費","衣服","美容","カフェ","デート","趣味","プレゼント"]);
   return catSet.has(String(category || "")) ? "cat" : "dog";
 }
 function getPetEmojiByMood(species, mood){
@@ -3261,6 +3265,7 @@ function getHomeBaseNameByCategory(category){
     "衣服":"スタイルメーカー",
     "美容":"ビューティーチューナー",
     "交際費":"コネクトキャプテン",
+    "プレゼント":"ギフトコーディネーター",
     "医療費":"ヘルスガーディアン",
     "教育費":"ラーニングブースター",
     "交通費":"ムーブマネージャー",
@@ -3288,6 +3293,7 @@ function getHomeCharacterName(category, tier){
     "衣服": { great:"着回しマエストロ", good:"スタイルメーカー", bad:"迷走クローゼッター", verybad:"浪費ランウェイ", analyzing:"スタイルメーカー（分析中）" },
     "美容": { great:"艶肌プランナー", good:"ビューティーチューナー", bad:"焦りケアジャンキー", verybad:"コスメストーム", analyzing:"ビューティーチューナー（分析中）" },
     "交際費": { great:"絆マネージャー", good:"コネクトキャプテン", bad:"見栄フォロワー", verybad:"付き合いヘラクレス", analyzing:"コネクトキャプテン（分析中）" },
+    "プレゼント": { great:"贈り物コンシェルジュ", good:"ギフトコーディネーター", bad:"勢いギフター", verybad:"爆買いサンタ", analyzing:"ギフトコーディネーター（分析中）" },
     "医療費": { great:"ケアバランサー", good:"ヘルスガーディアン", bad:"後回しヒーラー", verybad:"不調レスキュー常連", analyzing:"ヘルスガーディアン（分析中）" },
     "教育費": { great:"投資インストラクター", good:"ラーニングブースター", bad:"散財スカラー", verybad:"教材コレクター暴走", analyzing:"ラーニングブースター（分析中）" },
     "交通費": { great:"移動ルート名匠", good:"ムーブマネージャー", bad:"寄り道トラベラー", verybad:"タクシードラゴン", analyzing:"ムーブマネージャー（分析中）" },
@@ -3315,6 +3321,7 @@ function getHomeCategoryKey(category){
     "衣服":"fashion",
     "美容":"beauty",
     "交際費":"social",
+    "プレゼント":"gift",
     "医療費":"medical",
     "教育費":"education",
     "交通費":"transport",
@@ -3417,6 +3424,8 @@ window.switchReportTab = switchReportTab;
 
 function renderMonthlyReport(){
   const m = $("reportMonth")?.value || ym(new Date());
+  const trendCategory = $("reportTrendCategory")?.value || "all";
+  const compareCategory = $("reportCompareCategory")?.value || "all";
   const donut = $("reportDonut");
   const legend = $("reportLegend");
   const totalEl = $("reportTotal");
@@ -3427,8 +3436,8 @@ function renderMonthlyReport(){
   const quickInsight = $("reportQuickInsight");
   const quickBigMemo = $("reportQuickBigMemo");
   const drill = $("reportCategoryDrill");
-  renderSpendTrendChart(m);
-  renderMonthlyCompareChart(m);
+  renderSpendTrendChart(m, trendCategory);
+  renderMonthlyCompareChart(m, compareCategory);
   if(ENABLE_GROWTH_LOG){
     renderReportGrowthLog(m);
   }
@@ -3748,12 +3757,19 @@ function shiftYm(monthStr, delta){
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
 }
 
-function renderSpendTrendChart(monthStr){
+function getMonthlyAmountByCategory(monthStr, category){
+  const { items, total } = buildMonthlyReportItems(monthStr);
+  if(!category || category === "all") return total;
+  const found = items.find(x=> x.label === category);
+  return Number(found?.amount || 0);
+}
+
+function renderSpendTrendChart(monthStr, category = "all"){
   const area = $("reportSpendTrend");
   if(!area) return;
-  const tx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr));
+  const tx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr) && (category === "all" || t.category === category));
   if(!tx.length){
-    area.innerHTML = `<div class="small muted" style="padding:8px 0;">対象月の日次データがありません</div>`;
+    area.innerHTML = `<div class="small muted" style="padding:8px 0;">${escapeHtml(category === "all" ? "対象月" : category)}の日次データがありません</div>`;
     return;
   }
 
@@ -3766,7 +3782,7 @@ function renderSpendTrendChart(monthStr){
   });
 
   const prevMonthStr = shiftYm(monthStr, -1);
-  const prevTx = loadTx().filter(t=> t.date && t.date.startsWith(prevMonthStr));
+  const prevTx = loadTx().filter(t=> t.date && t.date.startsWith(prevMonthStr) && (category === "all" || t.category === category));
   const prevDays = new Date(Number(prevMonthStr.slice(0,4)), Number(prevMonthStr.slice(5,7)), 0).getDate();
   const prevDaily = Array.from({ length: days }, (_, idx)=> idx < prevDays ? 0 : null);
   prevTx.forEach(t=>{
@@ -3815,7 +3831,7 @@ function renderSpendTrendChart(monthStr){
   const yCumMarks = [maxCumVal, Math.round(maxCumVal/2), 0];
   const cumLatest = cumVisible[cumVisible.length - 1] || 0;
   const prevCumLatest = Number(prevCum[Math.min(days, prevDays) - 1] || 0);
-  const prevMonthFinal = buildMonthlyReportItems(prevMonthStr).total;
+  const prevMonthFinal = getMonthlyAmountByCategory(prevMonthStr, category);
   const cumDelta = cumLatest - prevCumLatest;
   const deltaSign = cumDelta > 0 ? "+" : "";
   const prevLastIndex = Math.max(Math.min(days, prevDays) - 1, 0);
@@ -3866,18 +3882,18 @@ function renderSpendTrendChart(monthStr){
     <div class="dailyTrendAxis">
       ${ticks.map(d=>`<span>${d}日</span>`).join("")}
     </div>
-    <div class="small muted" style="margin-top:6px;">今月の最大支出日: ${maxDay}日（${fmtYen(Math.round(maxDaySpend))}円）</div>
+    <div class="small muted" style="margin-top:6px;">${escapeHtml(category === "all" ? "今月" : category)}の最大支出日: ${maxDay}日（${fmtYen(Math.round(maxDaySpend))}円）</div>
   `;
 }
 
-function renderMonthlyCompareChart(monthStr){
+function renderMonthlyCompareChart(monthStr, category = "all"){
   const area = $("reportMonthlyCompare");
   if(!area) return;
   const months = [];
   for(let i=5;i>=0;i--) months.push(shiftYm(monthStr, -i));
   const rows = months.map(m=>({
     month: m,
-    total: buildMonthlyReportItems(m).total
+    total: getMonthlyAmountByCategory(m, category)
   }));
   const maxTotal = Math.max(...rows.map(r=>r.total), 1);
   const chartHtml = rows.map(r=>{
@@ -3897,7 +3913,8 @@ function renderMonthlyCompareChart(monthStr){
   const premiumHint = isPremiumUser()
     ? ""
     : `<button class="monthCompareUnlockBtn" type="button" onclick="openPremiumFromCompare()">マンスリーサマリー詳細を解放する</button>`;
-  area.innerHTML = `${chartHtml}${premiumHint}`;
+  const categoryLabel = category === "all" ? "全カテゴリ" : category;
+  area.innerHTML = `<div class="small muted" style="margin-bottom:8px;">表示カテゴリ: ${escapeHtml(categoryLabel)}</div>${chartHtml}${premiumHint}`;
 }
 
 function buildDailyComparisonData(monthStr){
@@ -4516,11 +4533,8 @@ function renderMonthlyGate(){
   }
 
   wrap.innerHTML = `
-    <div class="sectionCard">
-      <div class="sectionHead">
-        <div><div class="sectionName">マンスリーサマリー</div><div class="sectionHint">${escapeHtml(targetMonth)} を準備中</div></div>
-      </div>
-      <button class="ghost" type="button" style="width:100%; margin-top:10px;" onclick="openScreen('report')">レポート画面を見る</button>
+    <div class="small muted" style="text-align:center; padding:8px 0;">
+      ${escapeHtml(targetMonth)} のマンスリーサマリーは準備中です
     </div>
   `;
 }

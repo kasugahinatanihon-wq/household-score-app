@@ -319,6 +319,12 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:block;
   animation:screenFade .22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+.screen#screen-input.active,
+.screen#screen-score.active{
+  height:calc(100dvh - var(--navSpace) - 86px);
+  overflow:hidden;
+  padding-bottom:0;
+}
 
 .navSpacer{
   height: var(--navSpace);
@@ -4199,7 +4205,23 @@ tr:nth-child(even) td{ background:#F8FAFC; }
   border:none;
   box-shadow:none;
   padding:0;
+  margin:0;
+  height:100%;
+  overflow:hidden;
 }
 .screen#screen-score .bar{
   padding:0 0 6px;
+}
+.screen#screen-input .box{
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  padding:0;
+  margin:0;
+  height:100%;
+  overflow:hidden;
+}
+.screen#screen-input #quickCatArea{
+  height:100%;
+  align-content:start;
 }
