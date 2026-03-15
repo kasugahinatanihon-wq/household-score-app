@@ -2095,7 +2095,7 @@ function syncReportMonthDefault(){
 
 function updateScreenHeader(name){
   const headerMap = {
-    input: { icon:"✏️", title:"入力", hint:"カテゴリを選んで今日の支出を記録する" },
+    input: { icon:"✏️", title:"入力", hint:"今日の支出を記録する" },
     list: { icon:"📅", title:"カレンダー", hint:"" },
     report: { icon:"🧾", title:"レポート", hint:"" },
     score: { icon:"🏠", title:"ホーム", hint:"今月の状態をキャラクターで確認しよう" },
@@ -2556,6 +2556,26 @@ function saveEdit(){
   renderMonthlyGate();
 }
 window.saveEdit = saveEdit;
+function deleteEditTx(){
+  const id = $("editId")?.value;
+  if(!id) return;
+  const tx = loadTx().find(t=> t.id === id);
+  if(!tx) return;
+  const ok = window.confirm("この記録を削除しますか？");
+  if(!ok) return;
+  const date = tx.date || "";
+  deleteTx(id);
+  closeModal("editModal");
+  toast("削除しました");
+  renderList();
+  renderCalendar();
+  renderWeeklyInline();
+  renderMonthlyGate();
+  if(date){
+    openDayDetail(date);
+  }
+}
+window.deleteEditTx = deleteEditTx;
 
 /* ===== Day Detail ===== */
 function openDayDetail(dt){
@@ -2574,29 +2594,19 @@ function openDayDetail(dt){
     if(t.satisfaction!=null) meta.push(`納得:${getSatLabel(t.satisfaction)}`);
     const memo = t.memo ? ` / ${escapeHtml(t.memo)}` : "";
     return `
-      <div class="miniRow">
+      <div class="miniRow" data-edit="${t.id}">
         <div>
           <div class="miniCat">${escapeHtml(t.category)}</div>
           <div class="miniMeta">${Number(t.amount||0).toLocaleString("ja-JP")}円 ${meta.length?`/ ${meta.join(" / ")}`:""}${memo}</div>
-        </div>
-        <div class="bar" style="gap:6px;">
-          <button class="ghost" style="padding:8px 10px; font-size:12px;" type="button" data-edit="${t.id}">編集</button>
-          <button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button>
         </div>
       </div>
     `;
   }).join("");
 
-  $("dayDetailList").querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      deleteTx(btn.dataset.del);
-      openDayDetail(dt);
-      renderCalendar();
-    });
-  });
-  $("dayDetailList").querySelectorAll("[data-edit]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      openEditModal(btn.dataset.edit);
+  $("dayDetailList").querySelectorAll(".miniRow[data-edit]").forEach(row=>{
+    row.addEventListener("click", ()=>{
+      const id = row.dataset.edit;
+      if(id) openEditModal(id);
     });
   });
   }

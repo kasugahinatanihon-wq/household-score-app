@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#FFF8F1" />
   <title>家計診断アプリ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='22' cy='30' r='14' fill='%23f59e7a' fill-opacity='0.9'/%3E%3Ccircle cx='42' cy='34' r='14' fill='%236fbf9b' fill-opacity='0.9'/%3E%3Ctext x='11' y='37' font-size='18'%3E🐱%3C/text%3E%3Ctext x='31' y='41' font-size='18'%3E🐶%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="./style.css?v=20260315e" />
+  <link rel="stylesheet" href="./style.css?v=20260315f" />
 </head>
 
 <body>
@@ -372,7 +372,6 @@
 
     <div class="entryMid" id="entryMid">
       <div class="entryStep" id="step-category">
-        <div class="catTitle">カテゴリー</div>
         <div class="catGridApp" id="entryCatArea"></div>
       </div>
 
@@ -436,7 +435,7 @@
         <div style="font-weight:1000; color:var(--ink);" id="dayDetailSumPill">合計：0円</div>
         <div class="small" id="dayDetailCountPill">0件</div>
       </div>
-      <div class="miniList" id="dayDetailList" style="max-height:60vh; overflow-y:auto;"></div>
+      <div class="miniList" id="dayDetailList" style="max-height:48vh; overflow-y:auto;"></div>
       <div style="height:20px;"></div>
     </div>
   </div>
@@ -473,8 +472,9 @@
         <label>メモ<input type="text" id="editMemo" placeholder="未入力"></label>
       </div>
       <input type="hidden" id="editId">
-      <div style="margin-top:16px;">
-        <button class="primary" style="width:100%;" onclick="saveEdit()">保存</button>
+      <div class="row" style="margin-top:16px;">
+        <button class="danger" style="width:100%;" type="button" onclick="deleteEditTx()">削除</button>
+        <button class="primary" style="width:100%;" type="button" onclick="saveEdit()">保存</button>
       </div>
     </div>
   </div>
@@ -552,7 +552,6 @@
 <div class="wrap">
   <section class="screen active" id="screen-input">
     <div class="box">
-      <div class="catTitle" style="margin-top:2px;">カテゴリー</div>
       <div class="catGridApp" id="quickCatArea"></div>
     </div>
   </section>
@@ -960,6 +959,6 @@
     anonKey: "sb_publishable_okssLfovlx8CpwvNzskdLA_81rXRnlQ"
   };
 </script>
-<script src="./app.js?v=20260315e"></script>
+<script src="./app.js?v=20260315f"></script>
 </body>
 </html>

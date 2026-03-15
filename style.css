@@ -1718,9 +1718,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   transform:scale(.97);
 }
 .valueTagChips{
-  display:flex;
-  flex-wrap:wrap;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
   gap:8px;
+  width:100%;
 }
 .valueTagChip{
   border:1px solid var(--border);
@@ -1735,6 +1736,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   appearance:none;
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
+  width:100%;
+  text-align:center;
 }
 .valueTagChip.active{
   border-color:var(--primary-25);
@@ -2154,13 +2157,17 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:var(--bg-card);
 }
 .miniRow{
-  display:flex; justify-content:space-between; gap:10px;
-  padding:12px;
+  display:block;
+  padding:10px 12px;
   border-bottom:1px solid rgba(0,0,0,.06);
+  cursor:pointer;
 }
 .miniRow:last-child{ border-bottom:none; }
 .miniCat{ font-weight:1000; }
 .miniMeta{ font-size:12px; color:var(--muted); }
+.miniRow:active{
+  background:var(--primary-08);
+}
 
 /* Result UI */
 .resultWrap{ padding:16px; }
