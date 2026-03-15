@@ -5542,7 +5542,7 @@ const SURVEY_STEPS = [
   { stepId:"surveyStepUtility", fieldId:"surveyUtility", label:"光熱費", type:"input", question:"光熱費は月いくらくらいですか？", hint:"電気・ガス・水道の合計です。" },
   { stepId:"surveyStepNet", fieldId:"surveyNet", label:"通信費", type:"input", question:"通信費は月いくらくらいですか？", hint:"スマホとネット回線の合計です。" },
   { stepId:"surveyStepSub", fieldId:"surveySub", label:"サブスク", type:"input", question:"サブスクの毎月支払いは？", hint:"把握していない場合は、ここで一度合計してみましょう。" },
-  { stepId:"surveyStepValueCats", fieldId:"surveyValueCat1", label:"価値観カテゴリ", type:"valuecats", question:"上から順番に、あなたが大切にしたい価値観を入力してください", hint:"1番上が最優先です。入力欄をタップすると候補が出ます（自由入力もできます）。" },
+  { stepId:"surveyStepValueCats", fieldId:"surveyValueCat1", label:"価値観カテゴリ", type:"valuecats", question:"上から順番に、あなたが大切にしているものを入力してください", hint:"1番上が優先順位です。入力欄をタップすると候補が出ます。" },
   { stepId:"surveyStepMortgagePrincipal", fieldId:"surveyMortgagePrincipal", label:"ローン元本返済", type:"input", mortgageOnly:true, question:"そのうちローン元本返済はいくらですか？", hint:"ローン返済中の方のみ入力します。" },
 ];
 let surveyStepIndex = 0;
@@ -5696,6 +5696,82 @@ function renderValueCategorySuggestions(mode, targetId){
   });
 }
 
+function getFilteredValueSuggestions(keyword){
+  const q = String(keyword || "").trim().toLowerCase();
+  if(!q) return VALUE_CATEGORY_SUGGESTIONS.slice();
+  return VALUE_CATEGORY_SUGGESTIONS.filter(item => item.toLowerCase().includes(q));
+}
+
+function hideSurveyValueSuggestionLists(){
+  ["surveyValueSuggest1","surveyValueSuggest2","surveyValueSuggest3"].forEach(id=>{
+    const box = $(id);
+    if(!box) return;
+    box.hidden = true;
+    box.innerHTML = "";
+  });
+}
+
+function renderSurveyValueSuggestionList(inputEl, boxEl){
+  if(!inputEl || !boxEl) return;
+  const list = getFilteredValueSuggestions(inputEl.value);
+  if(!list.length){
+    boxEl.hidden = true;
+    boxEl.innerHTML = "";
+    return;
+  }
+  boxEl.innerHTML = list
+    .map(item=>`<button type="button" class="valueSuggestBtn" data-value-suggest="${escapeHtml(item)}">${escapeHtml(item)}</button>`)
+    .join("");
+  boxEl.hidden = false;
+  boxEl.querySelectorAll("[data-value-suggest]").forEach(btn=>{
+    btn.addEventListener("mousedown", (e)=> e.preventDefault());
+    btn.addEventListener("click", ()=>{
+      inputEl.value = btn.dataset.valueSuggest || "";
+      inputEl.dispatchEvent(new Event("input", { bubbles:true }));
+      boxEl.hidden = true;
+      boxEl.innerHTML = "";
+      inputEl.focus();
+    });
+  });
+}
+
+function setupSurveyValueSuggestionDropdowns(){
+  const pairs = [
+    ["surveyValueCat1","surveyValueSuggest1"],
+    ["surveyValueCat2","surveyValueSuggest2"],
+    ["surveyValueCat3","surveyValueSuggest3"],
+  ];
+  pairs.forEach(([inputId, listId])=>{
+    const input = $(inputId);
+    const list = $(listId);
+    if(!input || !list) return;
+    input.addEventListener("focus", ()=>{
+      renderSurveyValueSuggestionList(input, list);
+    });
+    input.addEventListener("click", ()=>{
+      renderSurveyValueSuggestionList(input, list);
+    });
+    input.addEventListener("input", ()=>{
+      renderSurveyValueSuggestionList(input, list);
+    });
+    input.addEventListener("blur", ()=>{
+      setTimeout(()=>{
+        if(document.activeElement && list.contains(document.activeElement)) return;
+        list.hidden = true;
+        list.innerHTML = "";
+      }, 120);
+    });
+  });
+  document.addEventListener("click", (e)=>{
+    const t = e.target;
+    if(!(t instanceof HTMLElement)) return;
+    const withinInput = t.closest("#surveyStepValueCats input");
+    const withinList = t.closest(".valueSuggestList");
+    if(withinInput || withinList) return;
+    hideSurveyValueSuggestionLists();
+  });
+}
+
 function openSurvey(){
   const prof = getProfile();
   if($("surveyHousehold")){
@@ -5773,6 +5849,7 @@ function ensureSurveyFieldVisible(el){
 function focusCurrentSurveyField(){
   const step = getCurrentSurveyStep();
   const id = step?.fieldId;
+  if(step?.type === "valuecats") return;
   const el = id ? $(id) : null;
   if(!el) return;
   setTimeout(()=>{
@@ -5982,6 +6059,7 @@ async function init(){
   $("surveyNextBtn")?.addEventListener("click", nextSurveyStep);
   $("surveyPrevBtn")?.addEventListener("click", prevSurveyStep);
   bindSurveyKeyboardFlow();
+  setupSurveyValueSuggestionDropdowns();
   updateSurveyHousingFields();
   renderValueCategorySuggestions("profile", "profileValueExampleChips");
 

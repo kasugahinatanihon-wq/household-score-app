@@ -2170,6 +2170,29 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .valueExampleChip:active{
   transform:scale(.98);
 }
+.valueSuggestList{
+  margin:8px 0 2px;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:6px;
+}
+.valueSuggestList[hidden]{
+  display:none !important;
+}
+.valueSuggestBtn{
+  border:1px solid var(--primary-25);
+  background:var(--primary-08);
+  color:#8f4b2f;
+  border-radius:999px;
+  padding:7px 8px;
+  font-size:12px;
+  font-weight:800;
+  width:100%;
+  text-align:center;
+}
+.valueSuggestBtn:active{
+  transform:scale(.98);
+}
 
 /* Sticky action bar inside entry modal */
 .entryActionBar{
