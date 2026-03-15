@@ -4390,32 +4390,27 @@ function renderWeeklyInline(){
     : tier === "悪い" ? "😟"
     : tier === "めっちゃ悪い" ? "🥶"
     : "🙂";
-  const speech = tier === "分析中"
-    ? "記録が増えると、あなたらしい使い方の傾向がはっきりしてきます。"
-    : tier === "めっちゃ良い"
-      ? "納得できる使い方ができています。今月はかなり良い状態です。"
-      : tier === "良い"
-        ? "大きな崩れはなく、いいペースで使えています。"
-        : tier === "悪い"
-          ? "使い方に少しブレがあります。内訳を見て1カテゴリだけ整えましょう。"
-          : "後悔につながる使い方が目立っています。今月は先に上限を決めて使うのが安全です。";
   const reaction = getHomeReaction();
   const displayMood = reaction?.mood || mood;
-  const displaySpeech = reaction?.text || speech;
   const readyMonth = getLatestReadyMonth();
-  const reportCta = readyMonth
-    ? `<button class="homeMiniReportBtn" type="button" onclick="showMonthlyScore()">📄 マンスリー便り</button>`
+  const handoffCard = readyMonth
+    ? `<button class="homeHandoffCard" type="button" onclick="showMonthlyScore()">
+        <span class="homeHandoffIcon">📄</span>
+        <span class="homeHandoffText">マンスリーサマリーを受け取る</span>
+      </button>`
     : "";
 
   wrap.innerHTML = `
     <div class="homeHeroCard">
       <div class="homeHeroHeader">
         <span class="homeHeroEyebrow">今月のキャラクター</span>
-        ${reportCta}
       </div>
       <div class="homeHeroTop">
         <div class="homeAvatarWrap">
-          <div class="homeAvatar is-live" id="homeAvatarLive">${homeAvatarHTML(displayCategory, tier, displayMood, { extraClass:"is-live", imgClass:"is-live", fallbackClass:"is-live" })}</div>
+          <div class="homeAvatarStage">
+            <div class="homeAvatar is-live" id="homeAvatarLive">${homeAvatarHTML(displayCategory, tier, displayMood, { extraClass:"is-live", imgClass:"is-live", fallbackClass:"is-live" })}</div>
+            ${handoffCard}
+          </div>
         </div>
         <div class="homeStateBlock">
           <div class="homeStateTitle">${escapeHtml(archetype)}</div>
@@ -4425,7 +4420,6 @@ function renderWeeklyInline(){
           </div>
         </div>
       </div>
-      <div class="homeSpeech">${displaySpeech}</div>
       <div class="homeRecordMeta">
         <span class="homeRecordPill">記録 ${daysWithEntry}日 ・ 最終 ${latestEntryLabel}</span>
       </div>
@@ -4517,14 +4511,7 @@ function renderMonthlyGate(){
   $("scoreMonth") && ($("scoreMonth").value = targetMonth);
 
   if(readyMonth){
-    wrap.innerHTML = `
-      <div class="sectionCard monthlyGateCard">
-        <div class="sectionHead">
-          <div><div class="sectionName">マンスリーサマリー</div><div class="sectionHint">${escapeHtml(targetMonth)} 分が届いています</div></div>
-        </div>
-        <button class="primary" type="button" style="width:100%; margin-top:10px;" onclick="showMonthlyScore()">マンスリーサマリーを見る</button>
-      </div>
-    `;
+    wrap.innerHTML = ``;
     return;
   }
 

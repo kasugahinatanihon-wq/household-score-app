@@ -1839,7 +1839,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:center;
   gap:8px;
   flex-wrap:wrap;
-  margin-bottom:10px;
+  margin-bottom:12px;
 }
 .homeHeroEyebrow{
   display:inline-flex;
@@ -1853,39 +1853,41 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:rgba(245,158,122,.16);
   border:1px solid rgba(214,120,75,.26);
 }
-.homeMiniReportBtn{
-  margin-left:auto;
-  border:1px solid var(--primary-25);
-  background:var(--primary-08);
-  color:#8f4b2f;
-  border-radius:999px;
-  padding:4px 10px;
-  font-size:11px;
-  font-weight:900;
-}
 .homeHeroTop{
   display:grid;
-  grid-template-columns:72px 1fr;
-  gap:12px;
+  grid-template-columns:1fr;
+  gap:14px;
   align-items:center;
+  justify-items:center;
+  text-align:center;
 }
 .homeAvatarWrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+}
+.homeAvatarStage{
+  position:relative;
+  width:min(78vw, 300px);
+  min-height:180px;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 .homeStateBlock{
   min-width:0;
+  width:100%;
 }
 .homeAvatar{
   position:relative;
-  width:72px;
-  height:72px;
-  border-radius:20px;
+  width:min(62vw, 240px);
+  height:min(62vw, 240px);
+  border-radius:34px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:34px;
+  font-size:80px;
   background:transparent;
   border:none;
 }
@@ -1901,7 +1903,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   width:100%;
   height:100%;
   object-fit:cover;
-  border-radius:18px;
+  border-radius:30px;
   display:block;
 }
 .homeAvatarImg.is-live{
@@ -1913,7 +1915,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:none;
   align-items:center;
   justify-content:center;
-  font-size:34px;
+  font-size:80px;
 }
 .homeAvatarFallback.is-live{
   animation:homeAvatarBob 2.6s ease-in-out infinite;
@@ -1936,7 +1938,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   animation:homeAvatarSpark .85s ease-out;
 }
 .homeStateTitle{
-  font-size:18px;
+  font-size:22px;
   font-weight:900;
   color:#3b241e;
 }
@@ -1962,10 +1964,46 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-color:var(--primary-25);
 }
 .homeStateSub{
-  margin-top:6px;
+  margin-top:8px;
   color:#7a635d;
-  font-size:13px;
+  font-size:14px;
   line-height:1.45;
+}
+.homeHandoffCard{
+  position:absolute;
+  right:-4px;
+  bottom:6px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  border:1px solid var(--primary-25);
+  background:linear-gradient(180deg, #ffffff 0%, #fff3e6 100%);
+  color:#8f4b2f;
+  border-radius:14px;
+  padding:7px 10px;
+  box-shadow:0 10px 24px rgba(143,75,47,.14);
+  max-width:180px;
+}
+.homeHandoffCard::before{
+  content:"";
+  position:absolute;
+  left:-9px;
+  bottom:10px;
+  width:0;
+  height:0;
+  border-top:7px solid transparent;
+  border-bottom:7px solid transparent;
+  border-right:9px solid #fff5ea;
+}
+.homeHandoffIcon{
+  font-size:14px;
+  line-height:1;
+}
+.homeHandoffText{
+  font-size:11px;
+  font-weight:900;
+  text-align:left;
+  line-height:1.3;
 }
 .homeSpeech{
   margin-top:10px;
@@ -2137,28 +2175,28 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     gap:10px;
     text-align:center;
   }
+  .homeAvatarStage{
+    width:min(88vw, 320px);
+    min-height:220px;
+  }
   .homeAvatar{
-    width:124px;
-    height:124px;
-    border-radius:30px;
-    font-size:56px;
+    width:min(70vw, 270px);
+    height:min(70vw, 270px);
+    border-radius:34px;
+    font-size:96px;
   }
-  .homeAvatarImg{
-    border-radius:26px;
-  }
-  .homeAvatarFallback{
-    font-size:56px;
-  }
+  .homeAvatarImg{ border-radius:30px; }
+  .homeAvatarFallback{ font-size:96px; }
   .homeStateTitle{
-    font-size:18px;
+    font-size:20px;
     line-height:1.35;
   }
-  .homeStateSub{
-    font-size:13px;
-  }
-  .homeSpeech{
-    font-size:13px;
-    padding:10px 12px;
+  .homeStateSub{ font-size:13px; }
+  .homeHandoffCard{
+    right:0;
+    bottom:4px;
+    max-width:165px;
+    padding:7px 9px;
   }
   .homeRecordMeta{
     gap:6px;
