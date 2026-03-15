@@ -1689,16 +1689,18 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:flex;
   align-items:center;
   gap:6px;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
+  width:100%;
 }
 .starBtn{
-  width:34px;
-  height:34px;
+  flex:1 1 0;
+  min-width:0;
+  height:44px;
   border-radius:10px;
   border:1px solid var(--border);
   background:#fff;
   color:#c8a18f;
-  font-size:20px;
+  font-size:24px;
   line-height:1;
   display:inline-flex;
   align-items:center;
@@ -1752,9 +1754,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     gap:6px;
   }
   .starBtn{
-    width:32px;
-    height:32px;
-    font-size:18px;
+    height:42px;
+    font-size:22px;
   }
 }
 

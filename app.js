@@ -5356,7 +5356,7 @@ function setValueTagSelection(inputId, chipsId, value, cats){
   if(!inputEl || !chipsEl) return;
   const normalized = dedupeList((cats || []).map(c=> String(c || "").trim()).filter(Boolean));
   const current = String(value || "").trim();
-  const choices = [{ value:"", label:"未設定" }, ...normalized.map(c=> ({ value:c, label:c }))];
+  const choices = [{ value:"", label:"該当なし" }, ...normalized.map(c=> ({ value:c, label:c }))];
   chipsEl.innerHTML = choices.map(item=>`
     <button type="button" class="valueTagChip ${current === item.value ? "active" : ""}" data-value-tag="${escapeHtml(item.value)}">
       ${escapeHtml(item.label)}
