@@ -391,24 +391,13 @@
         <div class="catTitle">納得度・価値観（任意）</div>
         <div class="qualityRow">
           <div class="qualityLabel">今日の支出は納得？</div>
-          <select id="entrySat">
-            <option value="">未入力</option>
-            <option value="5">😊 すごく納得</option>
-            <option value="4">🙂 まあ納得</option>
-            <option value="3">😐 どちらでもない</option>
-            <option value="2">🙁 少し後悔</option>
-            <option value="1">😢 後悔している</option>
-          </select>
+          <div class="starRating" id="entrySatStars" role="radiogroup" aria-label="納得度"></div>
+          <input type="hidden" id="entrySat" value="">
         </div>
         <div class="qualityRow">
           <div class="qualityLabel">価値観カテゴリ（何を満たした？）</div>
-          <select id="entryValueTag">
-            <option value="">未設定</option>
-          </select>
-        </div>
-        <div class="qualityRow" id="entryValueTagCustomWrap" style="display:none;">
-          <div class="qualityLabel">自由入力</div>
-          <input type="text" id="entryValueTagCustom" placeholder="例：急な出費 / 付き合い など">
+          <div class="valueTagChips" id="entryValueTagChips"></div>
+          <input type="hidden" id="entryValueTag" value="">
         </div>
       </div>
 
@@ -471,22 +460,12 @@
       </div>
       <div class="row" style="margin-top:12px;">
         <label>納得度
-          <select id="editSat">
-            <option value="">未入力</option>
-            <option value="5">😊 すごく納得</option>
-            <option value="4">🙂 まあ納得</option>
-            <option value="3">😐 どちらでもない</option>
-            <option value="2">🙁 少し後悔</option>
-            <option value="1">😢 後悔している</option>
-          </select>
+          <div class="starRating" id="editSatStars" role="radiogroup" aria-label="納得度"></div>
+          <input type="hidden" id="editSat" value="">
         </label>
         <label>価値観カテゴリ（何を満たした？）
-          <select id="editValueTag">
-            <option value="">未設定</option>
-          </select>
-        </label>
-        <label id="editValueTagCustomWrap" style="display:none;">価値観カテゴリ（自由入力）
-          <input type="text" id="editValueTagCustom" placeholder="例：急な出費 / 付き合い など">
+          <div class="valueTagChips" id="editValueTagChips"></div>
+          <input type="hidden" id="editValueTag" value="">
         </label>
       </div>
       <div class="row" style="margin-top:12px;">
@@ -955,13 +934,13 @@
 <nav class="bottomNav">
   <div class="tabs">
     <button class="tabBtn active" id="tab-input" onclick="switchScreen('input')">
-      <span class="icon emojiWarm">✏️</span><span>入力</span>
+      <span class="icon emojiWarm">📝</span><span>入力</span>
     </button>
     <button class="tabBtn" id="tab-list" onclick="switchScreen('list')">
-      <span class="icon emojiWarm">📅</span><span>カレンダー</span>
+      <span class="icon emojiWarm">🗓️</span><span>カレンダー</span>
     </button>
     <button class="tabBtn" id="tab-report" onclick="switchScreen('report')">
-      <span class="icon emojiWarm">🧾</span><span>レポート</span>
+      <span class="icon emojiWarm">📊</span><span>レポート</span>
     </button>
     <button class="tabBtn" id="tab-profile" onclick="switchScreen('profile')">
       <span class="icon emojiWarm">⚙️</span><span>設定</span>
@@ -971,7 +950,6 @@
 
 <button class="floatingScoreBtn" id="scoreQuickBtn" onclick="switchScreen('score')" aria-label="ホーム（スコア）">
   <span class="scoreQuickHome emojiWarm mini">🏠</span>
-  <span class="scoreQuickChart emojiWarm mini">📊</span>
 </button>
 
 <script>

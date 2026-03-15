@@ -2303,10 +2303,8 @@ function openEntryModal(dt, opts = {}){
   $("entryMsg").textContent = "";
   $("entryAmount").value = "";
   $("entryMemoTop").value = "";
-  $("entrySat").value = "";
+  setStarRating("entrySat", 0);
   $("entryValueTag") && ($("entryValueTag").value = "");
-  $("entryValueTagCustom") && ($("entryValueTagCustom").value = "");
-  $("entryValueTagCustomWrap") && ($("entryValueTagCustomWrap").style.display = "none");
 
   $("entryCategoryHidden").value = "";
   document.querySelectorAll("#entryCatArea .catCard").forEach(c=> c.classList.remove("active"));
@@ -2403,7 +2401,7 @@ function saveEntry(){
   }
 
   const sat = $("entrySat").value ? Number($("entrySat").value) : null;
-  const valueTag = resolveValueTag("entryValueTag", "entryValueTagCustom");
+  const valueTag = resolveValueTag("entryValueTag");
   const memoTop = ($("entryMemoTop").value||"").trim();
   const note = memoTop;
 
@@ -2494,8 +2492,8 @@ function openEditModal(id){
   $("editDate") && ($("editDate").value = tx.date || "");
   $("editCategory") && ($("editCategory").value = tx.category || "");
   $("editAmount") && ($("editAmount").value = tx.amount || "");
-  $("editSat") && ($("editSat").value = (tx.satisfaction!=null ? String(tx.satisfaction) : ""));
-  setValueTagSelection("editValueTag", "editValueTagCustom", tx.valueTag || "", valueCats);
+  setStarRating("editSat", (tx.satisfaction!=null ? Number(tx.satisfaction) : 0));
+  setValueTagSelection("editValueTag", "editValueTagChips", tx.valueTag || "", valueCats);
   $("editMemo") && ($("editMemo").value = tx.memo || "");
   openModal("editModal");
 }
@@ -2517,7 +2515,7 @@ function saveEdit(){
   const category = $("editCategory")?.value || list[idx].category;
   const memo = ($("editMemo")?.value || "").trim();
   const satRaw = ($("editSat")?.value || "").trim();
-  const valueTag = resolveValueTag("editValueTag", "editValueTagCustom");
+  const valueTag = resolveValueTag("editValueTag");
 
   list[idx] = {
     ...list[idx],
@@ -5336,65 +5334,67 @@ function getValueTop3FromProfile(profile){
   const cats = normalizeValueCats(profile?.valueCats || []).filter(Boolean);
   return dedupeList(cats).slice(0,3);
 }
-function buildValueTagOptionHTML(cats, current = ""){
+function setValueTagSelection(inputId, chipsId, value, cats){
+  const inputEl = $(inputId);
+  const chipsEl = $(chipsId);
+  if(!inputEl || !chipsEl) return;
   const normalized = dedupeList((cats || []).map(c=> String(c || "").trim()).filter(Boolean));
-  const options = [`<option value="">未設定</option>`];
-  options.push(...normalized.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`));
-  options.push(`<option value="__none__">該当なし</option>`);
-  options.push(`<option value="__custom__">その他（自由入力）</option>`);
-  if(current && !normalized.includes(current)){
-    options.push(`<option value="${escapeHtml(current)}">${escapeHtml(current)}（登録済み）</option>`);
-  }
-  return options.join("");
-}
-function setValueTagSelection(selectId, customId, value, cats){
-  const selectEl = $(selectId);
-  const customEl = $(customId);
-  const wrapEl = $(`${customId}Wrap`);
-  if(!selectEl) return;
   const current = String(value || "").trim();
-  selectEl.innerHTML = buildValueTagOptionHTML(cats, current);
-  if(!current){
-    selectEl.value = "";
-    if(customEl) customEl.value = "";
-    if(wrapEl) wrapEl.style.display = "none";
-    return;
-  }
-  const values = Array.from(selectEl.options).map(o=> o.value);
-  if(values.includes(current)){
-    selectEl.value = current;
-    if(customEl) customEl.value = "";
-    if(wrapEl) wrapEl.style.display = "none";
-    return;
-  }
-  selectEl.value = "__custom__";
-  if(customEl) customEl.value = current;
-  if(wrapEl) wrapEl.style.display = "";
+  const choices = [{ value:"", label:"未設定" }, ...normalized.map(c=> ({ value:c, label:c }))];
+  chipsEl.innerHTML = choices.map(item=>`
+    <button type="button" class="valueTagChip ${current === item.value ? "active" : ""}" data-value-tag="${escapeHtml(item.value)}">
+      ${escapeHtml(item.label)}
+    </button>
+  `).join("");
+  inputEl.value = current && normalized.includes(current) ? current : "";
+  chipsEl.querySelectorAll("[data-value-tag]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const selected = btn.dataset.valueTag || "";
+      inputEl.value = selected;
+      chipsEl.querySelectorAll(".valueTagChip").forEach(chip=>{
+        chip.classList.toggle("active", chip === btn);
+      });
+    });
+  });
 }
-function toggleValueTagCustom(selectId, customId){
-  const selectEl = $(selectId);
-  const customEl = $(customId);
-  const wrapEl = $(`${customId}Wrap`);
-  if(!selectEl || !wrapEl) return;
-  const showCustom = selectEl.value === "__custom__";
-  wrapEl.style.display = showCustom ? "" : "none";
-  if(showCustom){
-    setTimeout(()=> customEl?.focus(), 0);
-  }else if(customEl){
-    customEl.value = "";
-  }
+function resolveValueTag(inputId){
+  return String($(inputId)?.value || "").trim();
 }
-function resolveValueTag(selectId, customId){
-  const raw = String($(selectId)?.value || "").trim();
-  if(!raw || raw === "__none__") return "";
-  if(raw === "__custom__"){
-    return String($(customId)?.value || "").trim();
+function setupStarRating(starsId, inputId){
+  const starsEl = $(starsId);
+  const inputEl = $(inputId);
+  if(!starsEl || !inputEl) return;
+  if(!starsEl.dataset.initialized){
+    starsEl.innerHTML = [1,2,3,4,5].map(v=>`
+      <button type="button" class="starBtn" data-star="${v}" aria-label="${v}星">★</button>
+    `).join("");
+    starsEl.dataset.initialized = "1";
+    starsEl.querySelectorAll("[data-star]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const value = Number(btn.dataset.star || 0);
+        const current = Number(inputEl.value || 0);
+        setStarRating(inputId, current === value ? 0 : value);
+      });
+    });
   }
-  return raw;
+  setStarRating(inputId, Number(inputEl.value || 0));
+}
+function setStarRating(inputId, value){
+  const inputEl = $(inputId);
+  if(!inputEl) return;
+  const safeValue = clamp(Number(value || 0), 0, 5);
+  inputEl.value = safeValue > 0 ? String(safeValue) : "";
+  const starsEl = inputId === "entrySat" ? $("entrySatStars") : (inputId === "editSat" ? $("editSatStars") : null);
+  if(!starsEl) return;
+  starsEl.querySelectorAll("[data-star]").forEach(btn=>{
+    const v = Number(btn.dataset.star || 0);
+    btn.classList.toggle("active", v <= safeValue);
+    btn.setAttribute("aria-checked", String(v === safeValue));
+  });
 }
 function updateValueCategorySelects(cats, currentValueTag = ""){
-  setValueTagSelection("entryValueTag", "entryValueTagCustom", currentValueTag || $("entryValueTag")?.value || "", cats);
-  setValueTagSelection("editValueTag", "editValueTagCustom", currentValueTag || $("editValueTag")?.value || "", cats);
+  setValueTagSelection("entryValueTag", "entryValueTagChips", currentValueTag || $("entryValueTag")?.value || "", cats);
+  setValueTagSelection("editValueTag", "editValueTagChips", currentValueTag || $("editValueTag")?.value || "", cats);
 }
 function collectValueCatsFromUI(){
   return [1,2,3,4,5].map(i=> ($(`valueCat${i}`)?.value || "").trim());
@@ -5965,8 +5965,8 @@ async function init(){
   renderValueCategorySuggestions("survey", "surveyValueExampleChips");
   renderValueCategorySuggestions("profile", "profileValueExampleChips");
 
-  $("entryValueTag")?.addEventListener("change", ()=> toggleValueTagCustom("entryValueTag", "entryValueTagCustom"));
-  $("editValueTag")?.addEventListener("change", ()=> toggleValueTagCustom("editValueTag", "editValueTagCustom"));
+  setupStarRating("entrySatStars", "entrySat");
+  setupStarRating("editSatStars", "editSat");
 
   $("entryPrevDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, -1), { keepCategory:true }));
   $("entryNextDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, +1), { keepCategory:true }));
