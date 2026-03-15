@@ -3776,6 +3776,8 @@ function renderSpendTrendChart(monthStr){
     }
   });
 
+  const cutoffDay = getReportCutoffDay(monthStr);
+  const cutoffIndex = clamp(Number(cutoffDay || 1) - 1, 0, days - 1);
   const cum = [];
   const prevCum = [];
   let run = 0;
@@ -3791,7 +3793,8 @@ function renderSpendTrendChart(monthStr){
     }
   }
 
-  const maxCumVal = Math.max(...cum, ...prevCum.map(v=> Number(v || 0)), 1);
+  const cumVisible = cum.slice(0, cutoffIndex + 1);
+  const maxCumVal = Math.max(...cumVisible, ...prevCum.map(v=> Number(v || 0)), 1);
   const w = 360;
   const h = 170;
   const pad = { left:14, right:10, top:8, bottom:26 };
@@ -3799,18 +3802,18 @@ function renderSpendTrendChart(monthStr){
   const innerH = h - pad.top - pad.bottom;
   const x = (i)=> pad.left + ((days <= 1 ? 0 : i / (days - 1)) * innerW);
   const yCum = (v)=> pad.top + (1 - (v / maxCumVal)) * innerH;
-  const lineCum = cum.map((v, i)=>`${x(i)},${yCum(v)}`).join(" ");
+  const lineCum = cumVisible.map((v, i)=>`${x(i)},${yCum(v)}`).join(" ");
   const linePrevCum = prevCum
     .map((v, i)=> v == null ? null : `${x(i)},${yCum(v)}`)
     .filter(Boolean)
     .join(" ");
-  const areaCum = `M ${x(0)} ${yCum(cum[0])} L ${cum.map((v, i)=>`${x(i)} ${yCum(v)}`).join(" L ")} L ${x(days - 1)} ${yCum(0)} L ${x(0)} ${yCum(0)} Z`;
+  const areaCum = `M ${x(0)} ${yCum(cumVisible[0] || 0)} L ${cumVisible.map((v, i)=>`${x(i)} ${yCum(v)}`).join(" L ")} L ${x(cutoffIndex)} ${yCum(0)} L ${x(0)} ${yCum(0)} Z`;
 
   const ticks = [];
   for(let d=1; d<=days; d+=7) ticks.push(d);
   if(ticks[ticks.length - 1] !== days) ticks.push(days);
   const yCumMarks = [maxCumVal, Math.round(maxCumVal/2), 0];
-  const cumLatest = cum[cum.length - 1];
+  const cumLatest = cumVisible[cumVisible.length - 1] || 0;
   const prevCumLatest = Number(prevCum[Math.min(days, prevDays) - 1] || 0);
   const prevMonthFinal = buildMonthlyReportItems(prevMonthStr).total;
   const cumDelta = cumLatest - prevCumLatest;
@@ -3818,7 +3821,7 @@ function renderSpendTrendChart(monthStr){
   const prevLastIndex = Math.max(Math.min(days, prevDays) - 1, 0);
   const prevLastY = yCum(Number(prevCum[prevLastIndex] || 0));
   const prevFinalY = yCum(prevMonthFinal);
-  const currentY = yCum(cum[cum.length - 1]);
+  const currentY = yCum(cumLatest);
   let currentTopPct = clamp((currentY / h) * 100, 6, 86);
   let prevTopPct = clamp((prevFinalY / h) * 100, 6, 86);
   if(Math.abs(currentTopPct - prevTopPct) < 8){
@@ -3854,7 +3857,7 @@ function renderSpendTrendChart(monthStr){
         <polyline class="dailyTrendPrevCum" points="${linePrevCum}"></polyline>
         <polyline class="dailyTrendCum" points="${lineCum}"></polyline>
         <circle class="dailyTrendDotPrev" cx="${x(prevLastIndex)}" cy="${prevLastY}" r="3.5"></circle>
-        <circle class="dailyTrendDot" cx="${x(days - 1)}" cy="${currentY}" r="4"></circle>
+        <circle class="dailyTrendDot" cx="${x(cutoffIndex)}" cy="${currentY}" r="4"></circle>
         <circle class="dailyTrendDotPrevFinal" cx="${x(days - 1)}" cy="${prevFinalY}" r="3.2"></circle>
       </svg>
       <div class="dailyTrendInlineValue current" style="top:${currentTopPct}%;">当月累計 ${fmtYen(Math.round(cumLatest))}円</div>
@@ -5702,8 +5705,8 @@ function getFilteredValueSuggestions(keyword){
   return VALUE_CATEGORY_SUGGESTIONS.filter(item => item.toLowerCase().includes(q));
 }
 
-function hideSurveyValueSuggestionLists(){
-  ["surveyValueSuggest1","surveyValueSuggest2","surveyValueSuggest3"].forEach(id=>{
+function hideValueSuggestionLists(ids){
+  ids.forEach(id=>{
     const box = $(id);
     if(!box) return;
     box.hidden = true;
@@ -5711,7 +5714,7 @@ function hideSurveyValueSuggestionLists(){
   });
 }
 
-function renderSurveyValueSuggestionList(inputEl, boxEl){
+function renderValueSuggestionList(inputEl, boxEl){
   if(!inputEl || !boxEl) return;
   const list = getFilteredValueSuggestions(inputEl.value);
   if(!list.length){
@@ -5736,6 +5739,7 @@ function renderSurveyValueSuggestionList(inputEl, boxEl){
 }
 
 function setupSurveyValueSuggestionDropdowns(){
+  const listIds = ["surveyValueSuggest1","surveyValueSuggest2","surveyValueSuggest3"];
   const pairs = [
     ["surveyValueCat1","surveyValueSuggest1"],
     ["surveyValueCat2","surveyValueSuggest2"],
@@ -5746,13 +5750,13 @@ function setupSurveyValueSuggestionDropdowns(){
     const list = $(listId);
     if(!input || !list) return;
     input.addEventListener("focus", ()=>{
-      renderSurveyValueSuggestionList(input, list);
+      renderValueSuggestionList(input, list);
     });
     input.addEventListener("click", ()=>{
-      renderSurveyValueSuggestionList(input, list);
+      renderValueSuggestionList(input, list);
     });
     input.addEventListener("input", ()=>{
-      renderSurveyValueSuggestionList(input, list);
+      renderValueSuggestionList(input, list);
     });
     input.addEventListener("blur", ()=>{
       setTimeout(()=>{
@@ -5768,7 +5772,47 @@ function setupSurveyValueSuggestionDropdowns(){
     const withinInput = t.closest("#surveyStepValueCats input");
     const withinList = t.closest(".valueSuggestList");
     if(withinInput || withinList) return;
-    hideSurveyValueSuggestionLists();
+    hideValueSuggestionLists(listIds);
+  });
+}
+
+function setupProfileValueSuggestionDropdowns(){
+  const listIds = ["profileValueSuggest1","profileValueSuggest2","profileValueSuggest3","profileValueSuggest4","profileValueSuggest5"];
+  const pairs = [
+    ["valueCat1","profileValueSuggest1"],
+    ["valueCat2","profileValueSuggest2"],
+    ["valueCat3","profileValueSuggest3"],
+    ["valueCat4","profileValueSuggest4"],
+    ["valueCat5","profileValueSuggest5"],
+  ];
+  pairs.forEach(([inputId, listId])=>{
+    const input = $(inputId);
+    const list = $(listId);
+    if(!input || !list) return;
+    input.addEventListener("focus", ()=>{
+      renderValueSuggestionList(input, list);
+    });
+    input.addEventListener("click", ()=>{
+      renderValueSuggestionList(input, list);
+    });
+    input.addEventListener("input", ()=>{
+      renderValueSuggestionList(input, list);
+    });
+    input.addEventListener("blur", ()=>{
+      setTimeout(()=>{
+        if(document.activeElement && list.contains(document.activeElement)) return;
+        list.hidden = true;
+        list.innerHTML = "";
+      }, 120);
+    });
+  });
+  document.addEventListener("click", (e)=>{
+    const t = e.target;
+    if(!(t instanceof HTMLElement)) return;
+    const withinInput = t.closest("#settingsValueSection input");
+    const withinList = t.closest(".valueSuggestList");
+    if(withinInput || withinList) return;
+    hideValueSuggestionLists(listIds);
   });
 }
 
@@ -6060,8 +6104,8 @@ async function init(){
   $("surveyPrevBtn")?.addEventListener("click", prevSurveyStep);
   bindSurveyKeyboardFlow();
   setupSurveyValueSuggestionDropdowns();
+  setupProfileValueSuggestionDropdowns();
   updateSurveyHousingFields();
-  renderValueCategorySuggestions("profile", "profileValueExampleChips");
 
   setupStarRating("entrySatStars", "entrySat");
   setupStarRating("editSatStars", "editSat");
