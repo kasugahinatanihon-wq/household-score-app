@@ -2246,7 +2246,7 @@ function renderCalendar(){
 /* ===== Entry Modal ===== */
 function buildCatCards(){
   const PICTO = {
-    食費: `<path d="M4 11h16"/><path d="M6 11a6 6 0 0 0 12 0"/><path d="M3 15h18"/><path d="M8 5v3M12 5v3M16 5v3"/>`,
+    食費: `<circle cx="9" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/><path d="M4 5h2l1.3 8h10.7l1.6-6H7.4"/><path d="M8 13h10"/>`,
     外食費: `<circle cx="12" cy="12" r="5"/><path d="M5 4v6M7 4v6"/><path d="M19 4v6M17 4v6"/>`,
     日用品: `<rect x="5" y="6" width="14" height="12" rx="2"/><path d="M5 10h14"/><path d="M9 10v8"/>`,
     衣服: `<path d="M6 6l3-2h6l3 2v3l-2 1v9H8V10L6 9z"/>`,
@@ -5235,18 +5235,12 @@ function renderList(){
     const memo = t.memo ? t.memo : "—";
     const memoText = (memo === "—" && valueTag) ? valueTag : (valueTag ? `${memo} / ${valueTag}` : memo);
     return `
-      <tr>
+      <tr data-edit="${t.id}" style="cursor:pointer;">
         <td data-label="日付">${escapeHtml(t.date)}</td>
         <td data-label="カテゴリ">${escapeHtml(t.category)}</td>
         <td class="num" data-label="金額">${Number(t.amount||0).toLocaleString("ja-JP")}</td>
         <td class="center" data-label="納得度">${escapeHtml(sat)}</td>
         <td data-label="メモ">${escapeHtml(memoText)}</td>
-        <td class="num" data-label="操作">
-          <div class="bar" style="justify-content:flex-end; gap:6px;">
-            <button class="ghost" style="padding:8px 10px; font-size:12px;" type="button" data-edit="${t.id}">編集</button>
-            <button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button>
-          </div>
-        </td>
       </tr>
     `;
   }).join("");
@@ -5257,7 +5251,7 @@ function renderList(){
     const memo = t.memo ? t.memo : "—";
     const memoText = (memo === "—" && valueTag) ? valueTag : (valueTag ? `${memo} / ${valueTag}` : memo);
     return `
-      <div class="listCard">
+      <div class="listCard" data-edit="${t.id}" style="cursor:pointer;">
         <div class="listTop">${escapeHtml(t.date)}</div>
         <div class="listMain">
           <div class="listCat">${escapeHtml(t.category)}</div>
@@ -5266,10 +5260,6 @@ function renderList(){
         </div>
         <div class="listSub">
           <div class="listMemo">${escapeHtml(memoText)}</div>
-        </div>
-        <div class="listActions">
-          <button class="ghost" style="padding:8px 10px; font-size:12px;" type="button" data-edit="${t.id}">編集</button>
-          <button class="danger" style="padding:8px 10px; font-size:12px;" type="button" data-del="${t.id}">削除</button>
         </div>
       </div>
     `;
@@ -5286,7 +5276,6 @@ function renderList(){
               <th style="text-align:right;">金額</th>
               <th style="text-align:center;">納得度</th>
               <th>メモ</th>
-              <th style="text-align:right;">操作</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -5296,17 +5285,10 @@ function renderList(){
     </div>
   `;
 
-  area.querySelectorAll("[data-del]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      deleteTx(btn.dataset.del);
-      toast("削除しました");
-      renderList();
-      renderCalendar();
-    });
-  });
-  area.querySelectorAll("[data-edit]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      openEditModal(btn.dataset.edit);
+  area.querySelectorAll("[data-edit]").forEach(row=>{
+    row.addEventListener("click", ()=>{
+      const id = row.dataset.edit;
+      if(id) openEditModal(id);
     });
   });
 }
