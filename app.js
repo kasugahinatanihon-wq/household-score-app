@@ -70,8 +70,8 @@ const CATEGORY_EMOJI = {
   "コンビニ":"🏪",
 };
 const REPORT_COLORS = [
-  "#f59e7a","#d97745","#f7b267","#e58a5f","#f2a77f",
-  "#c86b42","#f0b48f","#b85c38","#f3c2a0","#d98b6a",
+  "#60a5fa","#34d399","#fbbf24","#f97316","#f472b6",
+  "#a78bfa","#38bdf8","#fca5a5","#22c55e","#fb7185",
 ];
 
 
