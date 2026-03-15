@@ -2924,7 +2924,15 @@ function withEmoji(label, emoji){
 }
 function emojiHTML(emoji, sizeClass){
   const cls = sizeClass ? ` ${sizeClass}` : "";
-  return `<span class="emojiWarm${cls}" aria-hidden="true">${emoji}</span>`;
+  const map = {
+    "📄": `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h8l3 3v13H6V5a1 1 0 0 1 1-1z"/><path d="M15 4v4h4"/><path d="M9 13h6M9 16h6"/></svg>`,
+    "😊": `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M9 10h.01M15 10h.01"/><path d="M8.5 14c1 1.4 2.3 2 3.5 2s2.5-.6 3.5-2"/></svg>`,
+    "🎯": `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5"/></svg>`,
+    "🌀": `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 0 7 7c0-3-2.2-5-5-5a4 4 0 1 0 4 4"/></svg>`,
+    "🌈": `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16a7 7 0 0 1 14 0"/><path d="M8 16a4 4 0 0 1 8 0"/><path d="M11 16a1 1 0 0 1 2 0"/></svg>`,
+  };
+  const svg = map[emoji] || `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg>`;
+  return `<span class="emojiWarm${cls}" aria-hidden="true">${svg}</span>`;
 }
 
 function xpForLevel(level){

@@ -159,12 +159,20 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   vertical-align:middle;
   color:#0f172a;
 }
+.emojiWarm .uiIconSvg{
+  width:14px;
+  height:14px;
+}
 .emojiWarm.icon{
   width:26px;
   height:26px;
   padding:0;
   border-radius:10px;
   font-size:14px;
+}
+.emojiWarm.icon .uiIconSvg{
+  width:14px;
+  height:14px;
 }
 .emojiWarm.lg{
   width:64px;
@@ -173,9 +181,17 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   border-radius:18px;
   font-size:28px;
 }
+.emojiWarm.lg .uiIconSvg{
+  width:30px;
+  height:30px;
+}
 .emojiWarm.mini{
   padding:2px 6px;
   font-size:12px;
+}
+.emojiWarm.mini .uiIconSvg{
+  width:12px;
+  height:12px;
 }
 
 .pill{
