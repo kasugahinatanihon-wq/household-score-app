@@ -242,6 +242,14 @@ h3{ margin:16px 0 10px; font-weight:800; line-height:1.4; }
   .appHeaderTitle{ font-size:17px; }
   .appHeaderIcon{ width:28px; height:28px; font-size:17px; }
   .appHeaderHint{ font-size:12px; }
+  .monthlyAxisTabs{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:6px;
+  }
+  .monthlyAxisBtn{
+    font-size:11px;
+    padding:8px 6px;
+  }
   .screen > .box{
     background:transparent;
     border:none;
@@ -443,20 +451,25 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   box-shadow:0 6px 16px rgba(15,23,42,.08);
 }
 .monthlyAxisTabs{
-  display:flex;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:8px;
-  background:#f8fafc;
-  border:1px solid rgba(15,23,42,.08);
+  background:rgba(255,255,255,.7);
+  border:1px solid rgba(15,23,42,.06);
   border-radius:12px;
   padding:6px;
   margin-top:16px;
 }
 .monthlyAxisBtn{
-  flex:1;
+  min-width:0;
   padding:8px 10px;
   border-radius:10px;
   border:1px solid transparent;
   font-weight:600;
+  font-size:12px;
+  line-height:1.35;
+  white-space:normal;
+  word-break:keep-all;
   color:var(--muted);
   background:transparent;
 }
@@ -504,6 +517,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   margin-top:16px;
   display:grid;
   gap:16px;
+}
+.sectionHeadTrend{
+  align-items:flex-start;
 }
 .reportGrid{
   display:grid;
@@ -1887,10 +1903,22 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   width:min(44vw, 168px);
 }
 .homeDevDockTitle{
+  display:block;
+  cursor:pointer;
+  list-style:none;
   font-size:11px;
   color:var(--muted);
   font-weight:900;
   margin-bottom:4px;
+}
+.homeDevDockTitle::-webkit-details-marker{ display:none; }
+.homeDevDockTitle::marker{ content:""; }
+.homeDevDock:not([open]) .homeDevDockTitle{
+  margin-bottom:0;
+}
+.homeDevDock:not([open]) .homeDevBtns,
+.homeDevDock:not([open]) .homeDevSelect{
+  display:none;
 }
 .homeDevBtns{
   display:grid;
@@ -2388,13 +2416,19 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border:1px solid rgba(15,23,42,.08);
 }
 .monthlyResult{
-  background:var(--bg-main);
-  border-radius:12px;
+  background:transparent;
+  border-radius:0;
   --card-radius:12px;
-  --card-border:rgba(15,23,42,.08);
-  --card-shadow:0 2px 6px rgba(15,23,42,.05);
-  --card-bg:#ffffff;
+  --card-border:rgba(214,120,75,.14);
+  --card-shadow:none;
+  --card-bg:rgba(255,255,255,.72);
   --card-muted:#64748b;
+}
+#resultModal .resultWrap.monthlyResult{
+  background:transparent;
+  border:none;
+  border-radius:0;
+  padding:8px 0 10px;
 }
 .scoreCard{
   border:1px solid var(--primary-18);
@@ -2417,7 +2451,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-color:var(--card-border);
   border-radius:var(--card-radius);
   background:var(--card-bg);
-  box-shadow:var(--card-shadow);
+  box-shadow:none;
+  padding:10px 8px;
 }
 .growthCard{
   border-color:var(--border);
@@ -3017,7 +3052,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-color:var(--card-border);
   border-radius:var(--card-radius);
   background:var(--card-bg);
-  box-shadow:var(--card-shadow);
+  box-shadow:none;
 }
 .axisCard.tone-sat{
   border-color:var(--card-border);
@@ -3206,10 +3241,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .monthlyResult .sectionCard{
   background:var(--card-bg);
-  box-shadow:var(--card-shadow);
+  box-shadow:none;
   border-color:var(--card-border);
   border-radius:var(--card-radius);
-  padding:16px;
+  padding:12px;
 }
 .sectionCard.tone-sat{
   border-color:var(--primary-25);
