@@ -32,9 +32,11 @@ const SAT_SCALE_VERSION = 2;
 const SIGNUP_EMAIL_COOLDOWN_MS = 60 * 1000;
 
 const CATEGORIES = [
-  "食費","外食費","日用品","衣服","美容","交際費","医療費","教育費",
-  "交通費","コンビニ","カフェ",
-  "デート","趣味","仕事"
+  "食費","外食費","コンビニ",
+  "日用品","衣服","美容",
+  "交際費","カフェ","デート",
+  "趣味","仕事","交通費",
+  "医療費","教育費"
 ];
 
 const QUALITY_TARGET = new Set(CATEGORIES);
