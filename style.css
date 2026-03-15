@@ -111,7 +111,16 @@ header{
   height:30px;
   border-radius:8px;
   background:rgba(245,158,122,.18);
-  font-size:18px;
+  color:#8f4b2f;
+}
+.uiIconSvg{
+  width:18px;
+  height:18px;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 .appHeaderHint{
   font-size:13px;
@@ -338,8 +347,17 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   overflow:hidden;
 }
 .scoreQuickHome{
-  font-size:26px;
+  width:26px;
+  height:26px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#8f4b2f;
   line-height:1;
+}
+.scoreQuickHome .uiIconSvg{
+  width:24px;
+  height:24px;
 }
 .floatingScoreBtn:active{
   transform:translateX(-50%) scale(.98);
@@ -359,7 +377,14 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   transition:transform .12s ease, background .12s ease, color .12s ease;
 }
 .tabBtn:active{ transform:scale(.98); }
-.tabBtn .icon{ font-size:16px; }
+.tabBtn .icon{
+  width:20px;
+  height:20px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#8f4b2f;
+}
 .tabBtn.active{
   color:var(--ink);
   border-color: var(--primary-25);
@@ -3972,6 +3997,10 @@ tr:nth-child(even) td{ background:#F8FAFC; }
   font-size:11px;
   color:var(--muted);
   margin-bottom:6px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
 }
 .listMain{
   display:flex;
@@ -3981,25 +4010,45 @@ tr:nth-child(even) td{ background:#F8FAFC; }
 }
 .listCat{ font-weight:900; }
 .listAmt{ font-weight:900; }
-.listSat{
-  font-size:12px;
-  color:var(--muted);
+.listSatStars{
+  font-size:11px;
+  letter-spacing:.06em;
+  color:#c98a64;
+  font-weight:900;
+  white-space:nowrap;
 }
-.listSub{
+.listDateCell{
   display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.listAmountCell{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:3px;
+}
+.listAmountMemoText{
+  font-size:11px;
+  color:var(--muted);
+  max-width:260px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.listAmtLine{
+  display:flex;
+  align-items:baseline;
   gap:8px;
-  flex-wrap:wrap;
-  margin-top:6px;
+  min-width:0;
+}
+.listInlineMemo{
   font-size:12px;
   color:var(--muted);
-}
-.listTrig{ flex:0 0 auto; }
-.listMemo{ flex:1 1 40%; }
-.listActions{
-  display:flex;
-  gap:6px;
-  justify-content:flex-end;
-  margin-top:8px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width:150px;
 }
 
 @media (max-width:768px){

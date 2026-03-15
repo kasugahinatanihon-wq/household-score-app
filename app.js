@@ -2094,15 +2094,22 @@ function syncReportMonthDefault(){
 }
 
 function updateScreenHeader(name){
+  const screenIconSvg = {
+    input: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18h14"/><path d="M7 4h8l3 3v13H6V5a1 1 0 0 1 1-1z"/><path d="M15 4v4h4"/></svg>`,
+    list: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="M8 3v4M16 3v4"/></svg>`,
+    report: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><rect x="6" y="11" width="3" height="6" rx="1"/><rect x="11" y="8" width="3" height="9" rx="1"/><rect x="16" y="5" width="3" height="12" rx="1"/></svg>`,
+    score: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5"/><path d="M7 10.5V19h10v-8.5"/><path d="M10 19v-4h4v4"/></svg>`,
+    profile: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4.8a7 7 0 0 0-1.7-1L14.5 3h-5l-.3 2.9a7 7 0 0 0-1.7 1l-2.4-.8-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-.8a7 7 0 0 0 1.7 1l.3 2.9h5l.3-2.9a7 7 0 0 0 1.7-1l2.4.8 2-3.4-2-1.5c.1-.3.1-.7.1-1z"/></svg>`
+  };
   const headerMap = {
-    input: { icon:"✏️", title:"入力", hint:"今日の支出を記録する" },
-    list: { icon:"📅", title:"カレンダー", hint:"" },
-    report: { icon:"🧾", title:"レポート", hint:"" },
-    score: { icon:"🏠", title:"ホーム", hint:"今月の状態をキャラクターで確認しよう" },
-    profile: { icon:"⚙️", title:"設定", hint:"" }
+    input: { title:"入力", hint:"今日の支出を記録する" },
+    list: { title:"カレンダー", hint:"" },
+    report: { title:"レポート", hint:"" },
+    score: { title:"ホーム", hint:"今月の状態をキャラクターで確認しよう" },
+    profile: { title:"設定", hint:"" }
   };
   const data = headerMap[name] || headerMap.score;
-  if($("currentScreenIcon")) $("currentScreenIcon").textContent = data.icon;
+  if($("currentScreenIcon")) $("currentScreenIcon").innerHTML = screenIconSvg[name] || screenIconSvg.score;
   if($("currentScreenTitle")) $("currentScreenTitle").textContent = data.title;
   if($("currentScreenHint")){
     $("currentScreenHint").textContent = data.hint;
@@ -2248,9 +2255,9 @@ function buildCatCards(){
   const PICTO = {
     食費: `<circle cx="9" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/><path d="M4 5h2l1.3 8h10.7l1.6-6H7.4"/><path d="M8 13h10"/>`,
     外食費: `<circle cx="12" cy="12" r="5"/><path d="M5 4v6M7 4v6"/><path d="M19 4v6M17 4v6"/>`,
-    日用品: `<rect x="5" y="6" width="14" height="12" rx="2"/><path d="M5 10h14"/><path d="M9 10v8"/>`,
-    衣服: `<path d="M6 6l3-2h6l3 2v3l-2 1v9H8V10L6 9z"/>`,
-    美容: `<circle cx="12" cy="10" r="4"/><path d="M12 14v5"/><circle cx="12" cy="20" r="1.5"/>`,
+    日用品: `<circle cx="11" cy="12" r="4.5"/><circle cx="11" cy="12" r="1.6"/><path d="M15.5 9.5h3v5h-3"/><path d="M6.5 16h9"/>`,
+    衣服: `<path d="M9 5h6l2 3-2 1-1 10H10L9 9 7 8z"/><path d="M10 5 8.5 8"/><path d="M14 5 15.5 8"/>`,
+    美容: `<path d="M6.5 6.5 12 12m5.5 5.5L12 12"/><circle cx="6.5" cy="6.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/><path d="m12 12 4-4m-4 4-4 4"/>`,
     交際費: `<rect x="4" y="6" width="8" height="6" rx="2"/><path d="M8 12l-2 2v-2"/><rect x="12" y="10" width="8" height="6" rx="2"/><path d="M16 16l2 2v-2"/>`,
     医療費: `<circle cx="12" cy="12" r="7"/><path d="M12 9v6M9 12h6"/>`,
     教育費: `<path d="M4 7h7a2 2 0 0 1 2 2v10H6a2 2 0 0 0-2 2z"/><path d="M20 7h-7a2 2 0 0 0-2 2v10h7a2 2 0 0 1 2 2z"/>`,
@@ -5230,36 +5237,32 @@ function renderList(){
   }
 
   const rows = tx.map(t=>{
-    const sat = (t.satisfaction!=null) ? getSatLabel(t.satisfaction) : "—";
+    const sat = Number(t.satisfaction || 0);
+    const satStars = sat >= 1 ? `${"★".repeat(sat)}${"☆".repeat(5 - sat)}` : "—";
     const valueTag = t.valueTag ? `価値観:${t.valueTag}` : "";
     const memo = t.memo ? t.memo : "—";
     const memoText = (memo === "—" && valueTag) ? valueTag : (valueTag ? `${memo} / ${valueTag}` : memo);
     return `
       <tr data-edit="${t.id}" style="cursor:pointer;">
-        <td data-label="日付">${escapeHtml(t.date)}</td>
+        <td data-label="日付"><div class="listDateCell"><span>${escapeHtml(t.date)}</span><span class="listSatStars">${escapeHtml(satStars)}</span></div></td>
         <td data-label="カテゴリ">${escapeHtml(t.category)}</td>
-        <td class="num" data-label="金額">${Number(t.amount||0).toLocaleString("ja-JP")}</td>
-        <td class="center" data-label="納得度">${escapeHtml(sat)}</td>
-        <td data-label="メモ">${escapeHtml(memoText)}</td>
+        <td class="num" data-label="金額"><div class="listAmountCell"><span>${Number(t.amount||0).toLocaleString("ja-JP")}円</span><span class="listAmountMemoText">${escapeHtml(memoText)}</span></div></td>
       </tr>
     `;
   }).join("");
 
   const cards = tx.map(t=>{
-    const sat = (t.satisfaction!=null) ? getSatLabel(t.satisfaction) : "—";
+    const sat = Number(t.satisfaction || 0);
+    const satStars = sat >= 1 ? `${"★".repeat(sat)}${"☆".repeat(5 - sat)}` : "—";
     const valueTag = t.valueTag ? `価値観:${t.valueTag}` : "";
     const memo = t.memo ? t.memo : "—";
     const memoText = (memo === "—" && valueTag) ? valueTag : (valueTag ? `${memo} / ${valueTag}` : memo);
     return `
       <div class="listCard" data-edit="${t.id}" style="cursor:pointer;">
-        <div class="listTop">${escapeHtml(t.date)}</div>
+        <div class="listTop"><span>${escapeHtml(t.date)}</span><span class="listSatStars">${escapeHtml(satStars)}</span></div>
         <div class="listMain">
           <div class="listCat">${escapeHtml(t.category)}</div>
-          <div class="listAmt">${Number(t.amount||0).toLocaleString("ja-JP")}円</div>
-          <div class="listSat">納得度 ${escapeHtml(sat)}</div>
-        </div>
-        <div class="listSub">
-          <div class="listMemo">${escapeHtml(memoText)}</div>
+          <div class="listAmtLine"><span class="listAmt">${Number(t.amount||0).toLocaleString("ja-JP")}円</span><span class="listInlineMemo">${escapeHtml(memoText)}</span></div>
         </div>
       </div>
     `;
@@ -5271,11 +5274,9 @@ function renderList(){
         <table>
           <thead>
             <tr>
-              <th>日付</th>
+              <th>日付 / 納得度</th>
               <th>カテゴリ</th>
-              <th style="text-align:right;">金額</th>
-              <th style="text-align:center;">納得度</th>
-              <th>メモ</th>
+              <th style="text-align:right;">金額 / メモ</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
