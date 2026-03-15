@@ -5331,11 +5331,10 @@ function getProfile(){
 }
 function getValueTop3FromProfile(profile){
   const top = (profile && Array.isArray(profile.valueTop3)) ? profile.valueTop3 : [];
-  return dedupeList(top).slice(0,3);
-}
-function buildValueOptionHTML(cats, withEmpty){
-  const base = withEmpty ? `<option value="">未設定</option>` : "";
-  return base + cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  const normalizedTop = dedupeList(top).slice(0,3);
+  if(normalizedTop.length) return normalizedTop;
+  const cats = normalizeValueCats(profile?.valueCats || []).filter(Boolean);
+  return dedupeList(cats).slice(0,3);
 }
 function buildValueTagOptionHTML(cats, current = ""){
   const normalized = dedupeList((cats || []).map(c=> String(c || "").trim()).filter(Boolean));
@@ -5394,14 +5393,6 @@ function resolveValueTag(selectId, customId){
   return raw;
 }
 function updateValueCategorySelects(cats, currentValueTag = ""){
-  const options = buildValueOptionHTML(cats, true);
-  ["valueTop1","valueTop2","valueTop3"].forEach(id=>{
-    const el = $(id);
-    if(!el) return;
-    const current = el.value || "";
-    el.innerHTML = options;
-    if(current && cats.includes(current)) el.value = current;
-  });
   setValueTagSelection("entryValueTag", "entryValueTagCustom", currentValueTag || $("entryValueTag")?.value || "", cats);
   setValueTagSelection("editValueTag", "editValueTagCustom", currentValueTag || $("editValueTag")?.value || "", cats);
 }
@@ -5428,11 +5419,6 @@ function loadProfileToUI(){
   });
   updateValueCategorySelects(cats.filter(Boolean));
 
-  const top3 = getValueTop3FromProfile(prof);
-  if($("valueTop1")) $("valueTop1").value = top3[0] || "";
-  if($("valueTop2")) $("valueTop2").value = top3[1] || "";
-  if($("valueTop3")) $("valueTop3").value = top3[2] || "";
-
   const p = $("profileMiniPill");
   if(p){
     const size = normalizeHouseholdSize(prof);
@@ -5443,12 +5429,7 @@ function loadProfileToUI(){
 }
 function saveProfile(){
   const valueCats = normalizeValueCats(collectValueCatsFromUI());
-  const rawTop = [
-    $("valueTop1")?.value || "",
-    $("valueTop2")?.value || "",
-    $("valueTop3")?.value || ""
-  ];
-  const valueTop3 = dedupeList(rawTop).slice(0,3);
+  const valueTop3 = dedupeList(valueCats.filter(Boolean)).slice(0,3);
   const ageRaw = Number($("profileAge")?.value || 0);
   const annualIncomeGross = Number(normalizeAnnualIncomeYen($("profileAnnualIncome")?.value) || 0);
   const householdSize = Number($("profileHousehold")?.value || 0);
