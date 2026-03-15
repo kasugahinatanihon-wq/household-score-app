@@ -70,8 +70,8 @@ const CATEGORY_EMOJI = {
   "コンビニ":"🏪",
 };
 const REPORT_COLORS = [
-  "#60a5fa","#34d399","#fbbf24","#f97316","#f472b6",
-  "#a78bfa","#38bdf8","#fca5a5","#22c55e","#fb7185",
+  "#f59e7a","#d97745","#f7b267","#e58a5f","#f2a77f",
+  "#c86b42","#f0b48f","#b85c38","#f3c2a0","#d98b6a",
 ];
 
 
@@ -3460,7 +3460,7 @@ function renderMonthlyReport(){
   totalEl.textContent = total > 0 ? `合計 ${Math.round(total).toLocaleString("ja-JP")}円` : "—";
 
   if(total <= 0){
-    donut.style.background = "conic-gradient(#e2e8f0 0 100%)";
+    donut.style.background = "conic-gradient(#f3dfd2 0 100%)";
     donut.innerHTML = "";
     donut.classList.remove("is-anim");
     legend.innerHTML = `<div class="small muted">データがありません</div>`;
