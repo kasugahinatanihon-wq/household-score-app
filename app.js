@@ -4459,6 +4459,7 @@ function renderWeeklyInline(){
   const reaction = getHomeReaction();
   const displayMood = reaction?.mood || mood;
   const readyMonth = getLatestReadyMonth();
+  const monthlyReadyLabel = readyMonth ? "マンスリー便あり" : "マンスリー便準備中";
   const handoffCard = readyMonth
     ? `<button class="homeHandoffCard" type="button" onclick="showMonthlyScore()">
         <span class="homeHandoffIcon">📄</span>
@@ -4468,6 +4469,10 @@ function renderWeeklyInline(){
 
   wrap.innerHTML = `
     <div class="homeHeroCard">
+      <div class="homeHeroHeader">
+        <span class="homeHeroEyebrow">${monthlyReadyLabel}</span>
+        <span class="homeHeroMood">${displayMood} いまの気分</span>
+      </div>
       <div class="homeHeroTop">
         <div class="homeAvatarWrap">
           <div class="homeAvatarStage">

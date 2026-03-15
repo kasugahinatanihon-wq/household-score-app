@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#FFF8F1" />
   <title>家計診断アプリ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='22' cy='30' r='14' fill='%23f59e7a' fill-opacity='0.9'/%3E%3Ccircle cx='42' cy='34' r='14' fill='%236fbf9b' fill-opacity='0.9'/%3E%3Ctext x='11' y='37' font-size='18'%3E🐱%3C/text%3E%3Ctext x='31' y='41' font-size='18'%3E🐶%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="./style.css?v=20260315q" />
+  <link rel="stylesheet" href="./style.css?v=20260315r" />
 </head>
 
 <body>
@@ -648,7 +648,7 @@
       </div>
 
       <div class="reportPane" id="reportPane-trend">
-        <div class="sectionCard" style="margin-top:12px;">
+        <div class="sectionCard" style="margin-top:6px;">
           <div class="sectionHead">
             <div><div class="sectionName">支出推移（1ヶ月）</div></div>
             <label class="small" style="min-width:160px;">カテゴリ
@@ -702,17 +702,27 @@
       <div id="score-weekly" style="display:block;">
         <div id="weeklyInline"></div>
       </div>
-      <details class="homeDevDock">
-        <summary>開発</summary>
+      <div class="homeDevDock" aria-label="開発用表示確認">
+        <div class="homeDevDockTitle">開発</div>
         <div class="homeDevBtns">
           <button class="ghost" type="button" onclick="setHomePreviewMode('auto')">自動</button>
           <button class="ghost" type="button" onclick="setHomePreviewMode('analyzing')">分析中</button>
-          <button class="ghost" type="button" onclick="setHomePreviewMode('great')">良い</button>
-          <button class="ghost" type="button" onclick="setHomePreviewMode('verybad')">悪い</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('great')">めっちゃ良い</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('good')">良い</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('bad')">悪い</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('verybad')">めっちゃ悪い</button>
           <button class="ghost" type="button" onclick="triggerHomeAvatarAction('jump')">ジャンプ</button>
           <button class="ghost" type="button" onclick="triggerHomeAvatarAction('spark')">きらめき</button>
         </div>
-      </details>
+        <select class="homeDevSelect" onchange="setHomePreviewCategory(this.value)">
+          <option value="auto">カテゴリ: 自動</option>
+          <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
+          <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
+          <option value="交際費">交際費</option><option value="プレゼント">プレゼント</option><option value="カフェ">カフェ</option>
+          <option value="デート">デート</option><option value="趣味">趣味</option><option value="仕事">仕事</option>
+          <option value="交通費">交通費</option><option value="医療費">医療費</option><option value="教育費">教育費</option>
+        </select>
+      </div>
       <div id="monthlyGate" style="margin-top:10px;"></div>
       <input type="hidden" id="scoreMonth">
       <input type="hidden" id="savingYen">
@@ -950,6 +960,6 @@
     anonKey: "sb_publishable_okssLfovlx8CpwvNzskdLA_81rXRnlQ"
   };
 </script>
-<script src="./app.js?v=20260315q"></script>
+<script src="./app.js?v=20260315r"></script>
 </body>
 </html>
