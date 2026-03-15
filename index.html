@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#FFF8F1" />
   <title>家計診断アプリ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='22' cy='30' r='14' fill='%23f59e7a' fill-opacity='0.9'/%3E%3Ccircle cx='42' cy='34' r='14' fill='%236fbf9b' fill-opacity='0.9'/%3E%3Ctext x='11' y='37' font-size='18'%3E🐱%3C/text%3E%3Ctext x='31' y='41' font-size='18'%3E🐶%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="./style.css?v=20260315l" />
+  <link rel="stylesheet" href="./style.css?v=20260315m" />
 </head>
 
 <body>
@@ -681,54 +681,7 @@
       <div id="score-weekly" style="display:block;">
         <div id="weeklyInline"></div>
       </div>
-      <details class="homePreviewTools">
-        <summary>表示確認</summary>
-        <div class="homePreviewRow">
-          <label class="small muted" for="homePreviewCategory">カテゴリ確認</label>
-          <select id="homePreviewCategory" onchange="setHomePreviewCategory(this.value)">
-            <option value="auto">自動（実データ）</option>
-            <option value="食費">食費</option>
-            <option value="外食費">外食費</option>
-            <option value="日用品">日用品</option>
-            <option value="衣服">衣服</option>
-            <option value="美容">美容</option>
-            <option value="交際費">交際費</option>
-            <option value="医療費">医療費</option>
-            <option value="教育費">教育費</option>
-            <option value="交通費">交通費</option>
-            <option value="コンビニ">コンビニ</option>
-            <option value="カフェ">カフェ</option>
-            <option value="デート">デート</option>
-            <option value="趣味">趣味</option>
-            <option value="仕事">仕事</option>
-          </select>
-        </div>
-        <div class="homePreviewBtns">
-          <button class="ghost" type="button" onclick="setHomePreviewMode('auto')">自動</button>
-          <button class="ghost" type="button" onclick="setHomePreviewMode('analyzing')">分析中</button>
-          <button class="ghost" type="button" onclick="setHomePreviewMode('great')">めっちゃ良い</button>
-          <button class="ghost" type="button" onclick="setHomePreviewMode('good')">良い</button>
-          <button class="ghost" type="button" onclick="setHomePreviewMode('bad')">悪い</button>
-          <button class="ghost" type="button" onclick="setHomePreviewMode('verybad')">めっちゃ悪い</button>
-        </div>
-        <div class="homePreviewRow" style="margin-top:10px;">
-          <label class="small muted">気分リアクション確認</label>
-          <div class="homePreviewBtns">
-            <button class="ghost" type="button" onclick="setHomeReactionPreview('good')">ごきげん</button>
-            <button class="ghost" type="button" onclick="setHomeReactionPreview('neutral')">ふつう</button>
-            <button class="ghost" type="button" onclick="setHomeReactionPreview('warn')">注意</button>
-            <button class="ghost" type="button" onclick="clearHomeReactionPreview()">自動に戻す</button>
-          </div>
-        </div>
-        <div class="homePreviewRow" style="margin-top:10px;">
-          <label class="small muted">アクション確認</label>
-          <div class="homePreviewBtns">
-            <button class="ghost" type="button" onclick="triggerHomeAvatarAction('jump')">ジャンプ</button>
-            <button class="ghost" type="button" onclick="triggerHomeAvatarAction('spark')">きらめき</button>
-          </div>
-        </div>
-      </details>
-      <div id="monthlyGate" style="margin-top:12px;"></div>
+      <div id="monthlyGate" style="margin-top:10px;"></div>
       <input type="hidden" id="scoreMonth">
       <input type="hidden" id="savingYen">
       <input type="hidden" id="investYen">
@@ -965,6 +918,6 @@
     anonKey: "sb_publishable_okssLfovlx8CpwvNzskdLA_81rXRnlQ"
   };
 </script>
-<script src="./app.js?v=20260315l"></script>
+<script src="./app.js?v=20260315m"></script>
 </body>
 </html>

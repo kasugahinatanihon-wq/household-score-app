@@ -4402,35 +4402,32 @@ function renderWeeklyInline(){
   const reaction = getHomeReaction();
   const displayMood = reaction?.mood || mood;
   const displaySpeech = reaction?.text || speech;
-  const reactionToneClass = reaction?.tone === "good"
-    ? "good"
-    : reaction?.tone === "warn"
-      ? "warn"
-      : "neutral";
   const readyMonth = getLatestReadyMonth();
-  const reportBadge = readyMonth ? `<span class="homeLiveBadge report">📄 マンスリー便りあり</span>` : "";
-  const reactionBadge = reaction ? `<span class="homeLiveBadge ${reactionToneClass}">${reaction.mood} いまの気分</span>` : "";
+  const reportCta = readyMonth
+    ? `<button class="homeMiniReportBtn" type="button" onclick="showMonthlyScore()">📄 マンスリー便り</button>`
+    : "";
 
   wrap.innerHTML = `
     <div class="homeHeroCard">
       <div class="homeHeroHeader">
         <span class="homeHeroEyebrow">今月のキャラクター</span>
-        ${reactionBadge}
-        ${reportBadge}
+        ${reportCta}
       </div>
       <div class="homeHeroTop">
         <div class="homeAvatarWrap">
           <div class="homeAvatar is-live" id="homeAvatarLive">${homeAvatarHTML(displayCategory, tier, displayMood, { extraClass:"is-live", imgClass:"is-live", fallbackClass:"is-live" })}</div>
         </div>
         <div class="homeStateBlock">
-          <div class="homeStateTitle">${escapeHtml(archetype)} <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span></div>
-          <div class="homeStateSub">${displayCategory !== "未設定" ? `主カテゴリ: ${escapeHtml(displayCategory)} (${displayShare}%)` : "主カテゴリ判定中"}${Number.isFinite(characterScore) ? ` / 判定スコア ${characterScore}` : ""}</div>
+          <div class="homeStateTitle">${escapeHtml(archetype)}</div>
+          <div class="homeStateSub">
+            <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span>
+            ${displayCategory !== "未設定" ? ` ${escapeHtml(displayCategory)} ${displayShare}%` : " 主カテゴリ判定中"}
+          </div>
         </div>
       </div>
-      <div class="homeSpeech ${reaction ? `is-live ${reactionToneClass}` : ""}">${displaySpeech}</div>
+      <div class="homeSpeech">${displaySpeech}</div>
       <div class="homeRecordMeta">
-        <span class="homeRecordPill">今月の記録あり: ${daysWithEntry}日</span>
-        <span class="homeRecordPill">最終記録: ${latestEntryLabel}</span>
+        <span class="homeRecordPill">記録 ${daysWithEntry}日 ・ 最終 ${latestEntryLabel}</span>
       </div>
     </div>
   `;

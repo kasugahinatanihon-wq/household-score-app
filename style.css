@@ -1853,6 +1853,16 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:rgba(245,158,122,.16);
   border:1px solid rgba(214,120,75,.26);
 }
+.homeMiniReportBtn{
+  margin-left:auto;
+  border:1px solid var(--primary-25);
+  background:var(--primary-08);
+  color:#8f4b2f;
+  border-radius:999px;
+  padding:4px 10px;
+  font-size:11px;
+  font-weight:900;
+}
 .homeHeroTop{
   display:grid;
   grid-template-columns:72px 1fr;
@@ -1926,7 +1936,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   animation:homeAvatarSpark .85s ease-out;
 }
 .homeStateTitle{
-  font-size:14px;
+  font-size:18px;
   font-weight:900;
   color:#3b241e;
 }
@@ -1952,9 +1962,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-color:var(--primary-25);
 }
 .homeStateSub{
-  margin-top:4px;
+  margin-top:6px;
   color:#7a635d;
-  font-size:12px;
+  font-size:13px;
   line-height:1.45;
 }
 .homeSpeech{
@@ -2008,7 +2018,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-color:var(--primary-25);
 }
 .homeRecordMeta{
-  margin-top:12px;
+  margin-top:10px;
   display:flex;
   flex-wrap:wrap;
   gap:8px;
