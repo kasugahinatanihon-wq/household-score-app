@@ -2049,9 +2049,10 @@ let PENDING_MONTHLY = false;
 
 function setEntryStep(step){
   entryStep = step;
+  const backBtn = $("entryBackBtn");
   const btn = $("entryPrimaryBtn");
-  if(!btn) return;
-  btn.textContent = (step === "memo") ? "保存" : "次へ";
+  if(backBtn) backBtn.style.display = (step === "category") ? "none" : "";
+  if(btn) btn.textContent = (step === "memo") ? "保存" : "次へ";
 }
 
 function showEntryStep(step){
@@ -2060,6 +2061,11 @@ function showEntryStep(step){
     if(el) el.style.display = (s === step) ? "" : "none";
   });
   setEntryStep(step);
+  if(step === "quality"){
+    setupStarRating("entrySatStars", "entrySat");
+    const prof = getProfile();
+    updateValueCategorySelects(normalizeValueCats(prof.valueCats).filter(Boolean));
+  }
 }
 
 /* ===== Modal helpers ===== */
@@ -2292,6 +2298,7 @@ window.startQuickEntry = startQuickEntry;
 
 function openEntryModal(dt, opts = {}){
   SELECTED_DATE = dt;
+  setupStarRating("entrySatStars", "entrySat");
   const prof = getProfile();
   updateValueCategorySelects(normalizeValueCats(prof.valueCats).filter(Boolean));
   $("txDate") && ($("txDate").value = dt);
@@ -2445,6 +2452,14 @@ function handleEntryPrimary(){
   const savedRow = saveEntry();
   if(savedRow) afterEntrySaved(savedRow);
 }
+function handleEntryBack(){
+  const idx = ENTRY_STEPS.indexOf(entryStep);
+  if(idx <= 0){
+    showEntryStep("category");
+    return;
+  }
+  showEntryStep(ENTRY_STEPS[idx - 1]);
+}
 
 function afterEntrySaved(savedRow){
   const beforeXP = getTotalXP();
@@ -2487,6 +2502,7 @@ function openEditModal(id){
   if(!tx) return;
   const prof = getProfile();
   const valueCats = normalizeValueCats(prof.valueCats).filter(Boolean);
+  setupStarRating("editSatStars", "editSat");
   updateValueCategorySelects(valueCats);
   $("editId") && ($("editId").value = tx.id);
   $("editDate") && ($("editDate").value = tx.date || "");
@@ -5972,6 +5988,7 @@ async function init(){
   $("entryNextDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, +1), { keepCategory:true }));
 
   $("entryPrimaryBtn")?.addEventListener("click", handleEntryPrimary);
+  $("entryBackBtn")?.addEventListener("click", handleEntryBack);
   $("entryCloseBtn")?.addEventListener("click", closeEntryModal);
   $("tab-input")?.addEventListener("click", ()=> updateScreenHeader("input"));
   $("tab-list")?.addEventListener("click", ()=> updateScreenHeader("list"));
