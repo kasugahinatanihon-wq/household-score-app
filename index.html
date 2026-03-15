@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#FFF8F1" />
   <title>家計診断アプリ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='22' cy='30' r='14' fill='%23f59e7a' fill-opacity='0.9'/%3E%3Ccircle cx='42' cy='34' r='14' fill='%236fbf9b' fill-opacity='0.9'/%3E%3Ctext x='11' y='37' font-size='18'%3E🐱%3C/text%3E%3Ctext x='31' y='41' font-size='18'%3E🐶%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="./style.css?v=20260315i" />
+  <link rel="stylesheet" href="./style.css?v=20260315j" />
 </head>
 
 <body>
@@ -24,7 +24,7 @@
   <div class="modal">
     <div class="modalBody" style="padding:32px 24px; text-align:center;">
       <div id="slide1" class="onboardSlide">
-        <div style="margin-bottom:16px;"><span class="emojiWarm lg"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v6a4 4 0 0 0 8 0V3"/><circle cx="9" cy="15" r="2.2"/><path d="M11 15h3a4 4 0 0 1 4 4v2"/></svg></span></div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10 8h4"/><path d="M12 8v8"/><path d="M10 16h4"/></svg></span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">このアプリは、節約アプリではありません</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           お金を「減らさない」ためではなく、<br>
@@ -183,25 +183,30 @@
         </label>
       </div>
       <div id="surveyStepValueCats" class="surveyStepItem" style="display:none;">
-        <div class="small muted" style="margin-bottom:8px;">
-          下の候補からタップして入れるか、自由に入力してください。
-        </div>
-        <div class="surveyValueChipsSticky">
-          <div class="valueExampleChips" id="surveyValueExampleChips"></div>
-        </div>
-        <div class="small muted" style="margin:8px 0 10px;">
-          例：リフレッシュ / 家族時間 / 自己投資 / 安心感 / 時短 / 健康
-        </div>
         <label>価値観カテゴリ1
-          <input type="text" id="surveyValueCat1" placeholder="例：成長">
+          <input type="text" id="surveyValueCat1" list="valueCategorySuggestionList" placeholder="例：成長">
         </label>
         <label style="margin-top:10px;">価値観カテゴリ2
-          <input type="text" id="surveyValueCat2" placeholder="例：つながり">
+          <input type="text" id="surveyValueCat2" list="valueCategorySuggestionList" placeholder="例：つながり">
         </label>
         <label style="margin-top:10px;">価値観カテゴリ3
-          <input type="text" id="surveyValueCat3" placeholder="例：回復">
+          <input type="text" id="surveyValueCat3" list="valueCategorySuggestionList" placeholder="例：回復">
         </label>
       </div>
+      <datalist id="valueCategorySuggestionList">
+        <option value="リフレッシュ"></option>
+        <option value="家族時間"></option>
+        <option value="自己投資"></option>
+        <option value="安心感"></option>
+        <option value="時短"></option>
+        <option value="健康"></option>
+        <option value="ご褒美"></option>
+        <option value="体験"></option>
+        <option value="人付き合い"></option>
+        <option value="学び"></option>
+        <option value="挑戦"></option>
+        <option value="趣味没頭"></option>
+      </datalist>
       <div id="surveyStepMortgagePrincipal" class="surveyStepItem" style="display:none;">
         <label id="surveyMortgagePrincipalWrap">ローン元本返済 (円)
           <input type="number" id="surveyMortgagePrincipal" placeholder="住宅ローン元本">
@@ -795,11 +800,11 @@
           <div class="small">何にお金を使うと満足しやすいかを設定します。上から順に優先度（TOP1→TOP5）として扱います。下の候補はタップで入力できます。</div>
           <div class="valueExampleChips" id="profileValueExampleChips" style="margin-top:10px;"></div>
           <div class="row" style="margin-top:12px;">
-            <label>カテゴリ1<input type="text" id="valueCat1" placeholder="例：成長"></label>
-            <label>カテゴリ2<input type="text" id="valueCat2" placeholder="例：つながり"></label>
-            <label>カテゴリ3<input type="text" id="valueCat3" placeholder="例：回復"></label>
-            <label>カテゴリ4<input type="text" id="valueCat4" placeholder="例：安心"></label>
-            <label>カテゴリ5<input type="text" id="valueCat5" placeholder="例：挑戦"></label>
+            <label>カテゴリ1<input type="text" id="valueCat1" list="valueCategorySuggestionList" placeholder="例：成長"></label>
+            <label>カテゴリ2<input type="text" id="valueCat2" list="valueCategorySuggestionList" placeholder="例：つながり"></label>
+            <label>カテゴリ3<input type="text" id="valueCat3" list="valueCategorySuggestionList" placeholder="例：回復"></label>
+            <label>カテゴリ4<input type="text" id="valueCat4" list="valueCategorySuggestionList" placeholder="例：安心"></label>
+            <label>カテゴリ5<input type="text" id="valueCat5" list="valueCategorySuggestionList" placeholder="例：挑戦"></label>
           </div>
         </div>
       </details>
@@ -933,7 +938,7 @@
 <nav class="bottomNav">
   <div class="tabs">
     <button class="tabBtn active" id="tab-input" onclick="switchScreen('input')">
-      <span class="icon"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18h14"/><path d="M7 4h8l3 3v13H6V5a1 1 0 0 1 1-1z"/><path d="M15 4v4h4"/></svg></span><span>入力</span>
+      <span class="icon"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 3.5-.6 9-9-2.9-2.9-9 9z"/><path d="m13.8 6.5 2.9 2.9"/><path d="M4 20h16"/></svg></span><span>入力</span>
     </button>
     <button class="tabBtn" id="tab-list" onclick="switchScreen('list')">
       <span class="icon"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="M8 3v4M16 3v4"/></svg></span><span>カレンダー</span>
@@ -958,6 +963,6 @@
     anonKey: "sb_publishable_okssLfovlx8CpwvNzskdLA_81rXRnlQ"
   };
 </script>
-<script src="./app.js?v=20260315i"></script>
+<script src="./app.js?v=20260315j"></script>
 </body>
 </html>

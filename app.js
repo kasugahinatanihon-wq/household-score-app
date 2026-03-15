@@ -2095,7 +2095,7 @@ function syncReportMonthDefault(){
 
 function updateScreenHeader(name){
   const screenIconSvg = {
-    input: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18h14"/><path d="M7 4h8l3 3v13H6V5a1 1 0 0 1 1-1z"/><path d="M15 4v4h4"/></svg>`,
+    input: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 3.5-.6 9-9-2.9-2.9-9 9z"/><path d="m13.8 6.5 2.9 2.9"/><path d="M4 20h16"/></svg>`,
     list: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="M8 3v4M16 3v4"/></svg>`,
     report: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><rect x="6" y="11" width="3" height="6" rx="1"/><rect x="11" y="8" width="3" height="9" rx="1"/><rect x="16" y="5" width="3" height="12" rx="1"/></svg>`,
     score: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5"/><path d="M7 10.5V19h10v-8.5"/><path d="M10 19v-4h4v4"/></svg>`,
@@ -2255,9 +2255,9 @@ function buildCatCards(){
   const PICTO = {
     食費: `<circle cx="9" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/><path d="M4 5h2l1.3 8h10.7l1.6-6H7.4"/><path d="M8 13h10"/>`,
     外食費: `<circle cx="12" cy="12" r="5"/><path d="M5 4v6M7 4v6"/><path d="M19 4v6M17 4v6"/>`,
-    日用品: `<circle cx="11" cy="12" r="4.5"/><circle cx="11" cy="12" r="1.6"/><path d="M15.5 9.5h3v5h-3"/><path d="M6.5 16h9"/>`,
-    衣服: `<path d="M9 5h6l2 3-2 1-1 10H10L9 9 7 8z"/><path d="M10 5 8.5 8"/><path d="M14 5 15.5 8"/>`,
-    美容: `<path d="M6.5 6.5 12 12m5.5 5.5L12 12"/><circle cx="6.5" cy="6.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/><path d="m12 12 4-4m-4 4-4 4"/>`,
+    日用品: `<rect x="8" y="4.5" width="8" height="3" rx="1"/><path d="M9 7.5h6l1.5 11H7.5z"/><path d="M10 11h4"/><path d="M10 14h4"/>`,
+    衣服: `<path d="M9 5h6l2 3-2.2 1.1L16 19H8l1.2-9.9L7 8z"/><path d="M10 12h4"/><path d="M11 15h2"/>`,
+    美容: `<rect x="9" y="4" width="6" height="3.5" rx="1"/><path d="M10 7.5h4v8.5a2 2 0 0 1-4 0z"/><path d="M10 16h4"/><path d="M10 19h4"/>`,
     交際費: `<rect x="4" y="6" width="8" height="6" rx="2"/><path d="M8 12l-2 2v-2"/><rect x="12" y="10" width="8" height="6" rx="2"/><path d="M16 16l2 2v-2"/>`,
     医療費: `<circle cx="12" cy="12" r="7"/><path d="M12 9v6M9 12h6"/>`,
     教育費: `<path d="M4 7h7a2 2 0 0 1 2 2v10H6a2 2 0 0 0-2 2z"/><path d="M20 7h-7a2 2 0 0 0-2 2v10h7a2 2 0 0 1 2 2z"/>`,
@@ -5542,7 +5542,7 @@ const SURVEY_STEPS = [
   { stepId:"surveyStepUtility", fieldId:"surveyUtility", label:"光熱費", type:"input", question:"光熱費は月いくらくらいですか？", hint:"電気・ガス・水道の合計です。" },
   { stepId:"surveyStepNet", fieldId:"surveyNet", label:"通信費", type:"input", question:"通信費は月いくらくらいですか？", hint:"スマホとネット回線の合計です。" },
   { stepId:"surveyStepSub", fieldId:"surveySub", label:"サブスク", type:"input", question:"サブスクの毎月支払いは？", hint:"把握していない場合は、ここで一度合計してみましょう。" },
-  { stepId:"surveyStepValueCats", fieldId:"surveyValueCat1", label:"価値観カテゴリ", type:"valuecats", question:"お金を使うときに、大事にしたいことは何ですか？", hint:"使い道（食費・趣味など）とは別に、何を大切にしたいかを3つまで設定します。" },
+  { stepId:"surveyStepValueCats", fieldId:"surveyValueCat1", label:"価値観カテゴリ", type:"valuecats", question:"上から順番に、あなたが大切にしたい価値観を入力してください", hint:"1番上が最優先です。入力欄をタップすると候補が出ます（自由入力もできます）。" },
   { stepId:"surveyStepMortgagePrincipal", fieldId:"surveyMortgagePrincipal", label:"ローン元本返済", type:"input", mortgageOnly:true, question:"そのうちローン元本返済はいくらですか？", hint:"ローン返済中の方のみ入力します。" },
 ];
 let surveyStepIndex = 0;
@@ -5589,6 +5589,8 @@ function renderSurveyStep(){
   if(titleEl) titleEl.textContent = step?.question || "あなたのことを教えてください";
   if(hintEl) hintEl.textContent = step?.hint || "答えやすいものからサクッと進めましょう。";
   updateSurveyProgress(steps.length ? surveyStepIndex + 1 : 0, steps.length);
+  const body = $("surveyModal")?.querySelector(".modalBody");
+  if(body) body.scrollTop = 0;
   focusCurrentSurveyField();
 }
 
@@ -5981,7 +5983,6 @@ async function init(){
   $("surveyPrevBtn")?.addEventListener("click", prevSurveyStep);
   bindSurveyKeyboardFlow();
   updateSurveyHousingFields();
-  renderValueCategorySuggestions("survey", "surveyValueExampleChips");
   renderValueCategorySuggestions("profile", "profileValueExampleChips");
 
   setupStarRating("entrySatStars", "entrySat");

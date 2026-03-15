@@ -368,7 +368,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  color:#8f4b2f;
+  color:rgba(255,255,255,.95);
   line-height:1;
 }
 .scoreQuickHome .uiIconSvg{
