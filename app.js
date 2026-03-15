@@ -2105,7 +2105,7 @@ function updateScreenHeader(name){
     profile: `<svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4.8a7 7 0 0 0-1.7-1L14.5 3h-5l-.3 2.9a7 7 0 0 0-1.7 1l-2.4-.8-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-.8a7 7 0 0 0 1.7 1l.3 2.9h5l.3-2.9a7 7 0 0 0 1.7-1l2.4.8 2-3.4-2-1.5c.1-.3.1-.7.1-1z"/></svg>`
   };
   const headerMap = {
-    input: { title:"入力", hint:"今日の支出を記録する" },
+    input: { title:"入力", hint:"カテゴリをタップして入力をはじめる" },
     list: { title:"カレンダー", hint:"" },
     report: { title:"レポート", hint:"" },
     score: { title:"ホーム", hint:"今月の状態をキャラクターで確認しよう" },
@@ -2132,6 +2132,7 @@ function switchScreen(name){
     if(b) b.classList.toggle("active", t===name);
   });
   $("scoreQuickBtn")?.classList.toggle("active", name === "score");
+  document.body.classList.toggle("hideTopHeader", ["list","report","profile"].includes(name));
   updateScreenHeader(name);
 
   if(name === "list"){
@@ -3557,16 +3558,19 @@ function renderMonthlyReport(){
     const pctText = `${Math.round(item.pct)}%`;
     const amtText = `${Math.round(item.amount).toLocaleString("ja-JP")}円`;
     return `
-      <button class="reportLegendItem" type="button" data-label="${escapeHtml(item.label)}">
-        <div class="reportLegendKey"><span class="reportLegendDot" style="background:${item.color};"></span>${escapeHtml(item.label)}</div>
-        <div class="reportLegendMeta">${pctText} / ${amtText}</div>
-      </button>
+      <div class="reportLegendItem" data-label="${escapeHtml(item.label)}">
+        <button class="reportLegendMain" type="button" data-label="${escapeHtml(item.label)}">
+          <div class="reportLegendKey"><span class="reportLegendDot" style="background:${item.color};"></span>${escapeHtml(item.label)}</div>
+          <div class="reportLegendMeta">${pctText} / ${amtText}</div>
+        </button>
+        <button class="reportLegendCheckBtn" type="button" data-history-label="${escapeHtml(item.label)}">確認</button>
+      </div>
     `;
   }).join("");
   let activeLabel = "";
   const syncDonutFocus = ()=>{
     donut.style.background = buildDonutGradient(activeLabel);
-    legend.querySelectorAll(".reportLegendItem").forEach(el=>{
+    legend.querySelectorAll(".reportLegendMain").forEach(el=>{
       const isActive = el.dataset.label === activeLabel;
       const isDim = activeLabel && !isActive;
       el.classList.toggle("is-active", !!isActive);
@@ -3578,11 +3582,19 @@ function renderMonthlyReport(){
     });
     renderReportCategoryDrill(m, activeLabel, total);
   };
-  legend.querySelectorAll(".reportLegendItem").forEach(el=>{
+  legend.querySelectorAll(".reportLegendMain").forEach(el=>{
     el.addEventListener("click", ()=>{
       const label = el.dataset.label || "";
       activeLabel = (activeLabel === label) ? "" : label;
       syncDonutFocus();
+    });
+  });
+  legend.querySelectorAll(".reportLegendCheckBtn").forEach(el=>{
+    el.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const label = el.dataset.historyLabel || "";
+      if(!label) return;
+      openReportCategoryHistory(m, label);
     });
   });
   donut.querySelectorAll(".reportDonutLabel").forEach(el=>{
@@ -3594,6 +3606,44 @@ function renderMonthlyReport(){
   });
   syncDonutFocus();
   switchReportTab(REPORT_TAB);
+}
+
+function openReportCategoryHistory(monthStr, category){
+  const view = $("modalResultView");
+  const txt = $("modalResultText");
+  if(!view || !txt) return;
+  const rows = loadTx()
+    .filter(t=> t.date && t.date.startsWith(monthStr) && t.category === category)
+    .sort((a,b)=> (b.date || "").localeCompare(a.date || "") || Number(b.amount || 0) - Number(a.amount || 0));
+  if(!rows.length){
+    view.innerHTML = `<div class="small muted" style="padding:8px 0;">${escapeHtml(category)} の履歴はありません（${escapeHtml(monthStr)}）</div>`;
+    txt.textContent = `${monthStr} ${category}: 履歴なし`;
+    openModal("resultModal");
+    return;
+  }
+  view.innerHTML = `
+    <div class="sectionCard">
+      <div class="sectionHead">
+        <div><div class="sectionName">${escapeHtml(category)} の履歴</div><div class="sectionHint">${escapeHtml(monthStr)}</div></div>
+      </div>
+      <div class="miniList">
+        ${rows.map(r=>`
+          <div class="miniRow">
+            <div class="listMeta">
+              <div class="listDate">${escapeHtml(String(r.date || "").slice(5))}</div>
+              <div class="listCat">${escapeHtml(r.category || "")}</div>
+            </div>
+            <div class="listAmtLine">
+              <span class="listAmt">${Number(r.amount || 0).toLocaleString("ja-JP")}円</span>
+              <span class="listInlineMemo">${escapeHtml(r.memo || "メモなし")}</span>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  txt.textContent = rows.map(r=> `${r.date} ${r.category} ${Number(r.amount || 0)}円 ${r.memo || ""}`.trim()).join("\n");
+  openModal("resultModal");
 }
 
 function getVariableSpendTotalToCutoff(monthStr, cutoffDay){
@@ -3769,7 +3819,7 @@ function renderSpendTrendChart(monthStr, category = "all"){
   if(!area) return;
   const tx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr) && (category === "all" || t.category === category));
   if(!tx.length){
-    area.innerHTML = `<div class="small muted" style="padding:8px 0;">${escapeHtml(category === "all" ? "対象月" : category)}の日次データがありません</div>`;
+    area.innerHTML = `<div class="small muted" style="padding:8px 0;">${escapeHtml(category === "all" ? "参照月" : category)}の日次データがありません</div>`;
     return;
   }
 
@@ -3862,7 +3912,6 @@ function renderSpendTrendChart(monthStr, category = "all"){
     <div class="dailyTrendDelta ${cumDelta > 0 ? "up" : (cumDelta < 0 ? "down" : "")}">
       先月同日比 ${deltaSign}${fmtYen(Math.round(cumDelta))}円
     </div>
-    <div class="small muted" style="margin-bottom:6px;">月累計（積み上げ）</div>
     <div class="dailyTrendChartBox">
       <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="1ヶ月の累計支出推移">
         <line class="dailyTrendGrid" x1="${pad.left}" y1="${yCum(yCumMarks[0])}" x2="${w - pad.right}" y2="${yCum(yCumMarks[0])}"></line>
@@ -4419,13 +4468,10 @@ function renderWeeklyInline(){
 
   wrap.innerHTML = `
     <div class="homeHeroCard">
-      <div class="homeHeroHeader">
-        <span class="homeHeroEyebrow">今月のキャラクター</span>
-      </div>
       <div class="homeHeroTop">
         <div class="homeAvatarWrap">
           <div class="homeAvatarStage">
-            <div class="homeAvatar is-live" id="homeAvatarLive">${homeAvatarHTML(displayCategory, tier, displayMood, { extraClass:"is-live", imgClass:"is-live", fallbackClass:"is-live" })}</div>
+            <div class="homeAvatar is-live" id="homeAvatarLive">${homeAvatarHTML(displayCategory, tier, displayMood, { imgClass:"is-live", fallbackClass:"is-live" })}</div>
             ${handoffCard}
           </div>
         </div>

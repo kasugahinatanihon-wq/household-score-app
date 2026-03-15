@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#FFF8F1" />
   <title>家計診断アプリ</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='22' cy='30' r='14' fill='%23f59e7a' fill-opacity='0.9'/%3E%3Ccircle cx='42' cy='34' r='14' fill='%236fbf9b' fill-opacity='0.9'/%3E%3Ctext x='11' y='37' font-size='18'%3E🐱%3C/text%3E%3Ctext x='31' y='41' font-size='18'%3E🐶%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="./style.css?v=20260315p" />
+  <link rel="stylesheet" href="./style.css?v=20260315q" />
 </head>
 
 <body>
@@ -590,7 +590,7 @@
   <section class="screen" id="screen-report">
     <div class="box boxSafeBottom">
       <div class="bar reportHeader" style="justify-content:flex-end; align-items:flex-end;">
-        <label class="small reportMonthLabel">対象月
+        <label class="small reportMonthLabel">参照月
           <input type="month" id="reportMonth">
         </label>
       </div>
@@ -650,7 +650,7 @@
       <div class="reportPane" id="reportPane-trend">
         <div class="sectionCard" style="margin-top:12px;">
           <div class="sectionHead">
-            <div><div class="sectionName">支出推移（1ヶ月）</div><div class="sectionHint">月累計の伸びを確認</div></div>
+            <div><div class="sectionName">支出推移（1ヶ月）</div></div>
             <label class="small" style="min-width:160px;">カテゴリ
               <select id="reportTrendCategory" onchange="renderMonthlyReport()">
                 <option value="all">全カテゴリ</option>
@@ -702,6 +702,17 @@
       <div id="score-weekly" style="display:block;">
         <div id="weeklyInline"></div>
       </div>
+      <details class="homeDevDock">
+        <summary>開発</summary>
+        <div class="homeDevBtns">
+          <button class="ghost" type="button" onclick="setHomePreviewMode('auto')">自動</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('analyzing')">分析中</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('great')">良い</button>
+          <button class="ghost" type="button" onclick="setHomePreviewMode('verybad')">悪い</button>
+          <button class="ghost" type="button" onclick="triggerHomeAvatarAction('jump')">ジャンプ</button>
+          <button class="ghost" type="button" onclick="triggerHomeAvatarAction('spark')">きらめき</button>
+        </div>
+      </details>
       <div id="monthlyGate" style="margin-top:10px;"></div>
       <input type="hidden" id="scoreMonth">
       <input type="hidden" id="savingYen">
@@ -939,6 +950,6 @@
     anonKey: "sb_publishable_okssLfovlx8CpwvNzskdLA_81rXRnlQ"
   };
 </script>
-<script src="./app.js?v=20260315p"></script>
+<script src="./app.js?v=20260315q"></script>
 </body>
 </html>
