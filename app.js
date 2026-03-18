@@ -3408,6 +3408,23 @@ function getHomeReaction(){
 
 const ENABLE_GROWTH_LOG = false;
 let REPORT_TAB = "overview";
+function syncReportTopCategoryUI(){
+  const wrap = $("reportCategoryTopWrap");
+  const topSelect = $("reportCategoryTop");
+  if(!wrap || !topSelect) return;
+  const show = REPORT_TAB === "trend" || REPORT_TAB === "compare";
+  wrap.hidden = !show;
+  if(!show) return;
+  const src = REPORT_TAB === "trend" ? $("reportTrendCategory") : $("reportCompareCategory");
+  topSelect.value = src?.value || "all";
+}
+function onReportTopCategoryChange(value){
+  const v = value || "all";
+  if(REPORT_TAB === "trend" && $("reportTrendCategory")) $("reportTrendCategory").value = v;
+  if(REPORT_TAB === "compare" && $("reportCompareCategory")) $("reportCompareCategory").value = v;
+  renderMonthlyReport();
+}
+window.onReportTopCategoryChange = onReportTopCategoryChange;
 function switchReportTab(tab){
   if(tab === "growth" && !ENABLE_GROWTH_LOG){
     tab = "overview";
@@ -3420,10 +3437,12 @@ function switchReportTab(tab){
   document.querySelectorAll(".reportPane").forEach(pane=>{
     pane.classList.toggle("active", pane.id === `reportPane-${REPORT_TAB}`);
   });
+  syncReportTopCategoryUI();
 }
 window.switchReportTab = switchReportTab;
 
 function renderMonthlyReport(){
+  syncReportTopCategoryUI();
   const m = $("reportMonth")?.value || ym(new Date());
   const trendCategory = $("reportTrendCategory")?.value || "all";
   const compareCategory = $("reportCompareCategory")?.value || "all";
@@ -5057,9 +5076,9 @@ function buildMonthlyResult(){
             </div>
           </div>
           <div class="monthlyAxisTabs" role="tablist" aria-label="マンスリーサマリー表示切り替え">
-            <button class="monthlyAxisBtn active" data-main="sat" onclick="switchMonthlyMainTab('sat')" role="tab" aria-controls="monthlyAxisPanel-sat" aria-selected="true">家計納得度スコア</button>
-            <button class="monthlyAxisBtn" data-main="stable" onclick="switchMonthlyMainTab('stable')" role="tab" aria-controls="monthlyAxisPanel-stable" aria-selected="false">家計安定度スコア</button>
-            <button class="monthlyAxisBtn" data-main="map" onclick="switchMonthlyMainTab('map')" role="tab" aria-controls="monthlyDetail-map" aria-selected="false">2軸分布図</button>
+            <button class="monthlyAxisBtn active" data-main="sat" onclick="switchMonthlyMainTab('sat')" role="tab" aria-controls="monthlyAxisPanel-sat" aria-selected="true">家計納得度</button>
+            <button class="monthlyAxisBtn" data-main="stable" onclick="switchMonthlyMainTab('stable')" role="tab" aria-controls="monthlyAxisPanel-stable" aria-selected="false">家計安定度</button>
+            <button class="monthlyAxisBtn" data-main="map" onclick="switchMonthlyMainTab('map')" role="tab" aria-controls="monthlyDetail-map" aria-selected="false">2軸分布</button>
             <button class="monthlyAxisBtn is-soon" data-main="compare" onclick="switchMonthlyMainTab('compare')" role="tab" aria-controls="monthlyDetail-compare" aria-selected="false">比較（準備中）</button>
           </div>
         </div>
@@ -6201,6 +6220,7 @@ async function init(){
   $("reportMonth")?.addEventListener("change", ()=>{
     renderMonthlyReport();
   });
+  switchReportTab(REPORT_TAB);
   $("incomeYen")?.addEventListener("input", ()=>{});
   if($("homePreviewCategory")){
     const current = localStorage.getItem(LS_HOME_PREVIEW_CATEGORY) || "auto";
