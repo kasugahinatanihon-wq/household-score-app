@@ -671,7 +671,7 @@
         </div>
       </details>
 
-      <details class="settingsSection">
+      <details class="settingsSection" id="settingsValueSection">
         <summary>価値観カテゴリ</summary>
         <div class="settingsBody">
           <div class="small">何にお金を使うと満足しやすいかを設定します。下の候補はタップで入力できます。</div>
@@ -687,6 +687,16 @@
             <label>TOP1<select id="valueTop1"><option value="">未設定</option></select></label>
             <label>TOP2<select id="valueTop2"><option value="">未設定</option></select></label>
             <label>TOP3<select id="valueTop3"><option value="">未設定</option></select></label>
+          </div>
+        </div>
+      </details>
+
+      <details class="settingsSection">
+        <summary>アカウント・世帯共有（準備中）</summary>
+        <div class="settingsBody">
+          <div class="small" style="line-height:1.8;">
+            認証と世帯共有は今後追加予定です。<br>
+            現在は入力体験とデータ蓄積を優先して調整しているため、この端末での記録と Supabase 同期を先に安定させています。
           </div>
         </div>
       </details>
@@ -797,6 +807,32 @@
   <span class="scoreQuickHome emojiWarm mini">🏠</span>
   <span class="scoreQuickChart emojiWarm mini">📊</span>
 </button>
+
+<div class="modalOverlay hidden" id="setPasswordModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">パスワード設定</div>
+      <button class="ghost" onclick="closeModal('setPasswordModal')">✕</button>
+    </div>
+    <div class="modalBody" style="padding:16px;">
+      <div class="small" style="line-height:1.8;">
+        メール認証が完了しました。今後ログインで使うパスワードを設定してください。
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label>新しいパスワード
+          <input type="password" id="authNewPassword" placeholder="8文字以上">
+        </label>
+        <label>新しいパスワード（確認）
+          <input type="password" id="authNewPasswordConfirm" placeholder="再入力">
+        </label>
+      </div>
+      <div class="bar" style="margin-top:12px; justify-content:flex-end;">
+        <button class="primary" type="button" id="authSetPasswordBtn" onclick="submitNewPassword()">パスワードを設定</button>
+      </div>
+      <div class="small" id="authSetPasswordStatus" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
 
 <script>
   // Initial Supabase config for first-time users (override is still available in Settings).

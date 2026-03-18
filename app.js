@@ -30,6 +30,7 @@ const MAX_LEVEL = 100;
 const LS_EVOLUTION = "evolution_stage_category";
 const SAT_SCALE_VERSION = 2;
 const SIGNUP_EMAIL_COOLDOWN_MS = 60 * 1000;
+const CUSTOM_VALUE_OPTION = "__custom__";
 
 const CATEGORIES = [
   "食費","外食費","コンビニ",
@@ -681,6 +682,9 @@ function setAuthStatus(msg, isError = false){
   refreshAuthControls();
   refreshHouseholdControls();
 }
+function hasAuthUi(){
+  return !!($("profileAuthGateModal") || $("openingModal"));
+}
 function refreshAuthControls(){
   const loggedIn = !!getAuthAccessToken();
   const signInBtn = $("signInBtn");
@@ -853,6 +857,10 @@ async function maybeOpenPasswordSetupModal(){
   if($("authSetPasswordStatus")) $("authSetPasswordStatus").textContent = "";
   if($("authNewPassword")) $("authNewPassword").value = "";
   if($("authNewPasswordConfirm")) $("authNewPasswordConfirm").value = "";
+  if(!$("setPasswordModal")){
+    setSupabaseStatus("メール認証済みです。パスワード設定UIは準備中です。", true);
+    return;
+  }
   openModal("setPasswordModal");
 }
 async function updateAuthPassword(newPassword){
@@ -976,6 +984,13 @@ function openProfileAuthGate(opts = {}){
     switchScreen(AUTH_GATE_NEXT_SCREEN || "score");
     return;
   }
+  if(!$("profileAuthGateModal")){
+    const msg = opts.message || "認証UIは準備中です。現状はゲスト利用で入力体験を検証できます。";
+    toast("認証UIは準備中です");
+    setSupabaseStatus(msg, true);
+    switchScreen("profile");
+    return;
+  }
   const modal = $("profileAuthGateModal");
   const closeBtn = $("authGateCloseBtn");
   if(modal){
@@ -994,7 +1009,11 @@ function openProfileAuthGate(opts = {}){
 window.openProfileAuthGate = openProfileAuthGate;
 function openOpeningModal(){
   const modal = $("openingModal");
-  if(!modal) return;
+  if(!modal){
+    localStorage.setItem(LS_ENTRY_MODE, "guest");
+    launchOnboardingIfNeeded();
+    return;
+  }
   modal.dataset.locked = "1";
   openModal("openingModal");
 }
@@ -1021,10 +1040,14 @@ function closeProfileAuthGate(){
 window.closeProfileAuthGate = closeProfileAuthGate;
 function ensureAuthForFeature(featureLabel = "この操作"){
   if(getAuthAccessToken() && getAuthUserId()) return true;
-  const msg = `${featureLabel}はログインすると使えます`;
+  const msg = `${featureLabel}向けの認証UIは準備中です。現状は入力体験とデータ蓄積を優先しています。`;
   setHouseholdStatus(msg, true);
-  toast("ログインしてからお試しください");
-  openProfileAuthGate({ locked:false, nextScreen:"profile", message: msg });
+  toast("認証UIは準備中です");
+  if(hasAuthUi()){
+    openProfileAuthGate({ locked:false, nextScreen:"profile", message: msg });
+  }else{
+    switchScreen("profile");
+  }
   return false;
 }
 function getActiveHouseholdId(){
@@ -2312,7 +2335,6 @@ window.startQuickEntry = startQuickEntry;
 
 function openEntryModal(dt, opts = {}){
   SELECTED_DATE = dt;
-  setupStarRating("entrySatStars", "entrySat");
   const prof = getProfile();
   updateValueCategorySelects(normalizeValueCats(prof.valueCats).filter(Boolean));
   $("txDate") && ($("txDate").value = dt);
@@ -2516,7 +2538,6 @@ function openEditModal(id){
   if(!tx) return;
   const prof = getProfile();
   const valueCats = normalizeValueCats(prof.valueCats).filter(Boolean);
-  setupStarRating("editSatStars", "editSat");
   updateValueCategorySelects(valueCats);
   $("editId") && ($("editId").value = tx.id);
   $("editDate") && ($("editDate").value = tx.date || "");
@@ -5422,12 +5443,43 @@ function getValueTop3FromProfile(profile){
   const cats = normalizeValueCats(profile?.valueCats || []).filter(Boolean);
   return dedupeList(cats).slice(0,3);
 }
+function bindValueTagCustomToggle(inputId){
+  const inputEl = $(inputId);
+  if(!inputEl || inputEl.tagName !== "SELECT" || inputEl.dataset.customToggleBound === "1") return;
+  inputEl.addEventListener("change", ()=>{
+    const customWrap = $(`${inputId}CustomWrap`);
+    const customInput = $(`${inputId}Custom`);
+    const isCustom = inputEl.value === CUSTOM_VALUE_OPTION;
+    if(customWrap) customWrap.style.display = isCustom ? "" : "none";
+    if(customInput && !isCustom) customInput.value = "";
+  });
+  inputEl.dataset.customToggleBound = "1";
+}
 function setValueTagSelection(inputId, chipsId, value, cats){
   const inputEl = $(inputId);
   const chipsEl = $(chipsId);
-  if(!inputEl || !chipsEl) return;
+  if(!inputEl) return;
   const normalized = dedupeList((cats || []).map(c=> String(c || "").trim()).filter(Boolean));
   const current = String(value || "").trim();
+
+  if(inputEl.tagName === "SELECT"){
+    const customWrap = $(`${inputId}CustomWrap`);
+    const customInput = $(`${inputId}Custom`);
+    const isCustomValue = !!current && !normalized.includes(current);
+    const choices = [
+      { value:"", label:"未設定" },
+      ...normalized.map(c=> ({ value:c, label:c })),
+      { value:CUSTOM_VALUE_OPTION, label:"自由入力" }
+    ];
+    inputEl.innerHTML = choices.map(item=> `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>`).join("");
+    inputEl.value = isCustomValue ? CUSTOM_VALUE_OPTION : current;
+    if(customInput) customInput.value = isCustomValue ? current : "";
+    if(customWrap) customWrap.style.display = isCustomValue ? "" : "none";
+    bindValueTagCustomToggle(inputId);
+    return;
+  }
+
+  if(!chipsEl) return;
   const choices = [{ value:"", label:"該当なし" }, ...normalized.map(c=> ({ value:c, label:c }))];
   chipsEl.innerHTML = choices.map(item=>`
     <button type="button" class="valueTagChip ${current === item.value ? "active" : ""}" data-value-tag="${escapeHtml(item.value)}">
@@ -5446,7 +5498,11 @@ function setValueTagSelection(inputId, chipsId, value, cats){
   });
 }
 function resolveValueTag(inputId){
-  return String($(inputId)?.value || "").trim();
+  const inputEl = $(inputId);
+  if(!inputEl) return "";
+  const selected = String(inputEl.value || "").trim();
+  if(selected !== CUSTOM_VALUE_OPTION) return selected;
+  return String($(`${inputId}Custom`)?.value || "").trim();
 }
 function setupStarRating(starsId, inputId){
   const starsEl = $(starsId);
@@ -5487,6 +5543,20 @@ function updateValueCategorySelects(cats, currentValueTag = ""){
 function collectValueCatsFromUI(){
   return [1,2,3,4,5].map(i=> ($(`valueCat${i}`)?.value || "").trim());
 }
+function updateValueTopSelects(cats, selectedTop3 = []){
+  const normalizedCats = dedupeList((cats || []).map(v=> String(v || "").trim()).filter(Boolean));
+  const normalizedTop = dedupeList((selectedTop3 || []).map(v=> String(v || "").trim()).filter(v=> normalizedCats.includes(v))).slice(0,3);
+  [1,2,3].forEach(idx=>{
+    const el = $(`valueTop${idx}`);
+    if(!el) return;
+    const current = normalizedTop[idx - 1] || "";
+    el.innerHTML = [
+      `<option value="">未設定</option>`,
+      ...normalizedCats.map(cat=> `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`)
+    ].join("");
+    el.value = current;
+  });
+}
 
 function loadProfileToUI(){
   const prof = getProfile();
@@ -5506,6 +5576,7 @@ function loadProfileToUI(){
     if(el) el.value = val;
   });
   updateValueCategorySelects(cats.filter(Boolean));
+  updateValueTopSelects(cats.filter(Boolean), getValueTop3FromProfile(prof));
 
   const p = $("profileMiniPill");
   if(p){
@@ -5517,7 +5588,8 @@ function loadProfileToUI(){
 }
 function saveProfile(){
   const valueCats = normalizeValueCats(collectValueCatsFromUI());
-  const valueTop3 = dedupeList(valueCats.filter(Boolean)).slice(0,3);
+  const explicitTop3 = dedupeList([1,2,3].map(i=> String($(`valueTop${i}`)?.value || "").trim()).filter(Boolean));
+  const valueTop3 = explicitTop3.length ? explicitTop3 : dedupeList(valueCats.filter(Boolean)).slice(0,3);
   const ageRaw = Number($("profileAge")?.value || 0);
   const annualIncomeGross = Number(normalizeAnnualIncomeYen($("profileAnnualIncome")?.value) || 0);
   const householdSize = Number($("profileHousehold")?.value || 0);
@@ -6171,10 +6243,9 @@ async function init(){
   bindSurveyKeyboardFlow();
   setupSurveyValueSuggestionDropdowns();
   setupProfileValueSuggestionDropdowns();
+  renderValueCategorySuggestions("survey", "surveyValueExampleChips");
+  renderValueCategorySuggestions("profile", "profileValueExampleChips");
   updateSurveyHousingFields();
-
-  setupStarRating("entrySatStars", "entrySat");
-  setupStarRating("editSatStars", "editSat");
 
   $("entryPrevDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, -1), { keepCategory:true }));
   $("entryNextDay")?.addEventListener("click", ()=> openEntryModal(addDays(SELECTED_DATE, +1), { keepCategory:true }));
@@ -6271,7 +6342,11 @@ async function init(){
   saveMonthlyReady(readyState);
 
   const loggedIn = !!getAuthAccessToken();
-  const entryMode = localStorage.getItem(LS_ENTRY_MODE);
+  let entryMode = localStorage.getItem(LS_ENTRY_MODE);
+  if(!entryMode && !loggedIn && !hasAuthUi()){
+    localStorage.setItem(LS_ENTRY_MODE, "guest");
+    entryMode = "guest";
+  }
   const canShowOnboarding = localStorage.getItem(LS_PASSWORD_SETUP_REQUIRED) !== "1" && !localStorage.getItem(LS_ONBOARD);
   if(canShowOnboarding && (loggedIn || entryMode === "guest")){
     nextSlide(1);
