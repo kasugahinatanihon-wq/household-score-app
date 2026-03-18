@@ -512,8 +512,18 @@
 
       <div class="reportPane" id="reportPane-trend">
         <div class="sectionCard" style="margin-top:12px;">
-          <div class="sectionHead">
+          <div class="sectionHead sectionHeadTrend">
             <div><div class="sectionName">支出推移（1ヶ月）</div><div class="sectionHint">月累計の伸びを確認</div></div>
+            <label class="small">カテゴリ
+              <select id="reportTrendCategory" onchange="renderMonthlyReport()">
+                <option value="all">全カテゴリ</option>
+                <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
+                <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
+                <option value="交際費">交際費</option><option value="プレゼント">プレゼント</option><option value="カフェ">カフェ</option><option value="デート">デート</option>
+                <option value="趣味">趣味</option><option value="仕事">仕事</option><option value="交通費">交通費</option>
+                <option value="医療費">医療費</option><option value="教育費">教育費</option>
+              </select>
+            </label>
           </div>
           <div id="reportSpendTrend"></div>
         </div>
@@ -523,6 +533,16 @@
         <div class="sectionCard">
           <div class="sectionHead" style="margin-top:12px;">
             <div><div class="sectionName">月次支出比較</div><div class="sectionHint">直近6ヶ月</div></div>
+            <label class="small">カテゴリ
+              <select id="reportCompareCategory" onchange="renderMonthlyReport()">
+                <option value="all">全カテゴリ</option>
+                <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
+                <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
+                <option value="交際費">交際費</option><option value="プレゼント">プレゼント</option><option value="カフェ">カフェ</option><option value="デート">デート</option>
+                <option value="趣味">趣味</option><option value="仕事">仕事</option><option value="交通費">交通費</option>
+                <option value="医療費">医療費</option><option value="教育費">教育費</option>
+              </select>
+            </label>
           </div>
           <div id="reportMonthlyCompare"></div>
         </div>
