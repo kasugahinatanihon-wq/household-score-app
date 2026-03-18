@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#FFF8F1" />
+  <meta name="theme-color" content="#F7F9FC" />
   <title>家計診断アプリ</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='22' cy='30' r='14' fill='%23f59e7a' fill-opacity='0.9'/%3E%3Ccircle cx='42' cy='34' r='14' fill='%236fbf9b' fill-opacity='0.9'/%3E%3Ctext x='11' y='37' font-size='18'%3E🐱%3C/text%3E%3Ctext x='31' y='41' font-size='18'%3E🐶%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="./style.css?v=20260315t" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='18' fill='%23A78BFA' fill-opacity='0.45'/%3E%3Ccircle cx='32' cy='32' r='8' fill='%2322D3EE'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
 <header>
   <div class="wrap appHeaderBar" style="padding:16px 0 8px;">
     <div class="appHeaderText">
-      <div class="appHeaderTitle"><span class="appHeaderIcon" id="currentScreenIcon"></span><span id="currentScreenTitle">ホーム</span></div>
+      <div class="appHeaderTitle"><span class="appHeaderIcon" id="currentScreenIcon">🏠</span><span id="currentScreenTitle">ホーム</span></div>
       <div class="appHeaderHint" id="currentScreenHint">今週の状態を確認して次の一手を決める</div>
     </div>
   </div>
@@ -24,7 +24,7 @@
   <div class="modal">
     <div class="modalBody" style="padding:32px 24px; text-align:center;">
       <div id="slide1" class="onboardSlide">
-        <div style="margin-bottom:16px;"><span class="emojiWarm lg"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h8"/><path d="M8 10h8"/><path d="M12 6v12"/><path d="M8.5 18h7"/></svg></span></div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">🩺</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">このアプリは、節約アプリではありません</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           お金を「減らさない」ためではなく、<br>
@@ -35,7 +35,7 @@
       </div>
 
       <div id="slide2" class="onboardSlide" style="display:none;">
-        <div style="margin-bottom:16px;"><span class="emojiWarm lg"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-2-1-2 1-2-1-2 1-2-1z"/><path d="M9 9h6M9 12h6M9 15h4"/></svg></span></div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">🧾</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">ちゃんと管理してるのに、不安は消えない</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           家計簿もつけてる。<br>
@@ -50,13 +50,12 @@
       </div>
 
       <div id="slide3" class="onboardSlide" style="display:none;">
-        <div style="margin-bottom:16px;"><span class="emojiWarm lg"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><path d="M6 15l4-4 3 2 5-6"/></svg></span></div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">📈</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">足りないのは、数字じゃなく“判断軸”</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
-          多くの家計管理は「いくら使ったか」<br>
-          しかみていません。<br>
+          多くの家計管理は「いくら使ったか」しか見ていません。<br>
           でも本当に必要なのは<br>
-          なぜ使ったのか/納得できたかです。
+          なぜ使ったか／納得できたかです。
         </p>
         <div style="display:flex; gap:12px;">
           <button class="ghost" style="flex:1;" onclick="nextSlide(2)">戻る</button>
@@ -65,8 +64,8 @@
       </div>
 
       <div id="slide4" class="onboardSlide" style="display:none;">
-        <div style="margin-bottom:16px;"><span class="emojiWarm lg"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4.5" width="14" height="15" rx="2"/><path d="M8 9h8"/><rect x="8" y="12" width="2.5" height="4" rx="0.8"/><rect x="11.75" y="10.5" width="2.5" height="5.5" rx="0.8"/><rect x="15.5" y="8.5" width="2.5" height="7.5" rx="0.8"/></svg></span></div>
-        <h2 style="color:var(--primary); margin-bottom:12px;">お金の使い方を月に1回のレポートで簡単見える化</h2>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">🧠</span></div>
+        <h2 style="color:var(--primary); margin-bottom:12px;">お金の使い方を、行動と感情で見える化</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           金額だけでなく「納得度」で支出を評価<br>
           公的データで、今の立ち位置がわかる<br>
@@ -79,7 +78,7 @@
       </div>
 
       <div id="slide5" class="onboardSlide" style="display:none;">
-        <div style="margin-bottom:16px;"><span class="emojiWarm lg"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 4 1.8 4.2L18 10l-4.2 1.8L12 16l-1.8-4.2L6 10l4.2-1.8z"/></svg></span></div>
+        <div style="margin-bottom:16px;"><span class="emojiWarm lg">✨</span></div>
         <h2 style="color:var(--primary); margin-bottom:12px;">まずは、いつも通り使ってみてください</h2>
         <p class="muted" style="line-height:1.8; text-align:center; font-size:14px; margin-bottom:32px;">
           完璧につけなくて大丈夫。<br>
@@ -184,33 +183,23 @@
         </label>
       </div>
       <div id="surveyStepValueCats" class="surveyStepItem" style="display:none;">
+        <div class="small muted" style="margin-bottom:8px;">
+          下の候補からタップして入れるか、自由に入力してください。
+        </div>
+        <div class="valueExampleChips" id="surveyValueExampleChips"></div>
+        <div class="small muted" style="margin:8px 0 10px;">
+          例：リフレッシュ / 家族時間 / 自己投資 / 安心感 / 時短 / 健康
+        </div>
         <label>価値観カテゴリ1
-          <input type="text" id="surveyValueCat1" placeholder="例：成長" autocomplete="off">
+          <input type="text" id="surveyValueCat1" placeholder="例：成長">
         </label>
-        <div class="valueSuggestList" id="surveyValueSuggest1" hidden></div>
         <label style="margin-top:10px;">価値観カテゴリ2
-          <input type="text" id="surveyValueCat2" placeholder="例：つながり" autocomplete="off">
+          <input type="text" id="surveyValueCat2" placeholder="例：つながり">
         </label>
-        <div class="valueSuggestList" id="surveyValueSuggest2" hidden></div>
         <label style="margin-top:10px;">価値観カテゴリ3
-          <input type="text" id="surveyValueCat3" placeholder="例：回復" autocomplete="off">
+          <input type="text" id="surveyValueCat3" placeholder="例：回復">
         </label>
-        <div class="valueSuggestList" id="surveyValueSuggest3" hidden></div>
       </div>
-      <datalist id="valueCategorySuggestionList">
-        <option value="リフレッシュ"></option>
-        <option value="家族時間"></option>
-        <option value="自己投資"></option>
-        <option value="安心感"></option>
-        <option value="時短"></option>
-        <option value="健康"></option>
-        <option value="ご褒美"></option>
-        <option value="体験"></option>
-        <option value="人付き合い"></option>
-        <option value="学び"></option>
-        <option value="挑戦"></option>
-        <option value="趣味没頭"></option>
-      </datalist>
       <div id="surveyStepMortgagePrincipal" class="surveyStepItem" style="display:none;">
         <label id="surveyMortgagePrincipalWrap">ローン元本返済 (円)
           <input type="number" id="surveyMortgagePrincipal" placeholder="住宅ローン元本">
@@ -242,128 +231,6 @@
   </div>
 </div>
 
-<!-- Household Onboarding Modal -->
-<div class="modalOverlay hidden" id="householdOnboardingModal">
-  <div class="modal">
-    <div class="modalHeader">
-      <div class="modalTitle">使い方を選んでください</div>
-      <button class="ghost" onclick="skipHouseholdOnboarding()">✕</button>
-    </div>
-    <div class="modalBody" style="padding:16px;">
-      <div class="small" style="line-height:1.8;">
-        夫婦で使うなら、同じ世帯に参加すると同じレポートを見られます。<br>
-        あとで設定からいつでも変更できます。
-      </div>
-      <div class="bar" style="margin-top:14px; gap:10px; justify-content:flex-end;">
-        <button class="ghost" type="button" onclick="skipHouseholdOnboarding()">1人で使う</button>
-        <button class="primary" type="button" onclick="startSharedOnboarding()">2人で使う（招待）</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Household Value Alignment Modal -->
-<div class="modalOverlay hidden" id="householdValueModal">
-  <div class="modal">
-    <div class="modalHeader">
-      <div class="modalTitle">価値観を2人でそろえましょう</div>
-      <button class="ghost" onclick="closeModal('householdValueModal')">✕</button>
-    </div>
-    <div class="modalBody" style="padding:16px;">
-      <div class="small" style="line-height:1.8;">
-        世帯共有を始めたら、価値観カテゴリをもう一度相談して決めるのがおすすめです。<br>
-        この設定があると、「満足につながる支出」と「見直す支出」を2人で同じ基準で見られます。
-      </div>
-      <div class="bar" style="margin-top:14px; gap:10px; justify-content:flex-end;">
-        <button class="ghost" type="button" onclick="closeModal('householdValueModal')">あとで</button>
-        <button class="primary" type="button" onclick="openHouseholdValueSetup()">今すぐ設定する</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Opening -->
-<div class="modalOverlay hidden" id="openingModal">
-  <div class="modal">
-    <div class="modalBody openingBody">
-      <div class="openingCard">
-        <div class="openingIcon"><span class="emojiWarm lg"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5"/><path d="M7 10.5V19h10v-8.5"/><path d="M10 19v-4h4v4"/></svg></span></div>
-        <h2 class="openingTitle">家計診断アプリへようこそ</h2>
-        <p class="openingLead">
-          支出の記録と分析を、あなたに合った形で続けられるアプリです。<br>
-          まずはゲストで試すか、ログインしてはじめましょう。
-        </p>
-        <div class="openingActions">
-          <button class="primary openingStartBtn" type="button" onclick="startGuestEntryFlow()">ゲストで試す</button>
-          <button class="ghost openingAuthBtn" type="button" onclick="startAuthEntryFlow()">ログイン / 新規登録</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Profile Login Gate Modal -->
-<div class="modalOverlay hidden" id="profileAuthGateModal">
-  <div class="modal">
-    <div class="modalHeader">
-      <div class="modalTitle">ログイン</div>
-      <button class="ghost" id="authGateCloseBtn" onclick="closeProfileAuthGate()">✕</button>
-    </div>
-    <div class="modalBody" style="padding:16px;">
-      <div class="bar" style="gap:8px; margin-bottom:10px;">
-        <button class="ghost" type="button" id="authModeLoginBtn" onclick="setAuthGateMode('login')">ログイン</button>
-        <button class="ghost" type="button" id="authModeSignupBtn" onclick="setAuthGateMode('signup')">新規登録</button>
-      </div>
-      <div class="small" style="line-height:1.8;">
-        <span id="authGateLeadLogin">アカウントでログインして利用を開始してください。</span>
-        <span id="authGateLeadSignup" style="display:none;">新規登録はメールアドレスのみで完了します。確認メールのリンクを開いた後にパスワードを設定します。</span>
-      </div>
-      <div class="row" style="margin-top:12px;" id="authGateInputRow">
-        <label>メールアドレス
-          <input type="email" id="authGateEmail" placeholder="example@mail.com">
-        </label>
-        <label id="authGatePasswordWrap">パスワード
-          <input type="password" id="authGatePassword" placeholder="8文字以上">
-        </label>
-      </div>
-      <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
-        <button class="primary" type="button" id="authGateSignInBtn" onclick="signInFromGate()">ログイン</button>
-        <button class="ghost" type="button" id="authGateSignUpBtn" onclick="signUpFromGate()">確認メールを送信</button>
-      </div>
-      <div class="small muted" style="margin-top:10px; line-height:1.7;">
-        初めての方: 「新規登録」→ メールのリンクを開く → パスワード設定
-      </div>
-      <div class="small" id="authGateStatus" style="margin-top:8px;"></div>
-    </div>
-  </div>
-</div>
-
-<div class="modalOverlay hidden" id="setPasswordModal">
-  <div class="modal">
-    <div class="modalHeader">
-      <div class="modalTitle">パスワード設定</div>
-      <button class="ghost" onclick="closeModal('setPasswordModal')">✕</button>
-    </div>
-    <div class="modalBody" style="padding:16px;">
-      <div class="small" style="line-height:1.8;">
-        メール認証が完了しました。今後のログインで使うパスワードを設定してください。
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <label>新しいパスワード
-          <input type="password" id="authNewPassword" placeholder="8文字以上">
-        </label>
-        <label>新しいパスワード（確認）
-          <input type="password" id="authNewPasswordConfirm" placeholder="再入力">
-        </label>
-      </div>
-      <div class="bar" style="margin-top:12px; justify-content:flex-end;">
-        <button class="primary" type="button" id="authSetPasswordBtn" onclick="submitNewPassword()">パスワードを設定</button>
-      </div>
-      <div class="small" id="authSetPasswordStatus" style="margin-top:8px;"></div>
-    </div>
-  </div>
-</div>
-
 <!-- Entry Modal -->
 <div class="modalOverlay" id="entryModal">
   <div class="modal modal-like-app" id="entryModalCard">
@@ -375,11 +242,13 @@
         <div class="datePill" id="entryDateText">----</div>
         <button class="dateNavBtn" type="button" id="entryNextDay" aria-label="next">›</button>
       </div>
-      <p class="muted small" style="margin:10px 0 0;">入力は「カテゴリ → 金額 → 納得 → メモ」</p>
+      <p class="muted small" style="margin:10px 0 0;">入力は「カテゴリ → 金額 → 納得」</p>
+      <p class="muted small" style="margin:6px 0 0;">固定費（住居/光熱/通信/サブスク）は月次入力です</p>
     </div>
 
     <div class="entryMid" id="entryMid">
       <div class="entryStep" id="step-category">
+        <div class="catTitle">カテゴリー</div>
         <div class="catGridApp" id="entryCatArea"></div>
       </div>
 
@@ -397,14 +266,25 @@
       <div class="entryStep" id="step-quality" style="display:none;">
         <div class="catTitle">納得度・価値観（任意）</div>
         <div class="qualityRow">
-          <div class="qualityLabel">支出に対する納得度は？</div>
-          <div class="starRating" id="entrySatStars" role="radiogroup" aria-label="納得度"></div>
-          <input type="hidden" id="entrySat" value="">
+          <div class="qualityLabel">今日の支出は納得？</div>
+          <select id="entrySat">
+            <option value="">未入力</option>
+            <option value="5">😊 すごく納得</option>
+            <option value="4">🙂 まあ納得</option>
+            <option value="3">😐 どちらでもない</option>
+            <option value="2">🙁 少し後悔</option>
+            <option value="1">😢 後悔している</option>
+          </select>
         </div>
         <div class="qualityRow">
           <div class="qualityLabel">価値観カテゴリ（何を満たした？）</div>
-          <div class="valueTagChips" id="entryValueTagChips"></div>
-          <input type="hidden" id="entryValueTag" value="">
+          <select id="entryValueTag">
+            <option value="">未設定</option>
+          </select>
+        </div>
+        <div class="qualityRow" id="entryValueTagCustomWrap" style="display:none;">
+          <div class="qualityLabel">自由入力</div>
+          <input type="text" id="entryValueTagCustom" placeholder="例：急な出費 / 付き合い など">
         </div>
       </div>
 
@@ -422,7 +302,6 @@
     <!-- 下部操作バー（sticky） -->
     <div class="entryActionBar">
       <button class="ghost" type="button" id="entryCloseBtn">閉じる</button>
-      <button class="ghost" type="button" id="entryBackBtn" style="display:none;">戻る</button>
       <button class="primary" type="button" id="entryPrimaryBtn">次へ</button>
     </div>
 
@@ -443,7 +322,7 @@
         <div style="font-weight:1000; color:var(--ink);" id="dayDetailSumPill">合計：0円</div>
         <div class="small" id="dayDetailCountPill">0件</div>
       </div>
-      <div class="miniList" id="dayDetailList" style="max-height:48vh; overflow-y:auto;"></div>
+      <div class="miniList" id="dayDetailList" style="max-height:60vh; overflow-y:auto;"></div>
       <div style="height:20px;"></div>
     </div>
   </div>
@@ -468,21 +347,30 @@
       </div>
       <div class="row" style="margin-top:12px;">
         <label>納得度
-          <div class="starRating" id="editSatStars" role="radiogroup" aria-label="納得度"></div>
-          <input type="hidden" id="editSat" value="">
+          <select id="editSat">
+            <option value="">未入力</option>
+            <option value="5">😊 すごく納得</option>
+            <option value="4">🙂 まあ納得</option>
+            <option value="3">😐 どちらでもない</option>
+            <option value="2">🙁 少し後悔</option>
+            <option value="1">😢 後悔している</option>
+          </select>
         </label>
         <label>価値観カテゴリ（何を満たした？）
-          <div class="valueTagChips" id="editValueTagChips"></div>
-          <input type="hidden" id="editValueTag" value="">
+          <select id="editValueTag">
+            <option value="">未設定</option>
+          </select>
+        </label>
+        <label id="editValueTagCustomWrap" style="display:none;">価値観カテゴリ（自由入力）
+          <input type="text" id="editValueTagCustom" placeholder="例：急な出費 / 付き合い など">
         </label>
       </div>
       <div class="row" style="margin-top:12px;">
         <label>メモ<input type="text" id="editMemo" placeholder="未入力"></label>
       </div>
       <input type="hidden" id="editId">
-      <div class="row" style="margin-top:16px;">
-        <button class="danger" style="width:100%;" type="button" onclick="deleteEditTx()">削除</button>
-        <button class="primary" style="width:100%;" type="button" onclick="saveEdit()">保存</button>
+      <div style="margin-top:16px;">
+        <button class="primary" style="width:100%;" onclick="saveEdit()">保存</button>
       </div>
     </div>
   </div>
@@ -534,7 +422,7 @@
     </div>
     <div class="modalBody" style="padding:16px;">
       <div class="small" style="line-height:1.7;">
-        過去のマンスリーサマリー詳細を確認できます。
+        先月以前のマンスリーサマリー詳細を確認できます。
       </div>
       <div class="sectionCard" style="margin-top:10px;">
         <div class="sectionHead">
@@ -545,7 +433,7 @@
           <div class="sectionScore">予定</div>
         </div>
         <div class="small" style="line-height:1.7;">
-          ・過去のマンスリーサマリー詳細<br>
+          ・先月以前のマンスリーサマリー詳細<br>
           ・将来の成長ログ機能<br>
           ・履歴の深掘り表示
         </div>
@@ -560,6 +448,7 @@
 <div class="wrap">
   <section class="screen active" id="screen-input">
     <div class="box">
+      <div class="catTitle" style="margin-top:2px;">カテゴリー</div>
       <div class="catGridApp" id="quickCatArea"></div>
     </div>
   </section>
@@ -568,10 +457,7 @@
     <div class="box">
       <div class="calendarBox" id="calendarBox" style="margin-top:2px;">
         <div class="calHeader">
-          <div>
-            <span class="pill" id="calMonthPill" style="font-size:14px; padding:6px 12px;">----</span>
-            <div class="small muted" style="margin-top:6px;">日付タップで入力 / 長押しで履歴</div>
-          </div>
+          <span class="pill" id="calMonthPill" style="font-size:14px; padding:6px 12px;">----</span>
           <div class="bar" style="gap:4px;">
             <button class="ghost" style="padding:8px;" onclick="calMove(-1)">◀</button>
             <button class="ghost" style="padding:8px;" onclick="calMove(1)">▶</button>
@@ -580,8 +466,10 @@
         <div class="calGrid" id="calDow"></div>
         <div class="calGrid" id="calGrid"></div>
       </div>
+      <p style="text-align:center; margin-top:10px; font-size:12px; color:#888;">日付タップで入力 / 長押しで履歴</p>
       <div class="bar" style="margin-top:12px; justify-content:flex-end;">
         <button class="dark" style="font-size:12px; padding:8px 12px; margin-right:8px;" onclick="completeMonthFromCalendar()">月の入力完了</button>
+         <button class="danger" style="font-size:12px; padding:8px 12px;" onclick="clearMonthTx()">月データ削除</button>
       </div>
       <div id="listArea" style="margin-top:16px;"></div>
     </div>
@@ -589,19 +477,9 @@
 
   <section class="screen" id="screen-report">
     <div class="box boxSafeBottom">
-      <div class="bar reportHeader" style="align-items:flex-end;">
-        <label class="small reportMonthLabel">参照月
+      <div class="bar reportHeader" style="justify-content:flex-end; align-items:flex-end;">
+        <label class="small reportMonthLabel">対象月
           <input type="month" id="reportMonth">
-        </label>
-        <label class="small reportCategoryLabel" id="reportCategoryTopWrap" hidden>カテゴリ
-          <select id="reportCategoryTop" onchange="onReportTopCategoryChange(this.value)">
-            <option value="all">全カテゴリ</option>
-            <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
-            <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
-            <option value="交際費">交際費</option><option value="プレゼント">プレゼント</option><option value="カフェ">カフェ</option><option value="デート">デート</option>
-            <option value="趣味">趣味</option><option value="仕事">仕事</option><option value="交通費">交通費</option>
-            <option value="医療費">医療費</option><option value="教育費">教育費</option>
-          </select>
         </label>
       </div>
 
@@ -618,20 +496,20 @@
         <div class="sectionCard" style="margin-top:12px;">
           <div class="reportQuickGrid reportQuickGridFeatured">
             <div class="reportQuickItem reportQuickItemHero" data-quick-tone="total">
-              <div class="small muted">今月支出</div>
+              <div class="small muted">💰 今月支出</div>
               <div class="reportQuickValue" id="reportQuickTotal">—</div>
             </div>
             <div class="reportQuickItem" data-quick-tone="diff">
-              <div class="small muted">先月同日比</div>
+              <div class="small muted">📊 先月同日比</div>
               <div class="reportQuickValue" id="reportQuickMoM">—</div>
               <div class="reportQuickSub" id="reportQuickMoMHint">—</div>
             </div>
             <div class="reportQuickItem" data-quick-tone="topcat">
-              <div class="small muted">最多カテゴリ</div>
+              <div class="small muted">🏷️ 最多カテゴリ</div>
               <div class="reportQuickValue" id="reportQuickTopCat">—</div>
             </div>
             <div class="reportQuickItem" data-quick-tone="bigbuy">
-              <div class="small muted">今月の一番大きな買い物</div>
+              <div class="small muted">🔥 今月の一番大きな買い物</div>
               <div class="reportQuickValue reportQuickNote" id="reportQuickInsight">—</div>
               <div class="reportQuickSub" id="reportQuickBigMemo">—</div>
             </div>
@@ -658,19 +536,9 @@
       </div>
 
       <div class="reportPane" id="reportPane-trend">
-        <div class="sectionCard" style="margin-top:6px;">
-          <div class="sectionHead sectionHeadTrend">
-            <div><div class="sectionName">支出推移（1ヶ月）</div></div>
-            <label class="small" style="display:none;">カテゴリ
-              <select id="reportTrendCategory" onchange="renderMonthlyReport()">
-                <option value="all">全カテゴリ</option>
-                <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
-                <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
-                <option value="交際費">交際費</option><option value="プレゼント">プレゼント</option><option value="カフェ">カフェ</option><option value="デート">デート</option>
-                <option value="趣味">趣味</option><option value="仕事">仕事</option><option value="交通費">交通費</option>
-                <option value="医療費">医療費</option><option value="教育費">教育費</option>
-              </select>
-            </label>
+        <div class="sectionCard" style="margin-top:12px;">
+          <div class="sectionHead">
+            <div><div class="sectionName">支出推移（1ヶ月）</div><div class="sectionHint">月累計の伸びを確認</div></div>
           </div>
           <div id="reportSpendTrend"></div>
         </div>
@@ -680,16 +548,6 @@
         <div class="sectionCard">
           <div class="sectionHead" style="margin-top:12px;">
             <div><div class="sectionName">月次支出比較</div><div class="sectionHint">直近6ヶ月</div></div>
-            <label class="small" style="display:none;">カテゴリ
-              <select id="reportCompareCategory" onchange="renderMonthlyReport()">
-                <option value="all">全カテゴリ</option>
-                <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
-                <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
-                <option value="交際費">交際費</option><option value="プレゼント">プレゼント</option><option value="カフェ">カフェ</option><option value="デート">デート</option>
-                <option value="趣味">趣味</option><option value="仕事">仕事</option><option value="交通費">交通費</option>
-                <option value="医療費">医療費</option><option value="教育費">教育費</option>
-              </select>
-            </label>
           </div>
           <div id="reportMonthlyCompare"></div>
         </div>
@@ -712,28 +570,38 @@
       <div id="score-weekly" style="display:block;">
         <div id="weeklyInline"></div>
       </div>
-      <details class="homeDevDock" open aria-label="開発用表示確認">
-        <summary class="homeDevDockTitle">開発</summary>
-        <div class="homeDevBtns">
+      <details class="homePreviewTools">
+        <summary>表示確認</summary>
+        <div class="homePreviewRow">
+          <label class="small muted" for="homePreviewCategory">カテゴリ確認</label>
+          <select id="homePreviewCategory" onchange="setHomePreviewCategory(this.value)">
+            <option value="auto">自動（実データ）</option>
+            <option value="食費">食費</option>
+            <option value="外食費">外食費</option>
+            <option value="日用品">日用品</option>
+            <option value="衣服">衣服</option>
+            <option value="美容">美容</option>
+            <option value="交際費">交際費</option>
+            <option value="医療費">医療費</option>
+            <option value="教育費">教育費</option>
+            <option value="交通費">交通費</option>
+            <option value="コンビニ">コンビニ</option>
+            <option value="カフェ">カフェ</option>
+            <option value="デート">デート</option>
+            <option value="趣味">趣味</option>
+            <option value="仕事">仕事</option>
+          </select>
+        </div>
+        <div class="homePreviewBtns">
           <button class="ghost" type="button" onclick="setHomePreviewMode('auto')">自動</button>
           <button class="ghost" type="button" onclick="setHomePreviewMode('analyzing')">分析中</button>
           <button class="ghost" type="button" onclick="setHomePreviewMode('great')">めっちゃ良い</button>
           <button class="ghost" type="button" onclick="setHomePreviewMode('good')">良い</button>
           <button class="ghost" type="button" onclick="setHomePreviewMode('bad')">悪い</button>
           <button class="ghost" type="button" onclick="setHomePreviewMode('verybad')">めっちゃ悪い</button>
-          <button class="ghost" type="button" onclick="triggerHomeAvatarAction('jump')">ジャンプ</button>
-          <button class="ghost" type="button" onclick="triggerHomeAvatarAction('spark')">きらめき</button>
         </div>
-        <select class="homeDevSelect" onchange="setHomePreviewCategory(this.value)">
-          <option value="auto">カテゴリ: 自動</option>
-          <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
-          <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
-          <option value="交際費">交際費</option><option value="プレゼント">プレゼント</option><option value="カフェ">カフェ</option>
-          <option value="デート">デート</option><option value="趣味">趣味</option><option value="仕事">仕事</option>
-          <option value="交通費">交通費</option><option value="医療費">医療費</option><option value="教育費">教育費</option>
-        </select>
       </details>
-      <div id="monthlyGate" style="margin-top:10px;"></div>
+      <div id="monthlyGate" style="margin-top:12px;"></div>
       <input type="hidden" id="scoreMonth">
       <input type="hidden" id="savingYen">
       <input type="hidden" id="investYen">
@@ -803,15 +671,22 @@
         </div>
       </details>
 
-      <details class="settingsSection" id="settingsValueSection">
+      <details class="settingsSection">
         <summary>価値観カテゴリ</summary>
         <div class="settingsBody">
+          <div class="small">何にお金を使うと満足しやすいかを設定します。下の候補はタップで入力できます。</div>
+          <div class="valueExampleChips" id="profileValueExampleChips" style="margin-top:10px;"></div>
           <div class="row" style="margin-top:12px;">
-            <label>カテゴリ1（最優先）<input type="text" id="valueCat1" placeholder="例：成長" autocomplete="off"><div class="valueSuggestList" id="profileValueSuggest1" hidden></div></label>
-            <label>カテゴリ2（優先）<input type="text" id="valueCat2" placeholder="例：つながり" autocomplete="off"><div class="valueSuggestList" id="profileValueSuggest2" hidden></div></label>
-            <label>カテゴリ3<input type="text" id="valueCat3" placeholder="例：回復" autocomplete="off"><div class="valueSuggestList" id="profileValueSuggest3" hidden></div></label>
-            <label>カテゴリ4<input type="text" id="valueCat4" placeholder="例：安心" autocomplete="off"><div class="valueSuggestList" id="profileValueSuggest4" hidden></div></label>
-            <label>カテゴリ5<input type="text" id="valueCat5" placeholder="例：挑戦" autocomplete="off"><div class="valueSuggestList" id="profileValueSuggest5" hidden></div></label>
+            <label>カテゴリ1<input type="text" id="valueCat1" placeholder="例：成長"></label>
+            <label>カテゴリ2<input type="text" id="valueCat2" placeholder="例：つながり"></label>
+            <label>カテゴリ3<input type="text" id="valueCat3" placeholder="例：回復"></label>
+            <label>カテゴリ4<input type="text" id="valueCat4" placeholder="例：安心"></label>
+            <label>カテゴリ5<input type="text" id="valueCat5" placeholder="例：挑戦"></label>
+          </div>
+          <div class="row" style="margin-top:12px;">
+            <label>TOP1<select id="valueTop1"><option value="">未設定</option></select></label>
+            <label>TOP2<select id="valueTop2"><option value="">未設定</option></select></label>
+            <label>TOP3<select id="valueTop3"><option value="">未設定</option></select></label>
           </div>
         </div>
       </details>
@@ -828,7 +703,7 @@
       <details class="settingsSection">
         <summary>固定費（月次）</summary>
         <div class="settingsBody">
-          <div class="small">診断する月の固定費を入力します。おおよその金額でも、スコア計算に反映されます。</div>
+          <div class="small">診断する月の固定費をここで入力します</div>
           <div class="row" style="margin-top:12px;">
             <label>住居費<input type="number" id="housingYen" placeholder="家賃など"></label>
             <label>光熱費<input type="number" id="utilityYen" placeholder="電気ガス水道"></label>
@@ -856,66 +731,26 @@
         </div>
       </details>
 
-      <details class="settingsSection" id="settingsHouseholdSection">
-        <summary>アカウント・世帯共有</summary>
+      <details class="settingsSection">
+        <summary>Supabase連携（本番データ収集）</summary>
         <div class="settingsBody">
-          <div class="small">世帯を設定すると、家族で同じ家計データを共有できます。</div>
-          <div class="small" id="householdGuide" style="margin-top:8px; line-height:1.7;">世帯の状態を確認中...</div>
-
-          <div class="small" style="margin-top:10px; font-weight:700;">アカウント</div>
-          <div class="small muted" id="authGuide" style="margin-top:6px; line-height:1.7;">
-            ゲストのままでも使えます。世帯共有・招待を使うときだけログインしてください。
+          <div class="small">Project Settings → API の URL と anon key を入力します。</div>
+          <div class="row" style="margin-top:12px;">
+            <label>Supabase URL
+              <input type="text" id="supabaseUrl" placeholder="https://xxxx.supabase.co">
+            </label>
           </div>
           <div class="row" style="margin-top:12px;">
-            <label>メールアドレス
-              <input type="email" id="authEmail" placeholder="example@mail.com">
-            </label>
-            <label id="authPasswordWrapSettings">パスワード（ログイン時のみ）
-              <input type="password" id="authPassword" placeholder="8文字以上">
+            <label>Supabase Anon Key
+              <input type="password" id="supabaseAnonKey" placeholder="eyJ...">
             </label>
           </div>
           <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
-            <button class="primary" type="button" id="signInBtn" onclick="signInWithEmail()">ログイン</button>
-            <button class="ghost" type="button" id="signUpBtn" onclick="signUpWithEmail()">確認メールを送信</button>
-            <button class="danger" type="button" id="signOutBtn" onclick="signOutAccount()">ログアウト</button>
+            <button class="ghost" type="button" onclick="saveSupabaseConfig()">接続情報を保存</button>
+            <button class="ghost" type="button" onclick="testSupabaseConnection()">接続テスト</button>
+            <button class="dark" type="button" onclick="syncAllToSupabase()">今すぐ同期</button>
           </div>
-          <div class="small muted" id="authRegisterHint" style="margin-top:8px; line-height:1.7;">
-            初めての方: メールアドレス入力 → 確認メールを送信 → メール内リンクからパスワード設定
-          </div>
-          <div class="small" id="authStatus" style="margin-top:8px; font-weight:700;">ログイン状態: 未ログイン</div>
-
-          <div class="small" style="margin-top:16px; font-weight:700;">世帯共有</div>
-          <div id="householdCreateJoinArea">
-            <div class="small muted" style="margin-top:8px;">「世帯を作成」または「招待コードで参加」を選択してください。</div>
-            <div class="small" style="margin-top:12px; font-weight:700;">1) 新しく世帯を作る</div>
-            <div class="row" style="margin-top:8px;">
-              <label>新しい世帯名
-                <input type="text" id="householdName" placeholder="例：田中家">
-              </label>
-            </div>
-            <div class="bar" style="margin-top:8px; justify-content:flex-end;">
-              <button class="primary" type="button" id="createHouseholdBtn" onclick="createHousehold()">世帯を作成</button>
-            </div>
-            <div class="small" style="margin-top:14px; font-weight:700;">2) 招待コードで参加する</div>
-            <div class="row" style="margin-top:8px;">
-              <label>参加コード
-                <input type="text" id="joinHouseholdCode" placeholder="例：AB12CD">
-              </label>
-            </div>
-            <div class="bar" style="margin-top:8px; justify-content:flex-end;">
-              <button class="dark" type="button" id="joinHouseholdBtn" onclick="joinHousehold()">コードで参加</button>
-            </div>
-          </div>
-
-          <div id="householdJoinedArea" style="display:none; margin-top:12px;">
-            <div class="small" id="householdJoinedSummary" style="font-weight:700;">世帯に参加中</div>
-            <div class="small muted" style="margin-top:6px;">この世帯でデータ共有中です。招待は下のボタンから送れます。</div>
-            <div class="bar" style="margin-top:10px; gap:8px; justify-content:flex-end;">
-              <button class="primary" type="button" id="copyInviteBtn" onclick="copyHouseholdInvite()">招待をコピー</button>
-              <button class="ghost" type="button" id="pullHouseholdBtn" onclick="pullHouseholdNow()">最新データを取得</button>
-            </div>
-          </div>
-          <div class="small" id="householdStatus" style="margin-top:8px; font-weight:700;">世帯状態: 未参加</div>
+          <div class="small muted" id="supabaseSyncStatus" style="margin-top:8px;">未接続</div>
         </div>
       </details>
 
@@ -924,13 +759,12 @@
       </div>
 
       <div class="box" style="margin:16px 0 0;">
-        <h3><span class="emojiWarm mini"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h7a2 2 0 0 1 2 2v10H6a2 2 0 0 0-2 2z"/><path d="M20 7h-7a2 2 0 0 0-2 2v10h7a2 2 0 0 1 2 2z"/></svg></span> チュートリアル</h3>
+        <h3><span class="emojiWarm mini">📕</span> チュートリアル</h3>
         <button class="ghost" style="width:100%;" onclick="resetOnboarding()">最初の説明をもう一度見る</button>
-        <button class="danger" style="width:100%; margin-top:10px;" onclick="resetToFirstRunLocal()">この端末を初期状態に戻す</button>
       </div>
 
       <div class="adminBox" style="display:none;">
-        <h3><span class="emojiWarm mini"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><rect x="4" y="15" width="16" height="5" rx="1.5"/></svg></span> データ管理</h3>
+        <h3><span class="emojiWarm mini">📥</span> データ管理</h3>
         <div class="small" style="margin-bottom:12px;">機種変更や分析用に、全データを書き出し・読み込みできます。</div>
         <button class="dark" style="width:100%; margin-bottom:12px;" onclick="downloadData()">全データを書き出し (Export)</button>
         <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(this)">
@@ -945,31 +779,32 @@
 <nav class="bottomNav">
   <div class="tabs">
     <button class="tabBtn active" id="tab-input" onclick="switchScreen('input')">
-      <span class="icon"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 3.5-.6 9-9-2.9-2.9-9 9z"/><path d="m13.8 6.5 2.9 2.9"/><path d="M4 20h16"/></svg></span><span>入力</span>
+      <span class="icon emojiWarm">✏️</span><span>入力</span>
     </button>
     <button class="tabBtn" id="tab-list" onclick="switchScreen('list')">
-      <span class="icon"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16"/><path d="M8 3v4M16 3v4"/></svg></span><span>カレンダー</span>
+      <span class="icon emojiWarm">📅</span><span>カレンダー</span>
     </button>
     <button class="tabBtn" id="tab-report" onclick="switchScreen('report')">
-      <span class="icon"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"/><rect x="6" y="11" width="3" height="6" rx="1"/><rect x="11" y="8" width="3" height="9" rx="1"/><rect x="16" y="5" width="3" height="12" rx="1"/></svg></span><span>レポート</span>
+      <span class="icon emojiWarm">🧾</span><span>レポート</span>
     </button>
     <button class="tabBtn" id="tab-profile" onclick="switchScreen('profile')">
-      <span class="icon"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4.8a7 7 0 0 0-1.7-1L14.5 3h-5l-.3 2.9a7 7 0 0 0-1.7 1l-2.4-.8-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-.8a7 7 0 0 0 1.7 1l.3 2.9h5l.3-2.9a7 7 0 0 0 1.7-1l2.4.8 2-3.4-2-1.5c.1-.3.1-.7.1-1z"/></svg></span><span>設定</span>
+      <span class="icon emojiWarm">⚙️</span><span>設定</span>
     </button>
   </div>
 </nav>
 
 <button class="floatingScoreBtn" id="scoreQuickBtn" onclick="switchScreen('score')" aria-label="ホーム（スコア）">
-  <span class="scoreQuickHome"><svg class="uiIconSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5"/><path d="M7 10.5V19h10v-8.5"/><path d="M10 19v-4h4v4"/></svg></span>
+  <span class="scoreQuickHome emojiWarm mini">🏠</span>
+  <span class="scoreQuickChart emojiWarm mini">📊</span>
 </button>
 
 <script>
   // Initial Supabase config for first-time users (override is still available in Settings).
   window.APP_SUPABASE_CONFIG = {
     url: "https://tfmyxzthwvxqpexdoarc.supabase.co",
-    anonKey: "sb_publishable_okssLfovlx8CpwvNzskdLA_81rXRnlQ"
+    anonKey: "sb_publishable_okssLfovlx8CpwvNzskdLA_81rXRnl"
   };
 </script>
-<script src="./app.js?v=20260315t"></script>
+<script src="./app.js"></script>
 </body>
 </html>
