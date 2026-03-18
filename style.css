@@ -412,6 +412,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:center;
   justify-content:center;
   color:#8f4b2f;
+  background:none;
+  border:none;
+  box-shadow:none;
 }
 .tabBtn.active{
   color:var(--ink);
@@ -1741,6 +1744,31 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-color: var(--primary-70);
   box-shadow:0 0 0 4px var(--primary-12);
 }
+@media (max-width:720px){
+  .screen#screen-input .box{
+    padding-top:6px;
+  }
+  .screen#screen-input #quickCatArea{
+    gap:8px;
+    padding-top:6px;
+  }
+  .screen#screen-input #quickCatArea .catCard{
+    min-height:68px;
+    padding:10px 8px;
+    gap:6px;
+  }
+  .screen#screen-input #quickCatArea .catCard .icon{
+    width:24px;
+    height:24px;
+  }
+  .screen#screen-input #quickCatArea .catCard .icon .pictogramSvg{
+    width:22px;
+    height:22px;
+  }
+  .screen#screen-input #quickCatArea .catCard .label{
+    font-size:12px;
+  }
+}
 
 /* ✅ B案：カテゴリ下の入力欄 */
 .entryFields{
@@ -2267,18 +2295,24 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:#64748b;
 }
 .homePreviewTools{
-  margin-top:10px;
+  position:absolute;
+  top:4px;
+  right:0;
+  z-index:3;
   border:1px dashed rgba(15,23,42,.18);
   border-radius:12px;
-  padding:8px 10px;
+  padding:6px 8px;
   background:rgba(248,250,252,.7);
 }
 .homePreviewTools > summary{
   cursor:pointer;
-  font-size:12px;
+  font-size:11px;
   font-weight:900;
   color:#475569;
+  text-align:right;
+  list-style:none;
 }
+.homePreviewTools > summary::-webkit-details-marker{ display:none; }
 .homePreviewBtns{
   margin-top:8px;
   display:grid;
@@ -2302,6 +2336,14 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-size:13px;
 }
 @media (max-width:720px){
+  .homePreviewTools{
+    top:6px;
+    right:2px;
+    padding:4px 6px;
+  }
+  .homePreviewTools > summary{
+    font-size:10px;
+  }
   .homeHeroCard{
     border-radius:0;
     padding:10px 0 12px;
