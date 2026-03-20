@@ -567,19 +567,15 @@
           <div class="sectionHead">
             <div><div class="sectionName">資産推移</div><div class="sectionHint">貯蓄・投資・合計を月次/累計で確認</div></div>
             <div class="reportGrowthControls">
-              <label class="small">項目
-                <select id="reportGrowthMetric" onchange="renderMonthlyReport()">
-                  <option value="total">合計</option>
-                  <option value="saving">貯蓄</option>
-                  <option value="invest">投資</option>
-                </select>
-              </label>
-              <label class="small">表示
-                <select id="reportGrowthMode" onchange="renderMonthlyReport()">
-                  <option value="monthly">その月</option>
-                  <option value="cumulative">累計</option>
-                </select>
-              </label>
+              <select id="reportGrowthMetric" onchange="renderMonthlyReport()" aria-label="資産推移の項目">
+                <option value="total">合計</option>
+                <option value="saving">貯蓄</option>
+                <option value="invest">投資</option>
+              </select>
+              <select id="reportGrowthMode" onchange="renderMonthlyReport()" aria-label="資産推移の表示切替">
+                <option value="monthly">その月</option>
+                <option value="cumulative">累計</option>
+              </select>
             </div>
           </div>
           <div id="reportGrowthLog"></div>
