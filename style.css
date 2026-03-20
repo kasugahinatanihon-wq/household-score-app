@@ -2228,7 +2228,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .homeFinanceSummary{
   margin-top:10px;
   display:grid;
-  grid-template-columns:repeat(2, minmax(0, 1fr));
+  width:100%;
+  grid-template-columns:auto auto;
+  justify-content:space-between;
   gap:6px;
   align-items:start;
 }
@@ -2238,10 +2240,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   padding:5px 9px;
   background:rgba(255,255,255,.5);
   text-align:left;
+  width:max-content;
+  max-width:100%;
 }
 .homeFinanceCardAction{
   cursor:pointer;
   transition:transform .16s ease, box-shadow .16s ease, background .16s ease;
+  justify-self:start;
 }
 .homeFinanceCardAction:active{
   transform:scale(.98);
@@ -2529,7 +2534,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     width:100%;
   }
   .homeFinanceSummary{
-    grid-template-columns:repeat(2, minmax(0, 1fr));
+    grid-template-columns:auto auto;
+    justify-content:space-between;
   }
   #reportPane-growth .reportGrowthControls{
     width:100%;
