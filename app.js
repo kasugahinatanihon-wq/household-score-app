@@ -4543,14 +4543,6 @@ function renderWeeklyInline(){
           </div>
         </div>
         <div class="homeStateBlock">
-          <div class="homeStateTitleRow">
-            <div class="homeStateTitle">${escapeHtml(archetype)}</div>
-            <button class="homeStateHelpBtn" type="button" onclick="openCharacterGuide()" aria-label="キャラクター解説を見る">?</button>
-          </div>
-          <div class="homeStateSub">
-            <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span>
-            ${displayCategory !== "未設定" ? ` ${escapeHtml(displayCategory)} ${displayShare}%` : " 主カテゴリ判定中"}
-          </div>
           <div class="homeFinanceSummary">
             <button class="homeFinanceCard homeFinanceCardAction" type="button" onclick="openSavingModal({ month: '${escapeHtml(monthStr)}' })" aria-label="今月の貯蓄と投資を入力">
               <div class="homeFinanceLabel">今月の入力</div>
@@ -4561,6 +4553,14 @@ function renderWeeklyInline(){
               <div class="homeFinanceValue">合計 ${fmtYen(Math.round(cumulativeTotal))}円</div>
               <div class="homeFinanceSub">貯蓄 ${fmtYen(Math.round(cumulativeSaving))}円 / 投資 ${fmtYen(Math.round(cumulativeInvest))}円</div>
             </div>
+          </div>
+          <div class="homeStateTitleRow">
+            <div class="homeStateTitle">${escapeHtml(archetype)}</div>
+            <button class="homeStateHelpBtn" type="button" onclick="openCharacterGuide()" aria-label="キャラクター解説を見る">?</button>
+          </div>
+          <div class="homeStateSub">
+            <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span>
+            ${displayCategory !== "未設定" ? ` ${escapeHtml(displayCategory)} ${displayShare}%` : " 主カテゴリ判定中"}
           </div>
           <div class="homeFinanceActions">
             <button class="dark" type="button" onclick="showMonthlyScore()">${escapeHtml(readyMonth || monthStr)} のサマリーを見る</button>
