@@ -3427,7 +3427,7 @@ function getHomeReaction(){
   return reaction;
 }
 
-const ENABLE_GROWTH_LOG = false;
+const ENABLE_GROWTH_LOG = true;
 let REPORT_TAB = "overview";
 function syncReportTopCategoryUI(){
   const wrap = $("reportCategoryTopWrap");
@@ -3479,9 +3479,7 @@ function renderMonthlyReport(){
   const drill = $("reportCategoryDrill");
   renderSpendTrendChart(m, trendCategory);
   renderMonthlyCompareChart(m, compareCategory);
-  if(ENABLE_GROWTH_LOG){
-    renderReportGrowthLog(m);
-  }
+  renderReportGrowthLog(m);
   if(!donut || !legend || !totalEl) return;
 
   const { items, total } = buildMonthlyReportItems(m);
@@ -3603,7 +3601,6 @@ function renderMonthlyReport(){
           <div class="reportLegendKey"><span class="reportLegendDot" style="background:${item.color};"></span>${escapeHtml(item.label)}</div>
           <div class="reportLegendMeta">${pctText} / ${amtText}</div>
         </button>
-        <button class="reportLegendCheckBtn" type="button" data-history-label="${escapeHtml(item.label)}">確認</button>
       </div>
     `;
   }).join("");
@@ -3627,14 +3624,9 @@ function renderMonthlyReport(){
       const label = el.dataset.label || "";
       activeLabel = (activeLabel === label) ? "" : label;
       syncDonutFocus();
-    });
-  });
-  legend.querySelectorAll(".reportLegendCheckBtn").forEach(el=>{
-    el.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      const label = el.dataset.historyLabel || "";
-      if(!label) return;
-      openReportCategoryHistory(m, label);
+      if(activeLabel && drill){
+        drill.scrollIntoView({ behavior:"smooth", block:"nearest" });
+      }
     });
   });
   donut.querySelectorAll(".reportDonutLabel").forEach(el=>{
@@ -3642,6 +3634,9 @@ function renderMonthlyReport(){
       const label = el.dataset.label || "";
       activeLabel = (activeLabel === label) ? "" : label;
       syncDonutFocus();
+      if(activeLabel && drill){
+        drill.scrollIntoView({ behavior:"smooth", block:"nearest" });
+      }
     });
   });
   syncDonutFocus();
@@ -3774,70 +3769,69 @@ function countContinuousMonthsWithRecords(targetMonth, monthsBack = 24){
   return count;
 }
 
+function getGrowthMetricValue(monthStr, metric){
+  const saved = getSavingForMonth(monthStr) || { saving:0, invest:0 };
+  const saving = Number(saved.saving || 0);
+  const invest = Number(saved.invest || 0);
+  if(metric === "saving") return saving;
+  if(metric === "invest") return invest;
+  return saving + invest;
+}
+
+function getGrowthMetricLabel(metric){
+  if(metric === "saving") return "貯蓄";
+  if(metric === "invest") return "投資";
+  return "合計";
+}
+
 function renderReportGrowthLog(monthStr){
   const area = $("reportGrowthLog");
   if(!area) return;
-  const continuousMonths = countContinuousMonthsWithRecords(monthStr, 24);
-  const uniqueMonths = new Set(
-    loadTx().map(t=> (t.date || "").slice(0, 7)).filter(m=> m && m <= monthStr)
-  ).size;
-  const current = buildCharacterSnapshot(monthStr);
-  const prevMonth = shiftYm(monthStr, -1);
-  const prev = buildCharacterSnapshot(prevMonth);
-  const tierRank = { "分析中":0, "めっちゃ悪い":1, "悪い":2, "良い":3, "めっちゃ良い":4 };
-  const tierDelta = (tierRank[current.tier] || 0) - (tierRank[prev.tier] || 0);
-  const scoreDelta = (Number.isFinite(current.score) && Number.isFinite(prev.score))
-    ? (current.score - prev.score)
-    : null;
-  const deltaClass = tierDelta > 0 ? "up" : tierDelta < 0 ? "down" : "flat";
-  const deltaText = tierDelta > 0
-    ? "先月より一段階アップ"
-    : tierDelta < 0
-      ? "先月より一段階ダウン"
-      : "先月と同じ段階";
-  const scoreText = Number.isFinite(scoreDelta)
-    ? `${scoreDelta > 0 ? "+" : ""}${scoreDelta}pt`
-    : "—";
-  const trendMonths = [shiftYm(monthStr, -2), shiftYm(monthStr, -1), monthStr];
-  const trendRows = trendMonths.map(m=>({
+  const metric = $("reportGrowthMetric")?.value || "total";
+  const months = [];
+  for(let i=5;i>=0;i--) months.push(shiftYm(monthStr, -i));
+  const rows = months.map(m=>({
     month: m,
-    total: buildMonthlyReportItems(m).total,
+    value: getGrowthMetricValue(m, metric)
   }));
-  const trendMax = Math.max(...trendRows.map(r=> r.total), 1);
+  const values = rows.map(r=> Number(r.value || 0));
+  const maxValue = Math.max(...values, 1);
+  const w = 360;
+  const h = 170;
+  const pad = { left:16, right:10, top:10, bottom:26 };
+  const innerW = w - pad.left - pad.right;
+  const innerH = h - pad.top - pad.bottom;
+  const x = (idx)=> pad.left + ((rows.length <= 1 ? 0 : idx / (rows.length - 1)) * innerW);
+  const y = (val)=> pad.top + (1 - (val / maxValue)) * innerH;
+  const line = rows.map((row, idx)=>`${x(idx)},${y(Number(row.value || 0))}`).join(" ");
+  const areaPath = `M ${x(0)} ${y(Number(rows[0]?.value || 0))} L ${rows.map((row, idx)=>`${x(idx)} ${y(Number(row.value || 0))}`).join(" L ")} L ${x(rows.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
+  const marks = [maxValue, Math.round(maxValue / 2), 0];
+  const latest = Number(rows[rows.length - 1]?.value || 0);
+  const prev = Number(rows[rows.length - 2]?.value || 0);
+  const diff = latest - prev;
+  const diffText = `${diff > 0 ? "+" : ""}${fmtYen(Math.round(diff))}円`;
+  const label = getGrowthMetricLabel(metric);
 
   area.innerHTML = `
-    <div class="growthLogGrid">
-      <div class="growthLogCard">
-        <div class="growthLogLabel">継続月数</div>
-        <div class="growthLogValue">${continuousMonths}ヶ月</div>
-        <div class="growthLogSub">これまで記録した月: ${uniqueMonths}ヶ月</div>
-      </div>
-      <div class="growthLogCard">
-        <div class="growthLogLabel">キャラクター進化履歴</div>
-        <div class="growthLogValue growthLogFlow">${escapeHtml(prev.name)} → ${escapeHtml(current.name)}</div>
-        <div class="growthLogSub">
-          <span class="growthLogDelta ${deltaClass}">${escapeHtml(deltaText)}</span>
-          <span> / 判定スコア ${scoreText}</span>
-        </div>
-      </div>
-      <div class="growthLogCard">
-        <div class="growthLogLabel">3ヶ月推移</div>
-        <div class="growthMiniTrend">
-          ${trendRows.map(row=>{
-            const label = `${Number(row.month.slice(5,7))}月`;
-            const width = Math.max(8, Math.round((row.total / trendMax) * 100));
-            const currentClass = row.month === monthStr ? "is-current" : "";
-            return `
-              <div class="growthMiniTrendRow ${currentClass}">
-                <div class="growthMiniTrendLabel">${label}</div>
-                <div class="growthMiniTrendBar"><span style="width:${width}%;"></span></div>
-                <div class="growthMiniTrendValue">${fmtYen(Math.round(row.total))}円</div>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      </div>
+    <div class="dailyTrendLegend" style="margin-bottom:8px;">
+      <span><i class="dailyTrendSwatch cum"></i>${escapeHtml(label)} ${fmtYen(Math.round(latest))}円</span>
+      <span><i class="dailyTrendSwatch prevcum"></i>前月差 ${escapeHtml(diffText)}</span>
     </div>
+    <div class="dailyTrendChartBox">
+      <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(label)}の月次推移">
+        <line class="dailyTrendGrid" x1="${pad.left}" y1="${y(marks[0])}" x2="${w - pad.right}" y2="${y(marks[0])}"></line>
+        <line class="dailyTrendGrid" x1="${pad.left}" y1="${y(marks[1])}" x2="${w - pad.right}" y2="${y(marks[1])}"></line>
+        <line class="dailyTrendGrid" x1="${pad.left}" y1="${y(marks[2])}" x2="${w - pad.right}" y2="${y(marks[2])}"></line>
+        ${marks.map(v=>`<text class="dailyTrendYLabel" x="2" y="${y(v)+4}">${fmtYen(Math.round(v))}</text>`).join("")}
+        <path class="dailyTrendArea" d="${areaPath}"></path>
+        <polyline class="dailyTrendCum" points="${line}"></polyline>
+        ${rows.map((row, idx)=>`<circle class="dailyTrendDot" cx="${x(idx)}" cy="${y(Number(row.value || 0))}" r="${idx === rows.length - 1 ? 4 : 3}"></circle>`).join("")}
+      </svg>
+    </div>
+    <div class="dailyTrendAxis">
+      ${rows.map(row=>`<span>${Number(row.month.slice(5,7))}月</span>`).join("")}
+    </div>
+    <div class="small muted" style="margin-top:6px;">${escapeHtml(label)}の入力はホームからいつでも変更できます</div>
   `;
 }
 
@@ -4615,15 +4609,31 @@ function renderMonthlyGate(){
   const currentMonth = ym(new Date());
   const targetMonth = readyMonth || currentMonth;
   $("scoreMonth") && ($("scoreMonth").value = targetMonth);
-
-  if(readyMonth){
-    wrap.innerHTML = ``;
-    return;
-  }
-
+  const saved = getSavingForMonth(targetMonth) || { saving:0, invest:0 };
+  const saving = Number(saved.saving || 0);
+  const invest = Number(saved.invest || 0);
+  const total = saving + invest;
+  const hasSaved = total > 0;
   wrap.innerHTML = `
-    <div class="small muted" style="text-align:center; padding:8px 0;">
-      ${escapeHtml(targetMonth)} のマンスリーサマリーは準備中です
+    <div class="actionHero">
+      <div class="actionHeroTitle">${escapeHtml(targetMonth)} の月次準備</div>
+      <div class="actionHeroSub">貯蓄・投資はホームからいつでも入力・変更できます。</div>
+      <div class="actionMissionList">
+        <div class="actionMissionItem">
+          <div class="actionMissionNo">1</div>
+          <div>貯蓄 ${fmtYen(Math.round(saving))}円 / 投資 ${fmtYen(Math.round(invest))}円 / 合計 ${fmtYen(Math.round(total))}円</div>
+        </div>
+        <div class="actionMissionItem">
+          <div class="actionMissionNo">2</div>
+          <div>${readyMonth ? "マンスリーサマリーを開いて振り返れます。" : `${escapeHtml(targetMonth)} のマンスリーサマリーは準備中です。`}</div>
+        </div>
+      </div>
+      <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
+        <button class="ghost" type="button" onclick="openSavingModal()">${hasSaved ? "貯蓄・投資を変更" : "貯蓄・投資を入力"}</button>
+        ${readyMonth
+          ? `<button class="dark" type="button" onclick="showMonthlyScore()">マンスリーサマリーを見る</button>`
+          : `<button class="primary" type="button" onclick="completeMonthFromCalendar()">今月の入力を完了</button>`}
+      </div>
     </div>
   `;
 }

@@ -460,9 +460,9 @@
       <div class="reportTabs" style="margin-top:12px;">
         <button class="reportTabBtn active" data-report-tab="overview" onclick="switchReportTab('overview')">全体</button>
         <button class="reportTabBtn" data-report-tab="breakdown" onclick="switchReportTab('breakdown')">内訳</button>
-        <button class="reportTabBtn" data-report-tab="trend" onclick="switchReportTab('trend')">推移</button>
-        <button class="reportTabBtn" data-report-tab="compare" onclick="switchReportTab('compare')">比較</button>
-        <button class="reportTabBtn is-comingsoon" data-report-tab="growth" type="button" disabled aria-label="成長ログ（企画中）">成長ログ（企画中）</button>
+        <button class="reportTabBtn" data-report-tab="trend" onclick="switchReportTab('trend')">支出推移</button>
+        <button class="reportTabBtn" data-report-tab="compare" onclick="switchReportTab('compare')">支出比較</button>
+        <button class="reportTabBtn" data-report-tab="growth" onclick="switchReportTab('growth')">資産推移</button>
         <button class="reportTabBtn is-comingsoon" type="button" disabled aria-label="新機能予定">新機能予定</button>
       </div>
 
@@ -501,8 +501,8 @@
             <div class="reportChartWrap">
               <div class="reportDonut" id="reportDonut" role="img" aria-label="支出内訳の円グラフ"></div>
               <div>
-                <div class="reportLegend" id="reportLegend"></div>
                 <div class="reportCategoryDrill" id="reportCategoryDrill"></div>
+                <div class="reportLegend" id="reportLegend"></div>
               </div>
             </div>
           </div>
@@ -550,7 +550,14 @@
       <div class="reportPane" id="reportPane-growth">
         <div class="sectionCard" style="margin-top:12px;">
           <div class="sectionHead">
-            <div><div class="sectionName">成長ログ</div><div class="sectionHint">続けた成果を確認</div></div>
+            <div><div class="sectionName">資産推移</div><div class="sectionHint">貯蓄・投資・合計の月次推移</div></div>
+            <label class="small">項目
+              <select id="reportGrowthMetric" onchange="renderMonthlyReport()">
+                <option value="total">合計</option>
+                <option value="saving">貯蓄</option>
+                <option value="invest">投資</option>
+              </select>
+            </label>
           </div>
           <div id="reportGrowthLog"></div>
         </div>

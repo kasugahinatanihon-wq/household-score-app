@@ -866,10 +866,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   gap:10px;
 }
 .reportLegendItem{
-  display:grid;
-  grid-template-columns:1fr auto;
-  align-items:center;
-  gap:8px;
+  display:block;
   border:1px solid var(--primary-18);
   border-radius:10px;
   padding:7px 8px;
@@ -895,27 +892,18 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   outline:2px solid var(--primary-55);
   outline-offset:2px;
 }
-.reportLegendCheckBtn{
-  border:1px solid var(--primary-25);
-  background:var(--primary-08);
-  color:#8f4b2f;
-  border-radius:999px;
-  padding:5px 9px;
-  font-size:11px;
-  font-weight:900;
-  white-space:nowrap;
-}
 .reportLegendMeta{
   margin-top:4px;
   color:var(--muted);
   font-weight:700;
 }
 .reportCategoryDrill{
-  margin-top:10px;
+  margin-bottom:12px;
   border:1px solid var(--primary-18);
   border-radius:10px;
   padding:10px;
-  background:linear-gradient(180deg, #fff 0%, #fff7ef 100%);
+  background:linear-gradient(180deg, #fffdfb 0%, #fff1e5 100%);
+  box-shadow:0 10px 22px rgba(114,72,57,.08);
 }
 .reportDrillHead{
   display:flex;
