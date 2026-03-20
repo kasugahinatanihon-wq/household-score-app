@@ -3147,7 +3147,12 @@ function buildMonthlyReportItems(monthStr){
   const items = Object.entries(sums)
     .map(([label, amount])=>({ label, amount }))
     .filter(item=>item.amount > 0)
-    .sort((a,b)=>b.amount - a.amount);
+    .sort((a,b)=>{
+      const aFixed = FIXED_CATEGORIES.has(a.label);
+      const bFixed = FIXED_CATEGORIES.has(b.label);
+      if(aFixed !== bFixed) return aFixed ? 1 : -1;
+      return b.amount - a.amount;
+    });
 
   const total = items.reduce((a,b)=>a + b.amount, 0);
   return { items, total };
@@ -3201,7 +3206,12 @@ function buildMonthlyReportItemsToDay(monthStr, cutoffDay){
   const items = Object.entries(sums)
     .map(([label, amount])=>({ label, amount }))
     .filter(item=>item.amount > 0)
-    .sort((a,b)=>b.amount - a.amount);
+    .sort((a,b)=>{
+      const aFixed = FIXED_CATEGORIES.has(a.label);
+      const bFixed = FIXED_CATEGORIES.has(b.label);
+      if(aFixed !== bFixed) return aFixed ? 1 : -1;
+      return b.amount - a.amount;
+    });
   const total = items.reduce((a,b)=>a + b.amount, 0);
   return { items, total, dayLimit };
 }
@@ -3780,6 +3790,18 @@ function getGrowthMetricValue(monthStr, metric){
   return saving + invest;
 }
 
+function getGrowthMetricSeriesValue(monthStr, metric, mode){
+  if(mode !== "cumulative") return getGrowthMetricValue(monthStr, metric);
+  const savingMap = loadSavingMap();
+  const months = Object.keys(savingMap).filter(Boolean).sort();
+  let total = 0;
+  months.forEach(key=>{
+    if(key > monthStr) return;
+    total += getGrowthMetricValue(key, metric);
+  });
+  return total;
+}
+
 function getGrowthMetricLabel(metric){
   if(metric === "saving") return "貯蓄";
   if(metric === "invest") return "投資";
@@ -3790,11 +3812,12 @@ function renderReportGrowthLog(monthStr){
   const area = $("reportGrowthLog");
   if(!area) return;
   const metric = $("reportGrowthMetric")?.value || "total";
+  const mode = $("reportGrowthMode")?.value || "monthly";
   const months = [];
   for(let i=5;i>=0;i--) months.push(shiftYm(monthStr, -i));
   const rows = months.map(m=>({
     month: m,
-    value: getGrowthMetricValue(m, metric)
+    value: getGrowthMetricSeriesValue(m, metric, mode)
   }));
   const values = rows.map(r=> Number(r.value || 0));
   const maxValue = Math.max(...values, 1);
@@ -3813,14 +3836,15 @@ function renderReportGrowthLog(monthStr){
   const diff = latest - prev;
   const diffText = `${diff > 0 ? "+" : ""}${fmtYen(Math.round(diff))}円`;
   const label = getGrowthMetricLabel(metric);
+  const modeLabel = mode === "cumulative" ? "累計" : "その月";
 
   area.innerHTML = `
     <div class="dailyTrendLegend" style="margin-bottom:8px;">
-      <span><i class="dailyTrendSwatch cum"></i>${escapeHtml(label)} ${fmtYen(Math.round(latest))}円</span>
+      <span><i class="dailyTrendSwatch cum"></i>${escapeHtml(modeLabel)}${escapeHtml(label)} ${fmtYen(Math.round(latest))}円</span>
       <span><i class="dailyTrendSwatch prevcum"></i>前月差 ${escapeHtml(diffText)}</span>
     </div>
     <div class="dailyTrendChartBox">
-      <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(label)}の月次推移">
+      <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(modeLabel)}${escapeHtml(label)}の月次推移">
         <line class="dailyTrendGrid" x1="${pad.left}" y1="${y(marks[0])}" x2="${w - pad.right}" y2="${y(marks[0])}"></line>
         <line class="dailyTrendGrid" x1="${pad.left}" y1="${y(marks[1])}" x2="${w - pad.right}" y2="${y(marks[1])}"></line>
         <line class="dailyTrendGrid" x1="${pad.left}" y1="${y(marks[2])}" x2="${w - pad.right}" y2="${y(marks[2])}"></line>
@@ -4456,7 +4480,6 @@ function renderWeeklyInline(){
   let displayShare = topShare;
   let archetype = getHomeCharacterName(displayCategory, tier);
 
-  const daysInMonth = getDaysInMonth(monthStr) || 30;
   const daysWithEntry = new Set(allMonthTx.map(t=> t.date)).size;
   const latestEntry = allMonthTx
     .map(t=> t.date)
@@ -4492,29 +4515,23 @@ function renderWeeklyInline(){
     : tier === "悪い" ? "😟"
     : tier === "めっちゃ悪い" ? "🥶"
     : "🙂";
-  const reaction = getHomeReaction();
-  const displayMood = reaction?.mood || mood;
   const readyMonth = getLatestReadyMonth();
   const currentMonthSaving = getSavingForMonth(monthStr) || { saving:0, invest:0 };
   const monthSaving = Number(currentMonthSaving.saving || 0);
   const monthInvest = Number(currentMonthSaving.invest || 0);
-  const handoffCard = readyMonth
-    ? `<button class="homeHandoffCard" type="button" onclick="showMonthlyScore()">
-        <span class="homeHandoffIcon">📄</span>
-        <span class="homeHandoffText">マンスリーサマリーを受け取る</span>
-      </button>`
-    : "";
+  const savingMap = loadSavingMap();
+  const savingMonths = Object.keys(savingMap).filter(Boolean).sort();
+  const cumulativeSaving = savingMonths.reduce((sum, key)=> sum + Number(savingMap[key]?.saving || 0), 0);
+  const cumulativeInvest = savingMonths.reduce((sum, key)=> sum + Number(savingMap[key]?.invest || 0), 0);
+  const cumulativeTotal = cumulativeSaving + cumulativeInvest;
+  const guideCopy = buildHomeCharacterGuide(displayCategory, tier, displayShare);
   HOME_CHARACTER_GUIDE = {
     title: archetype,
     tier,
     category: displayCategory,
     share: displayShare,
-    reason: displayCategory !== "未設定"
-      ? `${displayCategory} の支出比重が高く、現在の納得度と後悔率の傾向からこのキャラクターが表示されています。`
-      : "まだ十分な記録が集まっていないため、仮のキャラクターで表示しています。",
-    profile: displayCategory !== "未設定"
-      ? `${displayCategory} にお金を使う場面が多いタイプです。支出の納得感が高いほど、より良い状態のキャラクターに育っていきます。`
-      : "記録が増えるほど、あなたらしい支出傾向に近いキャラクターへ切り替わっていきます。"
+    reason: guideCopy.reason,
+    profile: guideCopy.profile
   };
 
   wrap.innerHTML = `
@@ -4522,8 +4539,7 @@ function renderWeeklyInline(){
       <div class="homeHeroTop">
         <div class="homeAvatarWrap">
           <div class="homeAvatarStage">
-            <div class="homeAvatar is-live" id="homeAvatarLive">${homeAvatarHTML(displayCategory, tier, displayMood, { imgClass:"is-live", fallbackClass:"is-live" })}</div>
-            ${handoffCard}
+            <div class="homeAvatar is-live" id="homeAvatarLive">${homeAvatarHTML(displayCategory, tier, mood, { imgClass:"is-live", fallbackClass:"is-live" })}</div>
           </div>
         </div>
         <div class="homeStateBlock">
@@ -4535,7 +4551,17 @@ function renderWeeklyInline(){
             <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span>
             ${displayCategory !== "未設定" ? ` ${escapeHtml(displayCategory)} ${displayShare}%` : " 主カテゴリ判定中"}
           </div>
-          <div class="homeFinanceMeta">貯蓄 ${fmtYen(Math.round(monthSaving))}円 / 投資 ${fmtYen(Math.round(monthInvest))}円</div>
+          <div class="homeFinanceSummary">
+            <div class="homeFinanceCard">
+              <div class="homeFinanceLabel">今月の入力</div>
+              <div class="homeFinanceValue">貯蓄 ${fmtYen(Math.round(monthSaving))}円 / 投資 ${fmtYen(Math.round(monthInvest))}円</div>
+            </div>
+            <div class="homeFinanceCard is-total">
+              <div class="homeFinanceLabel">これまでの累計</div>
+              <div class="homeFinanceValue">合計 ${fmtYen(Math.round(cumulativeTotal))}円</div>
+              <div class="homeFinanceSub">貯蓄 ${fmtYen(Math.round(cumulativeSaving))}円 / 投資 ${fmtYen(Math.round(cumulativeInvest))}円</div>
+            </div>
+          </div>
           <div class="homeFinanceActions">
             <button class="ghost" type="button" onclick="openSavingModal({ month: '${escapeHtml(monthStr)}' })">月を選んで貯蓄・投資を入力</button>
             ${readyMonth
@@ -4553,6 +4579,43 @@ function renderWeeklyInline(){
   if(section) section.style.display = "";
 }
 window.renderWeeklyInline = renderWeeklyInline;
+
+function buildHomeCharacterGuide(category, tier, share){
+  if(category === "未設定"){
+    return {
+      reason: "まだ十分な記録が集まっていないため、仮のキャラクターで表示しています。入力が増えるほど、あなたの傾向に近いキャラクターへ切り替わります。",
+      profile: "今は分析準備中の状態です。どのカテゴリに納得してお金を使っているかが見えてくると、性格や強みがはっきりしたキャラクターに育っていきます。"
+    };
+  }
+  const traits = {
+    "食費":"食事の満足度に敏感で、日々の食卓に価値を感じやすいタイプ",
+    "外食費":"体験や気分転換としての食事に価値を置きやすいタイプ",
+    "日用品":"暮らしを整えることに安心感を持つ、生活基盤重視タイプ",
+    "衣服":"見た目や装いで気分を整える、表現志向タイプ",
+    "美容":"コンディション維持や自己投資を大事にするタイプ",
+    "交際費":"人とのつながりにお金を使うことを惜しまない関係重視タイプ",
+    "プレゼント":"誰かに喜んでもらうことに満足を感じるギバータイプ",
+    "医療費":"安心や健康管理への優先度が高い堅実タイプ",
+    "教育費":"将来への学びや成長を優先しやすい投資タイプ",
+    "交通費":"移動の快適さや効率を重視する行動派タイプ",
+    "コンビニ":"手早さや即時性を優先しやすいクイック判断タイプ",
+    "カフェ":"休息や集中の切り替えに価値を置くリズム重視タイプ",
+    "デート":"思い出や体験にお金を使うことを大事にするタイプ",
+    "趣味":"好きなことへの熱量が高く、楽しさで行動できるタイプ",
+    "仕事":"成果や仕事の進めやすさにお金を使う実務優先タイプ",
+  };
+  const stateMap = {
+    "めっちゃ良い":"そのカテゴリへの支出が高くても、納得度とのバランスが取れていて、使い方がかなり洗練されています。",
+    "良い":"支出の中心カテゴリと満足度の整合が取れていて、今のところ良い使い方ができています。",
+    "悪い":"支出はこのカテゴリに集まっていますが、納得感とのズレが少し出ています。使い方を一段整える余地があります。",
+    "めっちゃ悪い":"このカテゴリへの支出が強く出ている一方で、後悔やブレも出ています。見直し優先度が高い状態です。",
+    "分析中":"まだ途中ですが、このカテゴリが今の支出傾向として強く出始めています。"
+  };
+  return {
+    reason: `${category} が今月の支出の中心で、全体の約${share}%を占めています。${stateMap[tier] || stateMap["分析中"]}`,
+    profile: `${traits[category] || "特定の価値を大事にしてお金を使うタイプ"}です。納得できる使い方が増えるほど、同じカテゴリでもより安定した上位キャラクターに育っていきます。`
+  };
+}
 
 function openCharacterGuide(){
   const body = $("characterGuideBody");

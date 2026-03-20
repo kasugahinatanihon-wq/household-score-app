@@ -654,7 +654,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:#8f4b2f;
 }
 .reportTabBtn[data-report-tab="growth"]{
-  color:#0f766e;
+  color:#5f7f74;
 }
 .reportTabBtn:active{
   transform:scale(.98);
@@ -673,10 +673,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   box-shadow:0 8px 18px rgba(143,75,47,.14);
 }
 .reportTabBtn[data-report-tab="growth"].active{
-  color:#0f766e;
-  background:linear-gradient(180deg, #f3fffd 0%, #daf8f4 100%);
-  border-color:rgba(15,118,110,.28);
-  box-shadow:0 8px 18px rgba(15,118,110,.14);
+  color:#516b62;
+  background:linear-gradient(180deg, #fdfdf9 0%, #edf3ee 100%);
+  border-color:rgba(95,127,116,.26);
+  box-shadow:0 8px 18px rgba(95,127,116,.12);
 }
 .reportTabBtn.is-comingsoon{
   color:#94a3b8;
@@ -700,59 +700,68 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-bottom:1px solid rgba(214,120,75,.12);
 }
 #reportPane-growth .sectionCard{
-  border-color:rgba(15,118,110,.16);
+  border-color:rgba(95,127,116,.14);
   background:
-    radial-gradient(120% 120% at 100% 0%, rgba(45,212,191,.12), rgba(45,212,191,0) 55%),
-    linear-gradient(180deg, #f9fffe 0%, #eefbf8 100%);
+    radial-gradient(120% 120% at 100% 0%, rgba(176,200,188,.18), rgba(176,200,188,0) 55%),
+    linear-gradient(180deg, #fffefb 0%, #f4f7f3 100%);
 }
 #reportPane-growth .sectionHead{
   padding-bottom:10px;
-  border-bottom:1px solid rgba(15,118,110,.12);
+  border-bottom:1px solid rgba(95,127,116,.12);
 }
 #reportPane-growth .sectionName,
 #reportPane-growth .sectionScore{
-  color:#115e59;
+  color:#516b62;
 }
 #reportPane-growth .sectionHint{
-  color:#4b7b77;
+  color:#70867d;
 }
 #reportPane-growth select{
-  border-color:rgba(15,118,110,.16);
+  border-color:rgba(95,127,116,.16);
   background:rgba(255,255,255,.88);
+}
+#reportPane-growth .small{
+  color:#70867d;
+}
+#reportPane-growth .reportGrowthControls{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
 }
 #reportPane-growth .dailyTrendLegend{
   padding:10px 12px;
-  border:1px solid rgba(15,118,110,.14);
+  border:1px solid rgba(95,127,116,.14);
   border-radius:14px;
   background:rgba(255,255,255,.72);
 }
 #reportPane-growth .dailyTrendSwatch.cum{
-  background:#0f766e;
+  background:#6f8f83;
 }
 #reportPane-growth .dailyTrendSwatch.prevcum{
-  background:#7dd3c6;
+  background:#c6d7ce;
 }
 #reportPane-growth .dailyTrendChartBox{
   background:rgba(255,255,255,.8);
-  border-color:rgba(15,118,110,.14);
+  border-color:rgba(95,127,116,.14);
 }
 #reportPane-growth .dailyTrendGrid{
-  stroke:rgba(15,118,110,.14);
+  stroke:rgba(95,127,116,.14);
 }
 #reportPane-growth .dailyTrendYLabel,
 #reportPane-growth .dailyTrendAxis{
-  color:#5f8c88;
-  fill:#5f8c88;
+  color:#7a9087;
+  fill:#7a9087;
 }
 #reportPane-growth .dailyTrendArea{
-  fill:rgba(45,212,191,.16);
+  fill:rgba(176,200,188,.18);
 }
 #reportPane-growth .dailyTrendCum{
-  stroke:#0f766e;
+  stroke:#6f8f83;
 }
 #reportPane-growth .dailyTrendDot{
-  fill:#0f766e;
-  stroke:#d9fffa;
+  fill:#6f8f83;
+  stroke:#f5fbf7;
 }
 .growthLogGrid{
   display:grid;
@@ -2207,11 +2216,37 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-size:14px;
   line-height:1.45;
 }
-.homeFinanceMeta{
+.homeFinanceSummary{
   margin-top:12px;
-  font-size:13px;
-  font-weight:800;
-  color:#6f5248;
+  display:grid;
+  gap:8px;
+}
+.homeFinanceCard{
+  border:1px solid rgba(214,120,75,.16);
+  border-radius:14px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.7);
+  text-align:left;
+}
+.homeFinanceCard.is-total{
+  background:linear-gradient(180deg, rgba(255,249,243,.96), rgba(255,255,255,.88));
+}
+.homeFinanceLabel{
+  font-size:11px;
+  font-weight:900;
+  color:#8a736c;
+}
+.homeFinanceValue{
+  margin-top:4px;
+  font-size:14px;
+  font-weight:1000;
+  color:#5a382f;
+  line-height:1.5;
+}
+.homeFinanceSub{
+  margin-top:3px;
+  font-size:11px;
+  color:#7b665f;
 }
 .homeFinanceActions{
   margin-top:10px;
@@ -2470,9 +2505,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:12px;
   }
   .homeStateSub{ font-size:13px; }
-  .homeFinanceMeta{
-    font-size:12px;
-  }
   .homeFinanceActions{
     grid-template-columns:1fr;
   }
