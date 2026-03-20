@@ -65,9 +65,17 @@ const SAT_LEVELS = [
   { value:1, label:"😢 後悔している" }
 ];
 const CATEGORY_EMOJI = {
+  "食費":"🍚",
   "外食費":"🍽️",
+  "日用品":"🧴",
+  "衣服":"👕",
+  "美容":"💄",
   "交際費":"🤝",
   "プレゼント":"🎁",
+  "医療費":"🩺",
+  "教育費":"📚",
+  "交通費":"🚌",
+  "仕事":"💼",
   "デート":"💑",
   "趣味":"🎯",
   "カフェ":"☕️",
@@ -5235,14 +5243,11 @@ function buildMonthlyResult(){
   const countYellow = comparableScores.filter(item=> item.score >= 60 && item.score < 80).length;
   const countRed = comparableScores.filter(item=> item.score < 60).length;
   const stabilityPositionSummary = comparableScores.length
-    ? `公的指標と比較できる ${comparableScores.length}項目中、目安内 ${countBlue} / 注意 ${countYellow} / 要改善 ${countRed}`
-    : "比較できるデータが増えると、現在地の精度が上がります。";
+    ? `現在地: 目安内 ${countBlue} / 注意 ${countYellow} / 要改善 ${countRed}`
+    : "現在地はデータが増えると表示されます。";
   const benchmarkIntroHtml = targetBudget ? `
     <div class="small muted" style="margin-top:6px; margin-bottom:10px;">
       基準：${targetBudget.ageBandLabel} / 世帯${targetBudget.householdSize}人 / 年収${fmtYen(targetBudget.annualIncomeGross)}円（手取り換算）
-    </div>
-    <div class="small muted" style="margin-top:-4px; margin-bottom:10px;">
-      ※ 公的指標 / 公的ベース / 独自指標 をラベルで区別しています
     </div>
   ` : `
     <div class="small muted" style="margin-top:6px;">
@@ -5292,11 +5297,7 @@ function buildMonthlyResult(){
           <div class="axisLabel">家計納得度スコア</div>
           <div class="axisSub">心理・行動</div>
           ${donutHTML(satisfactionScore, { size:"xl", stateColor:getScoreToneColor(satisfactionScore, "sat") })}
-          <div class="small muted" style="line-height:1.6;">
-            家計納得度スコアは、<br>
-            お金の使い方に対する納得感や価値観との一致、<br>
-            後悔の少なさ、幸福の実感をまとめて見える化した指標です。
-          </div>
+          <div class="small muted" style="line-height:1.7;">お金の使い方にどれだけ納得できているかを、主観納得度・価値観との一致・後悔の少なさ・幸福実感からまとめて見える化した指標です。</div>
         </div>
         <div class="sectionCard tone-sat">
           <div class="sectionHead">
@@ -5358,14 +5359,11 @@ function buildMonthlyResult(){
           <div class="axisLabel">家計安定度スコア</div>
           <div class="axisSub">バランス・比較</div>
           ${donutHTML(stabilityScore, { size:"xl", stateColor:getScoreToneColor(stabilityScore, "stable") })}
-          <div class="small muted" style="line-height:1.6;">
-            家計の土台がどれだけ安定しているかを、<br>
-            収支のバランスや貯蓄の状態からまとめて見える化した指標です。
-          </div>
+          <div class="small muted" style="line-height:1.7;">家計の土台がどれだけ安定しているかを、収支バランスと公的指標との比較からまとめて見える化した指標です。</div>
         </div>
         <div class="sectionCard tone-stable">
           <div class="sectionHead">
-            <div><div class="sectionName">家計安定度スコア 内訳</div><div class="sectionHint">バランス・比較の内訳</div></div>
+            <div><div class="sectionName">家計安定度スコア 内訳</div><div class="sectionHint">いまの位置を確認</div></div>
           <div class="sectionScore">${stabilityScore}/100</div>
         </div>
           <div>
