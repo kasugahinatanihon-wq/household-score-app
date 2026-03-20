@@ -3427,6 +3427,8 @@ function getHomeReaction(){
   return reaction;
 }
 
+let HOME_CHARACTER_GUIDE = null;
+
 const ENABLE_GROWTH_LOG = true;
 let REPORT_TAB = "overview";
 function syncReportTopCategoryUI(){
@@ -4493,18 +4495,30 @@ function renderWeeklyInline(){
   const reaction = getHomeReaction();
   const displayMood = reaction?.mood || mood;
   const readyMonth = getLatestReadyMonth();
+  const currentMonthSaving = getSavingForMonth(monthStr) || { saving:0, invest:0 };
+  const monthSaving = Number(currentMonthSaving.saving || 0);
+  const monthInvest = Number(currentMonthSaving.invest || 0);
   const handoffCard = readyMonth
     ? `<button class="homeHandoffCard" type="button" onclick="showMonthlyScore()">
         <span class="homeHandoffIcon">📄</span>
         <span class="homeHandoffText">マンスリーサマリーを受け取る</span>
       </button>`
     : "";
+  HOME_CHARACTER_GUIDE = {
+    title: archetype,
+    tier,
+    category: displayCategory,
+    share: displayShare,
+    reason: displayCategory !== "未設定"
+      ? `${displayCategory} の支出比重が高く、現在の納得度と後悔率の傾向からこのキャラクターが表示されています。`
+      : "まだ十分な記録が集まっていないため、仮のキャラクターで表示しています。",
+    profile: displayCategory !== "未設定"
+      ? `${displayCategory} にお金を使う場面が多いタイプです。支出の納得感が高いほど、より良い状態のキャラクターに育っていきます。`
+      : "記録が増えるほど、あなたらしい支出傾向に近いキャラクターへ切り替わっていきます。"
+  };
 
   wrap.innerHTML = `
     <div class="homeHeroCard">
-      <div class="homeHeroHeader">
-        <span class="homeHeroMood">${displayMood} いまの気分</span>
-      </div>
       <div class="homeHeroTop">
         <div class="homeAvatarWrap">
           <div class="homeAvatarStage">
@@ -4513,10 +4527,20 @@ function renderWeeklyInline(){
           </div>
         </div>
         <div class="homeStateBlock">
-          <div class="homeStateTitle">${escapeHtml(archetype)}</div>
+          <div class="homeStateTitleRow">
+            <div class="homeStateTitle">${escapeHtml(archetype)}</div>
+            <button class="homeStateHelpBtn" type="button" onclick="openCharacterGuide()" aria-label="キャラクター解説を見る">?</button>
+          </div>
           <div class="homeStateSub">
             <span class="homeStatePill ${tier === "めっちゃ良い" || tier === "良い" ? "good" : (tier === "悪い" || tier === "めっちゃ悪い" ? "warn" : "")}">${tier}</span>
             ${displayCategory !== "未設定" ? ` ${escapeHtml(displayCategory)} ${displayShare}%` : " 主カテゴリ判定中"}
+          </div>
+          <div class="homeFinanceMeta">貯蓄 ${fmtYen(Math.round(monthSaving))}円 / 投資 ${fmtYen(Math.round(monthInvest))}円</div>
+          <div class="homeFinanceActions">
+            <button class="ghost" type="button" onclick="openSavingModal({ month: '${escapeHtml(monthStr)}' })">月を選んで貯蓄・投資を入力</button>
+            ${readyMonth
+              ? `<button class="dark" type="button" onclick="showMonthlyScore()">${escapeHtml(readyMonth)} のサマリーを見る</button>`
+              : ""}
           </div>
         </div>
       </div>
@@ -4529,6 +4553,32 @@ function renderWeeklyInline(){
   if(section) section.style.display = "";
 }
 window.renderWeeklyInline = renderWeeklyInline;
+
+function openCharacterGuide(){
+  const body = $("characterGuideBody");
+  if(!body) return;
+  const guide = HOME_CHARACTER_GUIDE;
+  if(!guide){
+    body.innerHTML = `<div class="small muted">記録が増えるとキャラクター解説を表示できます。</div>`;
+    openModal("characterGuideModal");
+    return;
+  }
+  body.innerHTML = `
+    <div class="sectionCard">
+      <div class="sectionHead">
+        <div><div class="sectionName">${escapeHtml(guide.title)}</div><div class="sectionHint">${escapeHtml(guide.tier)}</div></div>
+      </div>
+      <div class="small" style="line-height:1.8;">
+        <strong>なぜこのキャラクター？</strong><br>
+        ${escapeHtml(guide.reason)}<br><br>
+        <strong>どんなキャラクター？</strong><br>
+        ${escapeHtml(guide.profile)}
+      </div>
+    </div>
+  `;
+  openModal("characterGuideModal");
+}
+window.openCharacterGuide = openCharacterGuide;
 
 function setHomePreviewMode(mode){
   const allow = new Set(["auto","analyzing","great","good","bad","verybad"]);
@@ -4609,33 +4659,7 @@ function renderMonthlyGate(){
   const currentMonth = ym(new Date());
   const targetMonth = readyMonth || currentMonth;
   $("scoreMonth") && ($("scoreMonth").value = targetMonth);
-  const saved = getSavingForMonth(targetMonth) || { saving:0, invest:0 };
-  const saving = Number(saved.saving || 0);
-  const invest = Number(saved.invest || 0);
-  const total = saving + invest;
-  const hasSaved = total > 0;
-  wrap.innerHTML = `
-    <div class="actionHero">
-      <div class="actionHeroTitle">${escapeHtml(targetMonth)} の月次準備</div>
-      <div class="actionHeroSub">貯蓄・投資はホームからいつでも入力・変更できます。</div>
-      <div class="actionMissionList">
-        <div class="actionMissionItem">
-          <div class="actionMissionNo">1</div>
-          <div>貯蓄 ${fmtYen(Math.round(saving))}円 / 投資 ${fmtYen(Math.round(invest))}円 / 合計 ${fmtYen(Math.round(total))}円</div>
-        </div>
-        <div class="actionMissionItem">
-          <div class="actionMissionNo">2</div>
-          <div>${readyMonth ? "マンスリーサマリーを開いて振り返れます。" : `${escapeHtml(targetMonth)} のマンスリーサマリーは準備中です。`}</div>
-        </div>
-      </div>
-      <div class="bar" style="margin-top:12px; gap:8px; justify-content:flex-end;">
-        <button class="ghost" type="button" onclick="openSavingModal()">${hasSaved ? "貯蓄・投資を変更" : "貯蓄・投資を入力"}</button>
-        ${readyMonth
-          ? `<button class="dark" type="button" onclick="showMonthlyScore()">マンスリーサマリーを見る</button>`
-          : `<button class="primary" type="button" onclick="completeMonthFromCalendar()">今月の入力を完了</button>`}
-      </div>
-    </div>
-  `;
+  wrap.innerHTML = ``;
 }
 window.renderMonthlyGate = renderMonthlyGate;
 
@@ -4773,9 +4797,10 @@ function refreshSavingLabel(){
   $("investYen") && ($("investYen").value = String(saved.invest||0));
 }
 
-function openSavingModal(){
-  const m = $("scoreMonth")?.value || ym(new Date());
+function openSavingModal(opts = {}){
+  const m = opts.month || $("scoreMonth")?.value || ym(new Date());
   const saved = getSavingForMonth(m);
+  $("savingMonth") && ($("savingMonth").value = m);
   $("savingInput") && ($("savingInput").value = saved ? String(saved.saving||0) : "");
   $("investInput") && ($("investInput").value = saved ? String(saved.invest||0) : "");
   openModal("savingModal");
@@ -4783,7 +4808,7 @@ function openSavingModal(){
 window.openSavingModal = openSavingModal;
 
 function saveSavingModal(){
-  const m = $("scoreMonth")?.value || ym(new Date());
+  const m = $("savingMonth")?.value || $("scoreMonth")?.value || ym(new Date());
   const savingRaw = ($("savingInput")?.value || "").trim();
   const investRaw = ($("investInput")?.value || "").trim();
   if(!savingRaw && !investRaw){
@@ -4792,13 +4817,18 @@ function saveSavingModal(){
   }
   const saving = Number(savingRaw || 0);
   const invest = Number(investRaw || 0);
+  $("scoreMonth") && ($("scoreMonth").value = m);
   setSavingForMonth(m, saving, invest);
   syncSafely(()=> syncMonthlySettingsToSupabase(m));
   refreshSavingLabel();
+  renderWeeklyInline();
+  renderMonthlyGate();
   closeModal("savingModal");
   if(PENDING_MONTHLY){
     PENDING_MONTHLY = false;
     showMonthlyScore();
+  }else{
+    toast("貯蓄・投資を保存しました");
   }
 }
 window.saveSavingModal = saveSavingModal;
@@ -6269,7 +6299,7 @@ async function init(){
   $("tab-profile")?.addEventListener("click", ()=> updateScreenHeader("profile"));
   $("scoreQuickBtn")?.addEventListener("click", ()=> updateScreenHeader("score"));
 
-  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","householdValueModal","profileAuthGateModal","setPasswordModal","openingModal"].forEach(id=>{
+  ["entryModal","dayDetailModal","resultModal","savingModal","surveyModal","editModal","premiumModal","premiumPlanModal","householdOnboardingModal","householdValueModal","profileAuthGateModal","setPasswordModal","openingModal","characterGuideModal"].forEach(id=>{
     const ov = $(id);
     if(!ov) return;
     ov.addEventListener("click", (e)=>{

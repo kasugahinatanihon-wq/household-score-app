@@ -360,14 +360,29 @@
     </div>
     <div class="modalBody" style="padding:16px;">
       <div class="row">
+        <label>対象月
+          <input type="month" id="savingMonth">
+        </label>
+      </div>
+      <div class="row">
         <label>貯蓄（円）<input type="number" id="savingInput" placeholder="例：30000"></label>
         <label>投資（円）<input type="number" id="investInput" placeholder="例：20000"></label>
       </div>
-      <div class="small" style="margin-top:8px;">初回だけ入力すればOK。必要なら後から編集できます。</div>
+      <div class="small" style="margin-top:8px;">対象月を選んで入力できます。必要なら後から何度でも変更できます。</div>
       <div style="margin-top:16px;">
-        <button class="primary" style="width:100%;" onclick="saveSavingModal()">保存して結果を見る</button>
+        <button class="primary" style="width:100%;" onclick="saveSavingModal()">保存する</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modalOverlay" id="characterGuideModal">
+  <div class="modal">
+    <div class="modalHeader">
+      <div class="modalTitle">キャラクター解説</div>
+      <button class="ghost" onclick="closeModal('characterGuideModal')">✕</button>
+    </div>
+    <div class="modalBody" id="characterGuideBody" style="padding:16px;"></div>
   </div>
 </div>
 

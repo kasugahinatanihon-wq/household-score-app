@@ -647,12 +647,36 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-weight:800;
   color:var(--report-muted);
   background:transparent;
+  transition:background .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.reportTabBtn[data-report-tab="trend"],
+.reportTabBtn[data-report-tab="compare"]{
+  color:#8f4b2f;
+}
+.reportTabBtn[data-report-tab="growth"]{
+  color:#0f766e;
+}
+.reportTabBtn:active{
+  transform:scale(.98);
 }
 .reportTabBtn.active{
   color:var(--report-ink);
   background:linear-gradient(180deg, #ffffff 0%, #fff3e7 100%);
   border-color:var(--primary-25);
   box-shadow:0 6px 14px rgba(114,72,57,.10);
+}
+.reportTabBtn[data-report-tab="trend"].active,
+.reportTabBtn[data-report-tab="compare"].active{
+  color:#8f4b2f;
+  background:linear-gradient(180deg, #fffdf8 0%, #ffe9d7 100%);
+  border-color:rgba(214,120,75,.30);
+  box-shadow:0 8px 18px rgba(143,75,47,.14);
+}
+.reportTabBtn[data-report-tab="growth"].active{
+  color:#0f766e;
+  background:linear-gradient(180deg, #f3fffd 0%, #daf8f4 100%);
+  border-color:rgba(15,118,110,.28);
+  box-shadow:0 8px 18px rgba(15,118,110,.14);
 }
 .reportTabBtn.is-comingsoon{
   color:#94a3b8;
@@ -663,6 +687,73 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .reportPane{ display:none; }
 .reportPane.active{ display:block; }
+#reportPane-trend .sectionCard,
+#reportPane-compare .sectionCard{
+  border-color:rgba(214,120,75,.18);
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(245,158,122,.10), rgba(245,158,122,0) 52%),
+    linear-gradient(180deg, #fffdfa 0%, #fff7ef 100%);
+}
+#reportPane-trend .sectionHead,
+#reportPane-compare .sectionHead{
+  padding-bottom:10px;
+  border-bottom:1px solid rgba(214,120,75,.12);
+}
+#reportPane-growth .sectionCard{
+  border-color:rgba(15,118,110,.16);
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(45,212,191,.12), rgba(45,212,191,0) 55%),
+    linear-gradient(180deg, #f9fffe 0%, #eefbf8 100%);
+}
+#reportPane-growth .sectionHead{
+  padding-bottom:10px;
+  border-bottom:1px solid rgba(15,118,110,.12);
+}
+#reportPane-growth .sectionName,
+#reportPane-growth .sectionScore{
+  color:#115e59;
+}
+#reportPane-growth .sectionHint{
+  color:#4b7b77;
+}
+#reportPane-growth select{
+  border-color:rgba(15,118,110,.16);
+  background:rgba(255,255,255,.88);
+}
+#reportPane-growth .dailyTrendLegend{
+  padding:10px 12px;
+  border:1px solid rgba(15,118,110,.14);
+  border-radius:14px;
+  background:rgba(255,255,255,.72);
+}
+#reportPane-growth .dailyTrendSwatch.cum{
+  background:#0f766e;
+}
+#reportPane-growth .dailyTrendSwatch.prevcum{
+  background:#7dd3c6;
+}
+#reportPane-growth .dailyTrendChartBox{
+  background:rgba(255,255,255,.8);
+  border-color:rgba(15,118,110,.14);
+}
+#reportPane-growth .dailyTrendGrid{
+  stroke:rgba(15,118,110,.14);
+}
+#reportPane-growth .dailyTrendYLabel,
+#reportPane-growth .dailyTrendAxis{
+  color:#5f8c88;
+  fill:#5f8c88;
+}
+#reportPane-growth .dailyTrendArea{
+  fill:rgba(45,212,191,.16);
+}
+#reportPane-growth .dailyTrendCum{
+  stroke:#0f766e;
+}
+#reportPane-growth .dailyTrendDot{
+  fill:#0f766e;
+  stroke:#d9fffa;
+}
 .growthLogGrid{
   display:grid;
   gap:10px;
@@ -2069,6 +2160,26 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-weight:900;
   color:#3b241e;
 }
+.homeStateTitleRow{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.homeStateHelpBtn{
+  width:24px;
+  height:24px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  border:1px solid rgba(148,163,184,.34);
+  background:rgba(255,255,255,.92);
+  color:#64748b;
+  font-size:13px;
+  font-weight:1000;
+  box-shadow:0 4px 12px rgba(15,23,42,.06);
+}
 .homeStatePill{
   display:inline-flex;
   align-items:center;
@@ -2095,6 +2206,24 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:#7a635d;
   font-size:14px;
   line-height:1.45;
+}
+.homeFinanceMeta{
+  margin-top:12px;
+  font-size:13px;
+  font-weight:800;
+  color:#6f5248;
+}
+.homeFinanceActions{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:8px;
+}
+.homeFinanceActions .ghost,
+.homeFinanceActions .dark{
+  min-height:42px;
+  font-size:12px;
+  font-weight:900;
 }
 .homeHandoffCard{
   position:absolute;
@@ -2332,7 +2461,21 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:20px;
     line-height:1.35;
   }
+  .homeStateTitleRow{
+    gap:6px;
+  }
+  .homeStateHelpBtn{
+    width:22px;
+    height:22px;
+    font-size:12px;
+  }
   .homeStateSub{ font-size:13px; }
+  .homeFinanceMeta{
+    font-size:12px;
+  }
+  .homeFinanceActions{
+    grid-template-columns:1fr;
+  }
   .homeHandoffCard{
     right:0;
     bottom:4px;
