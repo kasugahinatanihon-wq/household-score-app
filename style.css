@@ -725,9 +725,23 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 #reportPane-growth .reportGrowthControls{
   display:flex;
-  align-items:flex-end;
+  align-items:stretch;
   gap:8px;
   flex-wrap:wrap;
+  justify-content:flex-end;
+}
+#reportPane-growth .reportGrowthControls .small{
+  display:grid;
+  gap:4px;
+  min-width:116px;
+  padding:8px 10px;
+  border:1px solid rgba(95,127,116,.12);
+  border-radius:12px;
+  background:rgba(255,255,255,.68);
+}
+#reportPane-growth .reportGrowthControls select{
+  min-width:0;
+  width:100%;
 }
 #reportPane-growth .dailyTrendLegend{
   padding:10px 12px;
@@ -2507,6 +2521,14 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .homeStateSub{ font-size:13px; }
   .homeFinanceActions{
     grid-template-columns:1fr;
+  }
+  #reportPane-growth .reportGrowthControls{
+    width:100%;
+    justify-content:stretch;
+  }
+  #reportPane-growth .reportGrowthControls .small{
+    flex:1 1 0;
+    min-width:0;
   }
   .homeHandoffCard{
     right:0;
