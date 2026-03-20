@@ -4552,10 +4552,10 @@ function renderWeeklyInline(){
             ${displayCategory !== "未設定" ? ` ${escapeHtml(displayCategory)} ${displayShare}%` : " 主カテゴリ判定中"}
           </div>
           <div class="homeFinanceSummary">
-            <div class="homeFinanceCard">
+            <button class="homeFinanceCard homeFinanceCardAction" type="button" onclick="openSavingModal({ month: '${escapeHtml(monthStr)}' })" aria-label="今月の貯蓄と投資を入力">
               <div class="homeFinanceLabel">今月の入力</div>
               <div class="homeFinanceValue">貯蓄 ${fmtYen(Math.round(monthSaving))}円 / 投資 ${fmtYen(Math.round(monthInvest))}円</div>
-            </div>
+            </button>
             <div class="homeFinanceCard is-total">
               <div class="homeFinanceLabel">これまでの累計</div>
               <div class="homeFinanceValue">合計 ${fmtYen(Math.round(cumulativeTotal))}円</div>
@@ -4563,7 +4563,6 @@ function renderWeeklyInline(){
             </div>
           </div>
           <div class="homeFinanceActions">
-            <button class="ghost" type="button" onclick="openSavingModal({ month: '${escapeHtml(monthStr)}' })">月を選んで貯蓄・投資を入力</button>
             <button class="dark" type="button" onclick="showMonthlyScore()">${escapeHtml(readyMonth || monthStr)} のサマリーを見る</button>
           </div>
         </div>
