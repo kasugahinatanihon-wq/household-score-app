@@ -2117,6 +2117,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .homeStateBlock{
   min-width:0;
   width:100%;
+  text-align:left;
 }
 .homeAvatar{
   position:relative;
@@ -2227,9 +2228,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .homeFinanceSummary{
   margin-top:10px;
-  display:grid;
+  display:flex;
   width:100%;
-  grid-template-columns:auto auto;
   justify-content:space-between;
   gap:6px;
   align-items:start;
@@ -2240,20 +2240,20 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   padding:5px 9px;
   background:rgba(255,255,255,.5);
   text-align:left;
-  width:max-content;
-  max-width:100%;
+  width:auto;
+  max-width:48%;
 }
 .homeFinanceCardAction{
   cursor:pointer;
   transition:transform .16s ease, box-shadow .16s ease, background .16s ease;
-  justify-self:start;
 }
 .homeFinanceCardAction:active{
   transform:scale(.98);
 }
 .homeFinanceCard.is-total{
   background:rgba(255,251,247,.72);
-  justify-self:end;
+  margin-left:auto;
+  text-align:right;
 }
 .homeFinanceLabel{
   font-size:9px;
@@ -2527,6 +2527,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:12px;
   }
   .homeStateSub{ font-size:13px; }
+  .homeStateBlock{
+    text-align:left;
+  }
   .homeFinanceActions{
     justify-content:stretch;
   }
@@ -2534,8 +2537,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     width:100%;
   }
   .homeFinanceSummary{
-    grid-template-columns:auto auto;
+    display:flex;
     justify-content:space-between;
+    align-items:flex-start;
   }
   #reportPane-growth .reportGrowthControls{
     width:100%;
