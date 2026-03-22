@@ -569,6 +569,95 @@ function getMonthlyCategoryTotals(tx){
     .sort((a,b)=> b.amount - a.amount);
 }
 
+function buildMonthlyCategoryStats(tx, valueTop3, prevTx){
+  const topSet = new Set((valueTop3 || []).filter(Boolean));
+  const prevMap = {};
+  (prevTx || []).forEach(row=>{
+    const cat = String(row.category || "");
+    if(!cat || FIXED_CATEGORIES.has(cat)) return;
+    prevMap[cat] = (prevMap[cat] || 0) + Number(row.amount || 0);
+  });
+
+  const map = {};
+  tx.forEach(row=>{
+    const cat = String(row.category || "");
+    if(!cat || FIXED_CATEGORIES.has(cat)) return;
+    if(!map[cat]){
+      map[cat] = {
+        category: cat,
+        totalAmount: 0,
+        txCount: 0,
+        satTotal: 0,
+        satCount: 0,
+        highSatCount: 0,
+        lowSatCount: 0,
+        valueMatchCount: 0,
+      };
+    }
+    const item = map[cat];
+    const amount = Number(row.amount || 0);
+    const sat = Number(row.satisfaction || 0);
+    item.totalAmount += amount;
+    item.txCount += 1;
+    if(Number.isFinite(sat) && sat > 0){
+      item.satTotal += sat;
+      item.satCount += 1;
+      if(sat >= 4) item.highSatCount += 1;
+      if(sat <= 2) item.lowSatCount += 1;
+    }
+    if(topSet.has(String(row.valueTag || "").trim())) item.valueMatchCount += 1;
+  });
+
+  return Object.values(map).map(item=>{
+    const avgSat5 = item.satCount ? (item.satTotal / item.satCount) : null;
+    const avgSatisfaction = avgSat5 == null ? null : clamp(Math.round(((avgSat5 - 1) / 4) * 100), 0, 100);
+    const prevAmount = Number(prevMap[item.category] || 0);
+    return {
+      ...item,
+      avgSat5,
+      avgSatisfaction,
+      highSatRatio: item.txCount ? (item.highSatCount / item.txCount) : 0,
+      lowSatRatio: item.txCount ? (item.lowSatCount / item.txCount) : 0,
+      valueMatchRatio: item.txCount ? (item.valueMatchCount / item.txCount) : 0,
+      prevAmount,
+      diffAmount: item.totalAmount - prevAmount,
+      diffRate: prevAmount > 0 ? ((item.totalAmount - prevAmount) / prevAmount) : null,
+    };
+  }).sort((a,b)=> b.totalAmount - a.totalAmount);
+}
+
+function inferMonthlyMoneyStyle(stats){
+  if(!stats.length) return "分析準備中タイプ";
+  const top = stats[0];
+  const cat = top.category;
+  if(["デート","外食費","趣味","カフェ"].includes(cat)) return "体験重視タイプ";
+  if(["日用品","医療費","交通費"].includes(cat)) return "生活安定タイプ";
+  if(["教育費","美容","仕事","衣服"].includes(cat)) return "自己投資タイプ";
+  if(["交際費","プレゼント"].includes(cat)) return "人間関係重視タイプ";
+  if(["コンビニ"].includes(cat)) return "日常消費が漏れやすいタイプ";
+  return `${cat}重視タイプ`;
+}
+
+function pickMonthlyKeepSpend(stats){
+  return stats.find(item=>
+    item.totalAmount >= 5000 &&
+    Number.isFinite(item.avgSat5) &&
+    item.avgSat5 >= 4 &&
+    (item.valueMatchRatio >= 0.34 || item.highSatRatio >= 0.6)
+  ) || null;
+}
+
+function pickMonthlyRiskSpend(stats){
+  return stats.find(item=>
+    item.txCount >= 2 &&
+    (
+      (Number.isFinite(item.avgSat5) && item.avgSat5 <= 2.8) ||
+      item.lowSatRatio >= 0.34 ||
+      ((item.diffAmount >= 3000) && Number.isFinite(item.avgSat5) && item.avgSat5 < 3.4)
+    )
+  ) || null;
+}
+
 function buildMonthlyReviewStory({
   monthStr,
   tx,
@@ -586,32 +675,44 @@ function buildMonthlyReviewStory({
 }){
   const prevMonth = shiftYm(monthStr, -1);
   const prevTx = loadTx().filter(t=> t.date && t.date.startsWith(prevMonth));
-  const prevVarSpend = prevTx
-    .filter(t=> !FIXED_CATEGORIES.has(t.category))
-    .reduce((sum, row)=> sum + Number(row.amount || 0), 0);
+  const prevVarSpend = prevTx.filter(t=> !FIXED_CATEGORIES.has(t.category)).reduce((sum, row)=> sum + Number(row.amount || 0), 0);
   const diffVarSpend = Number(varSpend || 0) - Number(prevVarSpend || 0);
-  const topSpend = getMonthlyCategoryTotals(tx)[0] || null;
+  const stats = buildMonthlyCategoryStats(tx, valueTop3, prevTx);
+  const topSpend = stats[0] || null;
   const lowCategory = categoryScores
     .filter(item=> Number.isFinite(item.score))
     .sort((a,b)=> Number(a.score || 0) - Number(b.score || 0))[0] || null;
   const goodCategory = categoryScores
     .filter(item=> Number.isFinite(item.score))
     .sort((a,b)=> Number(b.score || 0) - Number(a.score || 0))[0] || null;
+  const keepSpend = pickMonthlyKeepSpend(stats);
+  const riskSpend = pickMonthlyRiskSpend(stats);
+  const moneyStyle = inferMonthlyMoneyStyle(stats);
 
   let overview = "今月は家計の全体像をつかみ始めた月です。";
   if(Number.isFinite(satisfactionScore) && Number.isFinite(stabilityScore)){
     if(satisfactionScore >= 75 && stabilityScore >= 75){
       overview = "今月は、納得して使いながら家計も崩していない、かなり完成度の高い月でした。";
     }else if(satisfactionScore >= 75){
-      overview = "今月は、使い方の満足度は高い一方で、家計の土台にはまだ整える余地がある月でした。";
+      overview = keepSpend
+        ? `今月は、${keepSpend.category}のような満足度の高い支出ができていた一方で、家計の土台にはまだ整える余地がある月でした。`
+        : "今月は、使い方の満足度は高い一方で、家計の土台にはまだ整える余地がある月でした。";
     }else if(stabilityScore >= 75){
-      overview = "今月は、家計は安定していた一方で、使ったお金の納得感には伸びしろが残る月でした。";
+      overview = riskSpend
+        ? `今月は、家計は安定していた一方で、${riskSpend.category}など使ったお金の納得感には伸びしろが残る月でした。`
+        : "今月は、家計は安定していた一方で、使ったお金の納得感には伸びしろが残る月でした。";
     }else{
-      overview = "今月は、満足度と安定度の両方に伸びしろが見えた月でした。";
+      overview = riskSpend
+        ? `今月は、${riskSpend.category}の使い方が満足度と安定度の両方に影響し、全体として伸びしろが見えた月でした。`
+        : "今月は、満足度と安定度の両方に伸びしろが見えた月でした。";
     }
   }
 
   const goodPoints = [];
+  goodPoints.push(`今月のあなたは「${moneyStyle}」です。${monthlyCharacter.name}が出ているのは、その傾向が強く表れていたからです。`);
+  if(keepSpend){
+    goodPoints.push(`${keepSpend.category}は金額が大きくても納得度が高く、あなたにとっては削るより活かしたい支出です。`);
+  }
   if(goodCategory){
     goodPoints.push(`${goodCategory.category}は納得度が高く、気持ちよく使えていたカテゴリです。`);
   }
@@ -625,6 +726,9 @@ function buildMonthlyReviewStory({
   }
 
   const riskPoints = [];
+  if(riskSpend){
+    riskPoints.push(`${riskSpend.category}は回数や金額のわりに納得度が伸びておらず、今月の崩れポイントになっています。`);
+  }
   if(lowCategory){
     riskPoints.push(`${lowCategory.category}は納得度が低めで、使い方を見直す余地がありそうです。`);
   }
@@ -651,9 +755,11 @@ function buildMonthlyReviewStory({
     fixedRate: income > 0 ? (fixedSum / income) : null
   });
 
-  const changeLine = Number.isFinite(diffVarSpend) && Math.abs(diffVarSpend) >= 1000
-    ? `先月比では、変動費が${diffVarSpend > 0 ? "増加" : "減少"}しています。`
-    : "先月比は大きくは動いておらず、使い方の質を整える段階です。";
+  const changeLine = topSpend && Number.isFinite(topSpend.diffAmount) && Math.abs(topSpend.diffAmount) >= 3000
+    ? `${topSpend.category}は先月より${topSpend.diffAmount > 0 ? fmtYen(topSpend.diffAmount) + "円増えており" : fmtYen(Math.abs(topSpend.diffAmount)) + "円減っており"}、今月の印象を強く動かしています。`
+    : Number.isFinite(diffVarSpend) && Math.abs(diffVarSpend) >= 1000
+      ? `先月比では、変動費が${diffVarSpend > 0 ? "増加" : "減少"}しています。`
+      : "先月比は大きくは動いておらず、使い方の質を整える段階です。";
 
   return {
     overview,
