@@ -445,8 +445,10 @@ function renderHappinessScatterContent({ youX, youY, avgX, avgY, xMid=50, yMid=7
         <span class="legendPill avg" data-target="avg" role="button" aria-pressed="true"><span class="dot"></span>中央値表示予定</span>
       </div>
     </div>
-    <div class="small" style="margin-top:6px;">今は完成イメージの表示です。記録が溜まり次第、中央値との比較表示に切り替わります。</div>
-    <div class="small muted guideLine">${escapeHtml(guideLineText || "納得して使えていて、家計への負担が軽いほど右上に近づくイメージです")}</div>
+    <div class="scatterNotes">
+      <div class="small">今は完成イメージの表示です。記録が溜まり次第、中央値との比較表示に切り替わります。</div>
+      <div class="small muted guideLine">${escapeHtml(guideLineText || "納得して使えていて、家計への負担が軽いほど右上に近づくイメージです")}</div>
+    </div>
   `;
 }
 
@@ -553,6 +555,113 @@ function buildSummaryTextMonthly({ satisfactionScore, stabilityScore }){
     }
   }
   return "今月の状態を2つの軸で確認できます。";
+}
+
+function getMonthlyCategoryTotals(tx){
+  const map = {};
+  tx.forEach(row=>{
+    const cat = String(row.category || "");
+    if(!cat || FIXED_CATEGORIES.has(cat)) return;
+    map[cat] = (map[cat] || 0) + Number(row.amount || 0);
+  });
+  return Object.entries(map)
+    .map(([category, amount])=> ({ category, amount }))
+    .sort((a,b)=> b.amount - a.amount);
+}
+
+function buildMonthlyReviewStory({
+  monthStr,
+  tx,
+  categoryScores,
+  satisfactionScore,
+  stabilityScore,
+  valueAlignScore,
+  regretRate,
+  happinessScore,
+  varSpend,
+  fixedSum,
+  income,
+  valueTop3,
+  monthlyCharacter
+}){
+  const prevMonth = shiftYm(monthStr, -1);
+  const prevTx = loadTx().filter(t=> t.date && t.date.startsWith(prevMonth));
+  const prevVarSpend = prevTx
+    .filter(t=> !FIXED_CATEGORIES.has(t.category))
+    .reduce((sum, row)=> sum + Number(row.amount || 0), 0);
+  const diffVarSpend = Number(varSpend || 0) - Number(prevVarSpend || 0);
+  const topSpend = getMonthlyCategoryTotals(tx)[0] || null;
+  const lowCategory = categoryScores
+    .filter(item=> Number.isFinite(item.score))
+    .sort((a,b)=> Number(a.score || 0) - Number(b.score || 0))[0] || null;
+  const goodCategory = categoryScores
+    .filter(item=> Number.isFinite(item.score))
+    .sort((a,b)=> Number(b.score || 0) - Number(a.score || 0))[0] || null;
+
+  let overview = "今月は家計の全体像をつかみ始めた月です。";
+  if(Number.isFinite(satisfactionScore) && Number.isFinite(stabilityScore)){
+    if(satisfactionScore >= 75 && stabilityScore >= 75){
+      overview = "今月は、納得して使いながら家計も崩していない、かなり完成度の高い月でした。";
+    }else if(satisfactionScore >= 75){
+      overview = "今月は、使い方の満足度は高い一方で、家計の土台にはまだ整える余地がある月でした。";
+    }else if(stabilityScore >= 75){
+      overview = "今月は、家計は安定していた一方で、使ったお金の納得感には伸びしろが残る月でした。";
+    }else{
+      overview = "今月は、満足度と安定度の両方に伸びしろが見えた月でした。";
+    }
+  }
+
+  const goodPoints = [];
+  if(goodCategory){
+    goodPoints.push(`${goodCategory.category}は納得度が高く、気持ちよく使えていたカテゴリです。`);
+  }
+  if(Number.isFinite(valueAlignScore) && valueAlignScore >= 65){
+    goodPoints.push(`価値観TOP3（${valueTop3.length ? valueTop3.join(" / ") : "未設定"}）に沿った支出が比較的できています。`);
+  }else if(Number.isFinite(happinessScore) && happinessScore >= 60){
+    goodPoints.push("使ったお金が満足感につながっていて、幸福効率は比較的良い状態です。");
+  }
+  if(!goodPoints.length){
+    goodPoints.push(`${monthlyCharacter.name}らしさが出ていて、今月の使い方の軸は見え始めています。`);
+  }
+
+  const riskPoints = [];
+  if(lowCategory){
+    riskPoints.push(`${lowCategory.category}は納得度が低めで、使い方を見直す余地がありそうです。`);
+  }
+  if(Number.isFinite(diffVarSpend) && Math.abs(diffVarSpend) >= 5000){
+    riskPoints.push(diffVarSpend > 0
+      ? `変動費は先月より${fmtYen(Math.abs(diffVarSpend))}円増えていて、日々の支出が家計を押し上げています。`
+      : `変動費は先月より${fmtYen(Math.abs(diffVarSpend))}円抑えられていて、使い方は整い始めています。`);
+  }else if(topSpend){
+    riskPoints.push(`${topSpend.category}が今月の中心支出でした。多いこと自体より、納得して使えていたかが来月の分かれ目です。`);
+  }
+  if(Number.isFinite(regretRate) && regretRate >= 0.35){
+    riskPoints.push("後悔した支出が少し目立ったので、理由を1つ振り返るだけでも来月の質が変わります。");
+  }
+  const dedupedRisk = Array.from(new Set(riskPoints)).slice(0,2);
+
+  const nextAction = buildNextActionMonthly({
+    coveragePct: tx.length ? Math.round((calcSubjectiveMetrics(tx).coverage || 0) * 100) : 0,
+    subjectiveScore: calcSubjectiveMetrics(tx).score,
+    valueAlignScore,
+    regretScore: calcRegretMetrics(tx).score,
+    happinessScore,
+    varRate: income > 0 ? (varSpend / income) : null,
+    savingRate: income > 0 ? ((Number(loadSavingMap()[monthStr]?.saving || 0) + Number(loadSavingMap()[monthStr]?.invest || 0)) / income) : null,
+    fixedRate: income > 0 ? (fixedSum / income) : null
+  });
+
+  const changeLine = Number.isFinite(diffVarSpend) && Math.abs(diffVarSpend) >= 1000
+    ? `先月比では、変動費が${diffVarSpend > 0 ? "増加" : "減少"}しています。`
+    : "先月比は大きくは動いておらず、使い方の質を整える段階です。";
+
+  return {
+    overview,
+    goodPoints: goodPoints.slice(0,2),
+    riskPoints: dedupedRisk.length ? dedupedRisk : ["今月は細かな支出の使い方を見直すと、来月の印象が変わりやすいです。"],
+    nextAction,
+    changeLine
+  };
 }
 
 function buildNextActionWeekly({ daysWithEntry, coveragePct, subjectiveScore, regretRate }){
@@ -2914,13 +3023,13 @@ function renderBenchCompareBar(you, target){
   const targetPos = clamp01(target / max) * 100;
   return `
     <div class="benchCompare">
-      <div class="benchCompareScale">
-        <span>低め</span>
-        <span>近い</span>
-        <span>高め</span>
-      </div>
       <span class="benchCompareTarget" style="left:${targetPos}%;"></span>
       <span class="benchCompareMarker" style="left:${youPos}%;"></span>
+    </div>
+    <div class="benchCompareScale">
+      <span>低め</span>
+      <span>近い</span>
+      <span>高め</span>
     </div>
   `;
 }
@@ -5262,12 +5371,32 @@ function buildMonthlyResult(){
 
   const monthlyCharacter = buildCharacterSnapshot(m);
   const monthlyMood = getPetEmojiByTier(getPetSpeciesByCategory(monthlyCharacter.category), monthlyCharacter.tier);
+  const monthlyStory = buildMonthlyReviewStory({
+    monthStr: m,
+    tx,
+    categoryScores,
+    satisfactionScore,
+    stabilityScore,
+    valueAlignScore,
+    regretRate,
+    happinessScore,
+    varSpend,
+    fixedSum,
+    income,
+    valueTop3,
+    monthlyCharacter
+  });
 
   const html = `
     <div class="resultWrap monthlyResult">
         <div class="summaryCard animIn a1">
           <div class="summaryTitle">マンスリーサマリー：${escapeHtml(m)}</div>
           <div class="summaryLead">${escapeHtml(summaryMonthly)}</div>
+          <div class="monthlyReviewHero">
+            <div class="monthlyReviewEyebrow">今月の総評</div>
+            <div class="monthlyReviewOverview">${escapeHtml(monthlyStory.overview)}</div>
+            <div class="monthlyReviewShift">${escapeHtml(monthlyStory.changeLine)}</div>
+          </div>
           <div class="monthlySummaryCharacter">
             <div class="monthlySummaryCharacterAvatar">${homeAvatarHTML(monthlyCharacter.category, monthlyCharacter.tier, monthlyMood)}</div>
             <div class="monthlySummaryCharacterMeta">
@@ -5275,6 +5404,20 @@ function buildMonthlyResult(){
               <div class="monthlySummaryCharacterSub">${escapeHtml(monthlyCharacter.tier)}</div>
               <div class="monthlySummaryCharacterNote">この月のお金の使い方の傾向から判定しています</div>
             </div>
+          </div>
+          <div class="monthlyReviewGrid">
+            <div class="monthlyReviewCard good">
+              <div class="monthlyReviewCardTitle">良かったこと</div>
+              ${monthlyStory.goodPoints.map(text=> `<div class="monthlyReviewPoint">${escapeHtml(text)}</div>`).join("")}
+            </div>
+            <div class="monthlyReviewCard warn">
+              <div class="monthlyReviewCardTitle">崩れたポイント</div>
+              ${monthlyStory.riskPoints.map(text=> `<div class="monthlyReviewPoint">${escapeHtml(text)}</div>`).join("")}
+            </div>
+          </div>
+          <div class="monthlyReviewAction">
+            <div class="monthlyReviewActionLabel">来月の1アクション</div>
+            <div class="monthlyReviewActionText">${escapeHtml(monthlyStory.nextAction)}</div>
           </div>
           <div class="monthlyAxisTabs" role="tablist" aria-label="マンスリーサマリー表示切り替え">
             <button class="monthlyAxisBtn active" data-main="sat" onclick="switchMonthlyMainTab('sat')" role="tab" aria-controls="monthlyAxisPanel-sat" aria-selected="true">家計納得度</button>

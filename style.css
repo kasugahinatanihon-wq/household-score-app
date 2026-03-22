@@ -2373,7 +2373,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   flex-wrap:wrap;
   gap:8px;
   justify-content:center;
-  padding-bottom:14px;
+  padding-bottom:calc(20px + var(--safeBottom));
 }
 .homeRecordPill{
   display:inline-flex;
@@ -3217,6 +3217,31 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .monthlyResult .summaryTitle{ font-size:15px; font-weight:600; }
 .monthlyResult .summaryLead{ font-size:13px; color:var(--card-muted); }
 .monthlyResult .summaryMeta{ color:var(--card-muted); }
+.monthlyReviewHero{
+  margin-top:10px;
+  padding:12px;
+  border-radius:14px;
+  background:linear-gradient(180deg, rgba(255,247,239,.96), rgba(255,255,255,.94));
+  border:1px solid rgba(214,120,75,.16);
+}
+.monthlyReviewEyebrow{
+  font-size:11px;
+  font-weight:900;
+  color:#8f4b2f;
+}
+.monthlyReviewOverview{
+  margin-top:6px;
+  font-size:14px;
+  font-weight:900;
+  line-height:1.65;
+  color:var(--ink);
+}
+.monthlyReviewShift{
+  margin-top:6px;
+  font-size:11px;
+  line-height:1.5;
+  color:var(--card-muted);
+}
 .monthlySummaryCharacter{
   margin-top:10px;
   display:flex;
@@ -3268,6 +3293,67 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-size:10px;
   color:var(--muted);
   line-height:1.4;
+}
+.monthlyReviewGrid{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+.monthlyReviewCard{
+  border:1px solid rgba(214,120,75,.14);
+  border-radius:14px;
+  padding:11px 12px;
+  background:rgba(255,255,255,.9);
+}
+.monthlyReviewCard.good{
+  background:linear-gradient(180deg, rgba(255,250,245,.98), rgba(255,255,255,.92));
+}
+.monthlyReviewCard.warn{
+  background:linear-gradient(180deg, rgba(255,247,242,.98), rgba(255,255,255,.92));
+}
+.monthlyReviewCardTitle{
+  font-size:12px;
+  font-weight:900;
+  color:#8f4b2f;
+}
+.monthlyReviewPoint{
+  margin-top:8px;
+  font-size:12px;
+  line-height:1.65;
+  color:var(--ink);
+}
+.monthlyReviewPoint:first-of-type{
+  margin-top:10px;
+}
+.monthlyReviewAction{
+  margin-top:10px;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;
+  padding:11px 12px;
+  background:rgba(248,250,252,.9);
+}
+.monthlyReviewActionLabel{
+  font-size:11px;
+  font-weight:900;
+  color:#64748b;
+}
+.monthlyReviewActionText{
+  margin-top:6px;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.6;
+  color:var(--ink);
+}
+@media (max-width:720px){
+  .monthlyReviewGrid{
+    grid-template-columns:1fr;
+  }
+  .monthlyReviewHero,
+  .monthlyReviewCard,
+  .monthlyReviewAction{
+    padding:10px 11px;
+  }
 }
 .summaryRight{ display:flex; align-items:center; justify-content:center; }
 .axisGrid{
@@ -3807,10 +3893,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   box-shadow: inset 0 0 0 1px rgba(15,23,42,.06);
 }
 .benchCompareScale{
-  position:absolute;
-  left:0;
-  right:0;
-  top:-18px;
+  margin-top:6px;
   display:flex;
   justify-content:space-between;
   font-size:9px;
@@ -3922,6 +4005,12 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   box-shadow:var(--card-shadow);
   max-width:1200px;
   margin:0 auto;
+}
+.scatterNotes{
+  margin-top:12px;
+  padding:0 10px 8px;
+  display:grid;
+  gap:10px;
 }
 .scatterHeader{
   display:flex;
