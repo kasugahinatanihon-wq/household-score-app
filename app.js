@@ -2914,12 +2914,8 @@ function renderBenchCompareBar(you, target){
   const targetPos = clamp01(target / max) * 100;
   return `
     <div class="benchCompare">
-      <span class="benchCompareTarget" style="left:${targetPos}%;">
-        <span class="benchCompareTargetLabel">目安</span>
-      </span>
-      <span class="benchCompareMarker" style="left:${youPos}%;">
-        <span class="benchCompareMarkerLabel">あなた</span>
-      </span>
+      <span class="benchCompareTarget" style="left:${targetPos}%;"></span>
+      <span class="benchCompareMarker" style="left:${youPos}%;"></span>
     </div>
   `;
 }
@@ -4527,11 +4523,6 @@ function renderWeeklyInline(){
   const currentMonthSaving = getSavingForMonth(monthStr) || { saving:0, invest:0 };
   const monthSaving = Number(currentMonthSaving.saving || 0);
   const monthInvest = Number(currentMonthSaving.invest || 0);
-  const savingMap = loadSavingMap();
-  const savingMonths = Object.keys(savingMap).filter(Boolean).sort();
-  const cumulativeSaving = savingMonths.reduce((sum, key)=> sum + Number(savingMap[key]?.saving || 0), 0);
-  const cumulativeInvest = savingMonths.reduce((sum, key)=> sum + Number(savingMap[key]?.invest || 0), 0);
-  const cumulativeTotal = cumulativeSaving + cumulativeInvest;
   const guideCopy = buildHomeCharacterGuide(displayCategory, tier, displayShare);
   HOME_CHARACTER_GUIDE = {
     title: archetype,
@@ -4556,11 +4547,6 @@ function renderWeeklyInline(){
               <div class="homeFinanceLabel">今月の入力</div>
               <div class="homeFinanceValue">貯蓄 ${fmtYen(Math.round(monthSaving))}円 / 投資 ${fmtYen(Math.round(monthInvest))}円</div>
             </button>
-            <div class="homeFinanceCard is-total">
-              <div class="homeFinanceLabel">これまでの累計</div>
-              <div class="homeFinanceValue">合計 ${fmtYen(Math.round(cumulativeTotal))}円</div>
-              <div class="homeFinanceSub">貯蓄 ${fmtYen(Math.round(cumulativeSaving))}円 / 投資 ${fmtYen(Math.round(cumulativeInvest))}円</div>
-            </div>
           </div>
           <div class="homeStateTitleRow">
             <div class="homeStateTitle">${escapeHtml(archetype)}</div>
@@ -5246,8 +5232,8 @@ function buildMonthlyResult(){
     ? `現在地: 目安内 ${countBlue} / 注意 ${countYellow} / 要改善 ${countRed}`
     : "現在地はデータが増えると表示されます。";
   const benchmarkIntroHtml = targetBudget ? `
-    <div class="small muted" style="margin-top:6px; margin-bottom:10px;">
-      基準：${targetBudget.ageBandLabel} / 世帯${targetBudget.householdSize}人 / 年収${fmtYen(targetBudget.annualIncomeGross)}円（手取り換算）
+    <div class="small muted" style="margin-top:6px; margin-bottom:10px; line-height:1.5;">
+      基準：${targetBudget.ageBandLabel} / 世帯${targetBudget.householdSize}人 / 年収${fmtYen(targetBudget.annualIncomeGross)}円
     </div>
   ` : `
     <div class="small muted" style="margin-top:6px;">
