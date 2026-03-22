@@ -400,9 +400,9 @@ function renderHappinessScatterContent({ youX, youY, avgX, avgY, xMid=50, yMid=7
       <div class="scatterHeader">
         <div>
           <div class="scatterTitle">ユーザー中央値比較マップ</div>
-          <div class="scatterSub">横軸：家計安定度 / 縦軸：家計納得度</div>
+          <div class="scatterSub">将来はユーザー中央値と比べて現在地が分かる予定です</div>
         </div>
-        <button class="scatterAction" type="button">比較</button>
+        <button class="scatterAction" type="button">イメージ</button>
       </div>
       <div class="scatterChart">
         <svg class="scatterSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="行動マップの比較">
@@ -441,12 +441,12 @@ function renderHappinessScatterContent({ youX, youY, avgX, avgY, xMid=50, yMid=7
         <div class="scatterTooltip" aria-hidden="true"></div>
       </div>
       <div class="scatterLegend">
-        <span class="legendPill you" data-target="you" role="button" aria-pressed="true"><span class="dot"></span>あなた</span>
-        <span class="legendPill avg" data-target="avg" role="button" aria-pressed="true"><span class="dot"></span>ユーザー中央値（仮）</span>
+        <span class="legendPill you" data-target="you" role="button" aria-pressed="true"><span class="dot"></span>あなたの位置イメージ</span>
+        <span class="legendPill avg" data-target="avg" role="button" aria-pressed="true"><span class="dot"></span>中央値表示予定</span>
       </div>
     </div>
-    ${!hasYou ? `<div class="small" style="margin-top:6px;">データが少ないため、次の月に精度が上がります（まずは記録と納得入力でOK）</div>` : ""}
-    <div class="small muted guideLine">${escapeHtml(guideLineText || "納得して使えていて、かつ家計への負担が軽いほど右上に近づきます")}</div>
+    <div class="small" style="margin-top:6px;">今は完成イメージの表示です。記録が溜まり次第、中央値との比較表示に切り替わります。</div>
+    <div class="small muted guideLine">${escapeHtml(guideLineText || "納得して使えていて、家計への負担が軽いほど右上に近づくイメージです")}</div>
   `;
 }
 
@@ -2914,6 +2914,11 @@ function renderBenchCompareBar(you, target){
   const targetPos = clamp01(target / max) * 100;
   return `
     <div class="benchCompare">
+      <div class="benchCompareScale">
+        <span>低め</span>
+        <span>近い</span>
+        <span>高め</span>
+      </div>
       <span class="benchCompareTarget" style="left:${targetPos}%;"></span>
       <span class="benchCompareMarker" style="left:${youPos}%;"></span>
     </div>
@@ -5381,22 +5386,22 @@ function buildMonthlyResult(){
       <div class="monthlyDetailPane animIn a3" id="monthlyDetail-compare" data-detail="compare" role="tabpanel" aria-hidden="true" style="display:none;">
         <div class="sectionCard">
           <div class="sectionHead">
-            <div><div class="sectionName">比較機能（準備中）</div><div class="sectionHint">データが溜まり次第、同属性比較を表示</div></div>
+            <div><div class="sectionName">比較機能（準備中）</div><div class="sectionHint">近い属性のユーザーと比較できる予定です</div></div>
             <div class="sectionScore"><span class="benchSource custom">準備中</span></div>
           </div>
           <div class="comparePreviewGrid">
             <div class="comparePreviewCard">
               <div class="comparePreviewLabel">表示予定</div>
-              <div class="comparePreviewValue">同属性内の現在地</div>
-              <div class="small muted">年齢帯・世帯人数・年収帯などを反映</div>
+              <div class="comparePreviewValue">近い属性の中での現在地</div>
+              <div class="small muted">年齢帯や世帯人数などをもとに比較予定です</div>
             </div>
             <div class="comparePreviewCard">
               <div class="comparePreviewLabel">表示予定</div>
-              <div class="comparePreviewValue">平均との差と推移</div>
-              <div class="small muted">月ごとの変化を比較しやすく表示</div>
+              <div class="comparePreviewValue">平均との差や傾向の違い</div>
+              <div class="small muted">細かな表示内容はデータが揃い次第調整します</div>
             </div>
           </div>
-          <div class="small muted" style="margin-top:8px;">今は精度担保のため非表示です。十分なデータが集まり次第リリースします。</div>
+          <div class="small muted" style="margin-top:8px;">今は準備中です。比較対象の精度が出せるだけデータが集まり次第、順次公開します。</div>
         </div>
       </div>
 
