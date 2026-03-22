@@ -5088,6 +5088,85 @@ function switchMonthlyMainTab(tab){
 }
 window.switchMonthlyMainTab = switchMonthlyMainTab;
 
+function initMonthlyWrapCarousels(root = document){
+  root.querySelectorAll("[data-wrap-carousel]").forEach(carousel=>{
+    if(carousel.dataset.ready === "true") return;
+    const track = carousel.querySelector(".monthlyWrapTrack");
+    const dots = carousel.querySelector(".monthlyWrapDots");
+    const cards = Array.from(carousel.querySelectorAll(".monthlyWrapCard"));
+    if(!track || !dots || !cards.length) return;
+
+    let index = 0;
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    dots.innerHTML = cards.map((_, i)=> `
+      <button
+        type="button"
+        class="monthlyWrapDot${i === 0 ? " active" : ""}"
+        aria-label="${i + 1}枚目へ"
+        data-index="${i}"></button>
+    `).join("");
+
+    const dotButtons = Array.from(dots.querySelectorAll(".monthlyWrapDot"));
+
+    const update = ()=>{
+      track.style.transform = `translate3d(${-index * 100}%, 0, 0)`;
+      cards.forEach((card, i)=>{
+        card.setAttribute("aria-hidden", i === index ? "false" : "true");
+      });
+      dotButtons.forEach((dot, i)=>{
+        dot.classList.toggle("active", i === index);
+        dot.setAttribute("aria-current", i === index ? "true" : "false");
+      });
+      carousel.dataset.index = String(index);
+    };
+
+    const moveTo = (nextIndex)=>{
+      index = clamp(nextIndex, 0, cards.length - 1);
+      update();
+    };
+
+    dots.addEventListener("click", (event)=>{
+      const button = event.target.closest(".monthlyWrapDot");
+      if(!button) return;
+      moveTo(Number(button.dataset.index || 0));
+    });
+
+    track.addEventListener("touchstart", (event)=>{
+      if(!event.touches.length) return;
+      isDragging = true;
+      startX = event.touches[0].clientX;
+      currentX = startX;
+    }, { passive: true });
+
+    track.addEventListener("touchmove", (event)=>{
+      if(!isDragging || !event.touches.length) return;
+      currentX = event.touches[0].clientX;
+    }, { passive: true });
+
+    track.addEventListener("touchend", ()=>{
+      if(!isDragging) return;
+      const deltaX = currentX - startX;
+      if(deltaX <= -48){
+        moveTo(index + 1);
+      }else if(deltaX >= 48){
+        moveTo(index - 1);
+      }else{
+        update();
+      }
+      isDragging = false;
+      startX = 0;
+      currentX = 0;
+    });
+
+    carousel.dataset.ready = "true";
+    update();
+  });
+}
+window.initMonthlyWrapCarousels = initMonthlyWrapCarousels;
+
 function bindScatterTooltips(){
   document.querySelectorAll(".scatterWrap").forEach(wrap=>{
     const tip = wrap.querySelector(".scatterTooltip");
@@ -5239,6 +5318,7 @@ function showMonthlyScore(){
   bindScatterTooltips();
   bindScatterLegendToggles();
   openModal("resultModal");
+  requestAnimationFrame(()=> initMonthlyWrapCarousels($("resultModal") || document));
 }
 window.showMonthlyScore = showMonthlyScore;
 
@@ -5525,33 +5605,38 @@ function buildMonthlyResult(){
         <div class="summaryCard animIn a1">
           <div class="summaryTitle">マンスリーサマリー：${escapeHtml(m)}</div>
           <div class="summaryLead">${escapeHtml(summaryMonthly)}</div>
-          <div class="monthlyWrapDeck" aria-label="月次まとめカード">
-            <section class="monthlyWrapCard is-hero">
-              <div class="monthlyWrapKicker">今月のあなた</div>
-              <div class="monthlyWrapBig">${escapeHtml(monthlyStory.moneyStyle)}</div>
-              <div class="monthlyWrapText">${escapeHtml(monthlyStory.overview)}</div>
-              <div class="monthlyWrapMeta">${escapeHtml(monthlyStory.changeLine)}</div>
-            </section>
-            <section class="monthlyWrapCard is-top">
-              <div class="monthlyWrapKicker">いちばん大きかった支出</div>
-              <div class="monthlyWrapBig">${escapeHtml(topMonthlyCategory?.category || "集計中")}</div>
-              <div class="monthlyWrapText">${escapeHtml(monthlyStory.topSpendLine)}</div>
-            </section>
-            <section class="monthlyWrapCard is-good">
-              <div class="monthlyWrapKicker">満足につながった支出</div>
-              <div class="monthlyWrapBig">残していい出費</div>
-              <div class="monthlyWrapText">${escapeHtml(monthlyStory.keepLine)}</div>
-            </section>
-            <section class="monthlyWrapCard is-risk">
-              <div class="monthlyWrapKicker">じわじわ効いたポイント</div>
-              <div class="monthlyWrapBig">見直し候補</div>
-              <div class="monthlyWrapText">${escapeHtml(monthlyStory.riskLine)}</div>
-            </section>
-            <section class="monthlyWrapCard is-action">
-              <div class="monthlyWrapKicker">来月はこれだけ</div>
-              <div class="monthlyWrapBig">${escapeHtml(monthlyStory.actionLine)}</div>
-              <div class="monthlyWrapText">${escapeHtml(monthlyStory.nextAction)}</div>
-            </section>
+          <div class="monthlyWrapCarousel" data-wrap-carousel aria-label="月次まとめカード">
+            <div class="monthlyWrapViewport">
+              <div class="monthlyWrapTrack">
+                <section class="monthlyWrapCard is-hero">
+                  <div class="monthlyWrapKicker">今月のあなた</div>
+                  <div class="monthlyWrapBig">${escapeHtml(monthlyStory.moneyStyle)}</div>
+                  <div class="monthlyWrapText">${escapeHtml(monthlyStory.overview)}</div>
+                  <div class="monthlyWrapMeta">${escapeHtml(monthlyStory.changeLine)}</div>
+                </section>
+                <section class="monthlyWrapCard is-top">
+                  <div class="monthlyWrapKicker">いちばん大きかった支出</div>
+                  <div class="monthlyWrapBig">${escapeHtml(topMonthlyCategory?.category || "集計中")}</div>
+                  <div class="monthlyWrapText">${escapeHtml(monthlyStory.topSpendLine)}</div>
+                </section>
+                <section class="monthlyWrapCard is-good">
+                  <div class="monthlyWrapKicker">満足につながった支出</div>
+                  <div class="monthlyWrapBig">残していい出費</div>
+                  <div class="monthlyWrapText">${escapeHtml(monthlyStory.keepLine)}</div>
+                </section>
+                <section class="monthlyWrapCard is-risk">
+                  <div class="monthlyWrapKicker">じわじわ効いたポイント</div>
+                  <div class="monthlyWrapBig">見直し候補</div>
+                  <div class="monthlyWrapText">${escapeHtml(monthlyStory.riskLine)}</div>
+                </section>
+                <section class="monthlyWrapCard is-action">
+                  <div class="monthlyWrapKicker">来月はこれだけ</div>
+                  <div class="monthlyWrapBig">${escapeHtml(monthlyStory.actionLine)}</div>
+                  <div class="monthlyWrapText">${escapeHtml(monthlyStory.nextAction)}</div>
+                </section>
+              </div>
+            </div>
+            <div class="monthlyWrapDots" aria-label="月次まとめページ送り"></div>
           </div>
           <div class="monthlyReviewHero">
             <div class="monthlyReviewEyebrow">今月の総評</div>
