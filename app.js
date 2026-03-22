@@ -688,6 +688,7 @@ function buildMonthlyReviewStory({
   const keepSpend = pickMonthlyKeepSpend(stats);
   const riskSpend = pickMonthlyRiskSpend(stats);
   const moneyStyle = inferMonthlyMoneyStyle(stats);
+  const totalVariableSpend = stats.reduce((sum, item)=> sum + Number(item.totalAmount || 0), 0);
 
   let overview = "今月は家計の全体像をつかみ始めた月です。";
   if(Number.isFinite(satisfactionScore) && Number.isFinite(stabilityScore)){
@@ -761,12 +762,35 @@ function buildMonthlyReviewStory({
       ? `先月比では、変動費が${diffVarSpend > 0 ? "増加" : "減少"}しています。`
       : "先月比は大きくは動いておらず、使い方の質を整える段階です。";
 
+  const topSpendShare = topSpend && totalVariableSpend > 0
+    ? Math.round((Number(topSpend.totalAmount || 0) / totalVariableSpend) * 100)
+    : null;
+  const topSpendLine = topSpend
+    ? `${topSpend.category}に${fmtYen(topSpend.totalAmount)}円。${topSpendShare != null ? `変動支出の${topSpendShare}%を占めています。` : "今月の中心支出です。"}`
+    : "今月はまだ支出データを集めている段階です。";
+  const keepLine = keepSpend
+    ? `${keepSpend.category}は高額でも納得度が高く、無理に削らなくてよい支出です。`
+    : goodCategory
+      ? `${goodCategory.category}は気持ちよく使えていて、今月の満足感を支えています。`
+      : "今月は、納得して使えた支出の傾向が見え始めています。";
+  const riskLine = riskSpend
+    ? `${riskSpend.category}は回数や金額のわりに納得度が伸びず、じわじわ効いた支出です。`
+    : lowCategory
+      ? `${lowCategory.category}は、使い方を少し見直すと印象が変わりやすいカテゴリです。`
+      : "今月は大きな崩れはないので、小さな使い方のクセを見る段階です。";
+  const actionLine = nextAction.replace(/^次は「/, "").replace(/」を1つだけ試してみましょう$/, "");
+
   return {
     overview,
+    moneyStyle,
     goodPoints: goodPoints.slice(0,2),
     riskPoints: dedupedRisk.length ? dedupedRisk : ["今月は細かな支出の使い方を見直すと、来月の印象が変わりやすいです。"],
     nextAction,
-    changeLine
+    changeLine,
+    topSpendLine,
+    keepLine,
+    riskLine,
+    actionLine
   };
 }
 
@@ -5477,6 +5501,9 @@ function buildMonthlyResult(){
 
   const monthlyCharacter = buildCharacterSnapshot(m);
   const monthlyMood = getPetEmojiByTier(getPetSpeciesByCategory(monthlyCharacter.category), monthlyCharacter.tier);
+  const prevMonthTx = loadTx().filter(t=> t.date && t.date.startsWith(shiftYm(m, -1)));
+  const monthlyCategoryStats = buildMonthlyCategoryStats(tx, valueTop3, prevMonthTx);
+  const topMonthlyCategory = monthlyCategoryStats[0] || null;
   const monthlyStory = buildMonthlyReviewStory({
     monthStr: m,
     tx,
@@ -5498,6 +5525,34 @@ function buildMonthlyResult(){
         <div class="summaryCard animIn a1">
           <div class="summaryTitle">マンスリーサマリー：${escapeHtml(m)}</div>
           <div class="summaryLead">${escapeHtml(summaryMonthly)}</div>
+          <div class="monthlyWrapDeck" aria-label="月次まとめカード">
+            <section class="monthlyWrapCard is-hero">
+              <div class="monthlyWrapKicker">今月のあなた</div>
+              <div class="monthlyWrapBig">${escapeHtml(monthlyStory.moneyStyle)}</div>
+              <div class="monthlyWrapText">${escapeHtml(monthlyStory.overview)}</div>
+              <div class="monthlyWrapMeta">${escapeHtml(monthlyStory.changeLine)}</div>
+            </section>
+            <section class="monthlyWrapCard is-top">
+              <div class="monthlyWrapKicker">いちばん大きかった支出</div>
+              <div class="monthlyWrapBig">${escapeHtml(topMonthlyCategory?.category || "集計中")}</div>
+              <div class="monthlyWrapText">${escapeHtml(monthlyStory.topSpendLine)}</div>
+            </section>
+            <section class="monthlyWrapCard is-good">
+              <div class="monthlyWrapKicker">満足につながった支出</div>
+              <div class="monthlyWrapBig">残していい出費</div>
+              <div class="monthlyWrapText">${escapeHtml(monthlyStory.keepLine)}</div>
+            </section>
+            <section class="monthlyWrapCard is-risk">
+              <div class="monthlyWrapKicker">じわじわ効いたポイント</div>
+              <div class="monthlyWrapBig">見直し候補</div>
+              <div class="monthlyWrapText">${escapeHtml(monthlyStory.riskLine)}</div>
+            </section>
+            <section class="monthlyWrapCard is-action">
+              <div class="monthlyWrapKicker">来月はこれだけ</div>
+              <div class="monthlyWrapBig">${escapeHtml(monthlyStory.actionLine)}</div>
+              <div class="monthlyWrapText">${escapeHtml(monthlyStory.nextAction)}</div>
+            </section>
+          </div>
           <div class="monthlyReviewHero">
             <div class="monthlyReviewEyebrow">今月の総評</div>
             <div class="monthlyReviewOverview">${escapeHtml(monthlyStory.overview)}</div>

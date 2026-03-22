@@ -3217,6 +3217,73 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .monthlyResult .summaryTitle{ font-size:15px; font-weight:600; }
 .monthlyResult .summaryLead{ font-size:13px; color:var(--card-muted); }
 .monthlyResult .summaryMeta{ color:var(--card-muted); }
+.monthlyWrapDeck{
+  margin-top:12px;
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(240px, 82%);
+  gap:10px;
+  overflow-x:auto;
+  padding-bottom:4px;
+  scroll-snap-type:x proximity;
+  -webkit-overflow-scrolling:touch;
+}
+.monthlyWrapDeck::-webkit-scrollbar{
+  display:none;
+}
+.monthlyWrapCard{
+  scroll-snap-align:start;
+  min-height:172px;
+  border-radius:18px;
+  padding:14px;
+  border:1px solid rgba(214,120,75,.16);
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,249,244,.96));
+  box-shadow:0 10px 24px rgba(180,115,77,.08);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.monthlyWrapCard.is-hero{
+  background:linear-gradient(145deg, rgba(255,243,233,.98), rgba(255,255,255,.96));
+}
+.monthlyWrapCard.is-top{
+  background:linear-gradient(145deg, rgba(255,248,239,.98), rgba(255,255,255,.96));
+}
+.monthlyWrapCard.is-good{
+  background:linear-gradient(145deg, rgba(255,252,247,.98), rgba(255,255,255,.96));
+}
+.monthlyWrapCard.is-risk{
+  background:linear-gradient(145deg, rgba(255,246,241,.98), rgba(255,255,255,.96));
+}
+.monthlyWrapCard.is-action{
+  background:linear-gradient(145deg, rgba(247,249,255,.98), rgba(255,255,255,.96));
+  border-color:rgba(74,102,148,.14);
+}
+.monthlyWrapKicker{
+  font-size:11px;
+  font-weight:900;
+  color:#8f4b2f;
+  letter-spacing:.03em;
+}
+.monthlyWrapBig{
+  margin-top:8px;
+  font-size:24px;
+  line-height:1.15;
+  font-weight:1200;
+  color:var(--ink);
+}
+.monthlyWrapText{
+  margin-top:10px;
+  font-size:13px;
+  line-height:1.7;
+  color:var(--ink);
+}
+.monthlyWrapMeta{
+  margin-top:12px;
+  font-size:11px;
+  line-height:1.55;
+  color:var(--card-muted);
+}
 .monthlyReviewHero{
   margin-top:10px;
   padding:12px;
@@ -3346,6 +3413,16 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:var(--ink);
 }
 @media (max-width:720px){
+  .monthlyWrapDeck{
+    grid-auto-columns:88%;
+  }
+  .monthlyWrapCard{
+    min-height:164px;
+    padding:12px;
+  }
+  .monthlyWrapBig{
+    font-size:21px;
+  }
   .monthlyReviewGrid{
     grid-template-columns:1fr;
   }
