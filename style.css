@@ -2653,6 +2653,46 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 #resultModal .modalHeader{
   background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(248,250,252,.92));
 }
+#resultModal.is-story-mode{
+  padding:0;
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(214,120,75,.18), rgba(214,120,75,0) 48%),
+    radial-gradient(120% 120% at 100% 100%, rgba(99,102,241,.14), rgba(99,102,241,0) 52%),
+    rgba(15,23,42,.55);
+}
+#resultModal.is-story-mode .modal{
+  width:100vw;
+  max-width:none;
+  height:100vh;
+  height:100svh;
+  height:100dvh;
+  max-height:none;
+  border:none;
+  border-radius:0;
+  box-shadow:none;
+  background:
+    linear-gradient(180deg, rgba(255,249,244,.98), rgba(244,247,255,.96));
+}
+#resultModal.is-story-mode .modalHeader{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  z-index:4;
+  padding:18px 18px 10px;
+  background:linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,0));
+  border-bottom:none;
+}
+#resultModal.is-story-mode .modalTitle{
+  opacity:0;
+  pointer-events:none;
+}
+#resultModal.is-story-mode .modalHeader .ghost{
+  display:none;
+}
+#resultModal.is-story-mode .modalBody{
+  overflow:hidden;
+}
 #resultModal .resultWrap{
   background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-radius:20px;
@@ -3217,6 +3257,32 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .monthlyResult .summaryTitle{ font-size:15px; font-weight:600; }
 .monthlyResult .summaryLead{ font-size:13px; color:var(--card-muted); }
 .monthlyResult .summaryMeta{ color:var(--card-muted); }
+.monthlyStoryMode{
+  min-height:100%;
+  padding:0;
+}
+.monthlyStoryShell{
+  min-height:calc(100vh - var(--safeBottom));
+  min-height:calc(100svh - var(--safeBottom));
+  min-height:calc(100dvh - var(--safeBottom));
+  padding:82px 18px 28px;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+.monthlyStoryExperience{
+  margin-top:14px;
+}
+.monthlyStoryProgress{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+  font-size:11px;
+  font-weight:900;
+  color:#8a736c;
+  letter-spacing:.03em;
+}
 .monthlyWrapCarousel{
   margin-top:12px;
 }
@@ -3243,6 +3309,131 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   justify-content:space-between;
   user-select:none;
   -webkit-user-select:none;
+}
+.monthlyStoryViewport{
+  border-radius:28px;
+}
+.monthlyStoryTrack{
+  min-height:calc(100vh - 220px - var(--safeBottom));
+  min-height:calc(100svh - 220px - var(--safeBottom));
+  min-height:calc(100dvh - 220px - var(--safeBottom));
+}
+.monthlyStoryPage{
+  position:relative;
+  overflow:hidden;
+  min-height:100%;
+  padding:20px 18px 18px;
+  border-radius:28px;
+  justify-content:flex-start;
+  box-shadow:0 24px 50px rgba(15,23,42,.10);
+}
+.monthlyStoryPage::before{
+  content:"";
+  position:absolute;
+  inset:auto -14% -24% auto;
+  width:220px;
+  height:220px;
+  border-radius:999px;
+  background:radial-gradient(circle, rgba(255,255,255,.55), rgba(255,255,255,0) 65%);
+  animation:storyFloat 6.5s ease-in-out infinite;
+}
+.monthlyStoryAura{
+  position:absolute;
+  inset:-8% auto auto -10%;
+  width:180px;
+  height:180px;
+  border-radius:999px;
+  background:radial-gradient(circle, rgba(255,255,255,.56), rgba(255,255,255,0) 68%);
+  filter:blur(6px);
+  animation:storyPulse 5.4s ease-in-out infinite;
+}
+.monthlyStoryBadge{
+  position:relative;
+  z-index:1;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.58);
+  border:1px solid rgba(255,255,255,.62);
+  font-size:11px;
+  font-weight:900;
+  color:#8f4b2f;
+  backdrop-filter:blur(8px);
+}
+.monthlyStoryMonth{
+  position:relative;
+  z-index:1;
+  margin-top:16px;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+  color:#8a736c;
+}
+.monthlyStoryMascot{
+  position:relative;
+  z-index:1;
+  margin-top:18px;
+  display:flex;
+  justify-content:center;
+  animation:storyRise .55s ease both;
+}
+.monthlyStoryMascot .homeAvatarImg,
+.monthlyStoryMascot .homeAvatarFallback{
+  width:min(56vw, 280px);
+  height:min(56vw, 280px);
+  max-width:280px;
+  max-height:280px;
+}
+.monthlyStoryPage .monthlyWrapBig,
+.monthlyStoryPage .monthlyWrapText,
+.monthlyStoryPage .monthlyWrapMeta{
+  position:relative;
+  z-index:1;
+  animation:storyRise .55s ease both;
+}
+.monthlyStoryPage .monthlyWrapBig{
+  margin-top:18px;
+  font-size:clamp(28px, 7vw, 46px);
+}
+.monthlyStoryPage .monthlyWrapText{
+  margin-top:14px;
+  font-size:15px;
+  line-height:1.8;
+}
+.monthlyStoryList{
+  position:relative;
+  z-index:1;
+  margin-top:16px;
+  display:grid;
+  gap:10px;
+}
+.monthlyStoryBullet{
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.7);
+  border:1px solid rgba(255,255,255,.72);
+  font-size:13px;
+  line-height:1.7;
+  color:var(--ink);
+  animation:storyRise .55s ease both;
+}
+.monthlyStoryEnd{
+  position:relative;
+  z-index:1;
+  margin-top:auto;
+  padding-top:18px;
+  display:grid;
+  gap:12px;
+}
+.monthlyStoryReportBtn{
+  width:100%;
+  min-height:52px;
+  font-size:15px;
+}
+.monthlyStoryDots{
+  margin-top:14px;
 }
 .monthlyWrapDots{
   margin-top:10px;
@@ -3434,12 +3625,29 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:var(--ink);
 }
 @media (max-width:720px){
+  #resultModal.is-story-mode .modalHeader{
+    padding:14px 14px 10px;
+  }
+  .monthlyStoryShell{
+    padding:74px 14px 24px;
+  }
   .monthlyWrapCard{
     min-height:164px;
     padding:12px;
   }
   .monthlyWrapBig{
     font-size:21px;
+  }
+  .monthlyStoryTrack{
+    min-height:calc(100vh - 206px - var(--safeBottom));
+    min-height:calc(100svh - 206px - var(--safeBottom));
+    min-height:calc(100dvh - 206px - var(--safeBottom));
+  }
+  .monthlyStoryPage{
+    padding:18px 14px 16px;
+  }
+  .monthlyStoryPage .monthlyWrapText{
+    font-size:14px;
   }
   .monthlyReviewGrid{
     grid-template-columns:1fr;
@@ -3449,6 +3657,19 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .monthlyReviewAction{
     padding:10px 11px;
   }
+}
+
+@keyframes storyFloat{
+  0%,100%{ transform:translate3d(0,0,0) scale(1); }
+  50%{ transform:translate3d(-10px,-12px,0) scale(1.04); }
+}
+@keyframes storyPulse{
+  0%,100%{ opacity:.78; transform:scale(1); }
+  50%{ opacity:1; transform:scale(1.08); }
+}
+@keyframes storyRise{
+  0%{ opacity:0; transform:translateY(18px); }
+  100%{ opacity:1; transform:translateY(0); }
 }
 .summaryRight{ display:flex; align-items:center; justify-content:center; }
 .axisGrid{
