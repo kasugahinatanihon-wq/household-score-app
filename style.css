@@ -2693,6 +2693,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 #resultModal.is-story-mode .modalBody{
   overflow:hidden;
 }
+#resultModal.is-story-mode[data-story-stage="detail"] .modalBody{
+  overflow:auto;
+}
 #resultModal .resultWrap{
   background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
   border-radius:20px;
@@ -3386,6 +3389,37 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   max-width:280px;
   max-height:280px;
 }
+.monthlyStoryStatGrid{
+  position:relative;
+  z-index:1;
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+.monthlyStoryStat{
+  padding:12px 14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(255,255,255,.7);
+  backdrop-filter:blur(8px);
+}
+.monthlyStoryStatLabel{
+  font-size:11px;
+  font-weight:900;
+  color:#8a736c;
+}
+.monthlyStoryStatValue{
+  margin-top:4px;
+  font-size:28px;
+  font-weight:1200;
+  color:var(--ink);
+}
+.monthlyStoryStatValue span{
+  margin-left:2px;
+  font-size:12px;
+  color:#8a736c;
+}
 .monthlyStoryPage .monthlyWrapBig,
 .monthlyStoryPage .monthlyWrapText,
 .monthlyStoryPage .monthlyWrapMeta{
@@ -3409,6 +3443,64 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:grid;
   gap:10px;
 }
+.monthlyStoryMiniStats{
+  position:relative;
+  z-index:1;
+  margin-top:16px;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:10px;
+}
+.monthlyStoryMiniStat{
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.68);
+  border:1px solid rgba(255,255,255,.72);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.monthlyStoryMiniStat span{
+  font-size:11px;
+  font-weight:900;
+  color:#8a736c;
+}
+.monthlyStoryMiniStat strong{
+  font-size:22px;
+  font-weight:1200;
+  color:var(--ink);
+}
+.monthlyStoryBars{
+  position:relative;
+  z-index:1;
+  margin-top:14px;
+  display:grid;
+  gap:10px;
+}
+.monthlyStoryBarRow{
+  display:grid;
+  gap:6px;
+}
+.monthlyStoryBarHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12px;
+  font-weight:900;
+  color:#6f5248;
+}
+.monthlyStoryBar{
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.55);
+  overflow:hidden;
+}
+.monthlyStoryBar span{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg, #f59e0b, #f97316 55%, #fb7185);
+}
 .monthlyStoryBullet{
   padding:12px 14px;
   border-radius:16px;
@@ -3431,6 +3523,23 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   width:100%;
   min-height:52px;
   font-size:15px;
+}
+.monthlyStoryDetailPanel{
+  margin-top:8px;
+}
+.monthlyStoryDetailHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.monthlyStoryBackBtn{
+  min-height:40px;
+}
+.monthlyStoryDetailMeta{
+  font-size:12px;
+  color:var(--card-muted);
 }
 .monthlyStoryDots{
   margin-top:14px;
@@ -3643,11 +3752,20 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     min-height:calc(100svh - 206px - var(--safeBottom));
     min-height:calc(100dvh - 206px - var(--safeBottom));
   }
+  .monthlyStoryStatGrid,
+  .monthlyStoryMiniStats{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
   .monthlyStoryPage{
     padding:18px 14px 16px;
   }
   .monthlyStoryPage .monthlyWrapText{
     font-size:14px;
+  }
+  .monthlyStoryDetailHead{
+    flex-direction:column;
+    align-items:flex-start;
   }
   .monthlyReviewGrid{
     grid-template-columns:1fr;

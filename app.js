@@ -5098,12 +5098,22 @@ function setResultModalMode(mode = ""){
 }
 window.setResultModalMode = setResultModalMode;
 
-function openMonthlyStoryReport(monthStr){
-  if($("reportMonth")) $("reportMonth").value = monthStr;
-  closeModal("resultModal");
-  switchScreen("report");
-  switchReportTab("overview");
-  renderMonthlyReport();
+function setMonthlyStoryStage(stage = "story"){
+  const modal = $("resultModal");
+  if(!modal) return;
+  modal.dataset.storyStage = stage;
+  const story = $("monthlyStoryFlow");
+  const detail = $("monthlyStoryDetail");
+  if(story) story.style.display = stage === "story" ? "" : "none";
+  if(detail) detail.style.display = stage === "detail" ? "" : "none";
+  const body = modal.querySelector(".modalBody");
+  if(body) body.scrollTop = 0;
+}
+window.setMonthlyStoryStage = setMonthlyStoryStage;
+
+function openMonthlyStoryReport(){
+  setMonthlyStoryStage("detail");
+  switchMonthlyMainTab("sat");
 }
 window.openMonthlyStoryReport = openMonthlyStoryReport;
 
@@ -5338,7 +5348,10 @@ function showMonthlyScore(){
   bindScatterTooltips();
   bindScatterLegendToggles();
   openModal("resultModal");
-  requestAnimationFrame(()=> initMonthlyWrapCarousels($("resultModal") || document));
+  requestAnimationFrame(()=>{
+    initMonthlyWrapCarousels($("resultModal") || document);
+    if(result.mode === "story") setMonthlyStoryStage("story");
+  });
 }
 window.showMonthlyScore = showMonthlyScore;
 
@@ -5620,13 +5633,206 @@ function buildMonthlyResult(){
     valueTop3,
     monthlyCharacter
   });
+  const topStoryBarsHtml = monthlyCategoryStats.slice(0, 3).map(item=>{
+    const share = varSpend > 0 ? Math.round((Number(item.totalAmount || 0) / varSpend) * 100) : 0;
+    return `
+      <div class="monthlyStoryBarRow">
+        <div class="monthlyStoryBarHead">
+          <span>${escapeHtml(item.category)}</span>
+          <span>${share}%</span>
+        </div>
+        <div class="monthlyStoryBar"><span style="width:${share}%;"></span></div>
+      </div>
+    `;
+  }).join("");
+  const heroStatsHtml = `
+    <div class="monthlyStoryStatGrid">
+      <div class="monthlyStoryStat">
+        <div class="monthlyStoryStatLabel">納得度</div>
+        <div class="monthlyStoryStatValue">${satisfactionScore}<span>/100</span></div>
+      </div>
+      <div class="monthlyStoryStat">
+        <div class="monthlyStoryStatLabel">安定度</div>
+        <div class="monthlyStoryStatValue">${stabilityScore}<span>/100</span></div>
+      </div>
+    </div>
+  `;
+  const positiveStatsHtml = `
+    <div class="monthlyStoryMiniStats">
+      <div class="monthlyStoryMiniStat">
+        <span>価値観一致</span>
+        <strong>${valueAlignScore}/100</strong>
+      </div>
+      <div class="monthlyStoryMiniStat">
+        <span>幸福効率</span>
+        <strong>${happinessScore}/100</strong>
+      </div>
+    </div>
+  `;
+  const riskStatsHtml = `
+    <div class="monthlyStoryMiniStats">
+      <div class="monthlyStoryMiniStat">
+        <span>後悔率</span>
+        <strong>${rr}</strong>
+      </div>
+      <div class="monthlyStoryMiniStat">
+        <span>変動費率</span>
+        <strong>${vr}</strong>
+      </div>
+    </div>
+  `;
+  const detailHtml = `
+      <div class="monthlyStoryDetailPanel">
+        <div class="monthlyStoryDetailHead">
+          <button class="ghost monthlyStoryBackBtn" type="button" onclick="setMonthlyStoryStage('story')">ストーリーに戻る</button>
+          <div class="monthlyStoryDetailMeta">細かい数値はここで確認できます</div>
+        </div>
+        <div class="monthlyAxisTabs" role="tablist" aria-label="マンスリーサマリー表示切り替え">
+          <button class="monthlyAxisBtn active" data-main="sat" onclick="switchMonthlyMainTab('sat')" role="tab" aria-controls="monthlyAxisPanel-sat" aria-selected="true">家計納得度</button>
+          <button class="monthlyAxisBtn" data-main="stable" onclick="switchMonthlyMainTab('stable')" role="tab" aria-controls="monthlyAxisPanel-stable" aria-selected="false">家計安定度</button>
+          <button class="monthlyAxisBtn" data-main="map" onclick="switchMonthlyMainTab('map')" role="tab" aria-controls="monthlyDetail-map" aria-selected="false">2軸分布</button>
+          <button class="monthlyAxisBtn is-soon" data-main="compare" onclick="switchMonthlyMainTab('compare')" role="tab" aria-controls="monthlyDetail-compare" aria-selected="false">比較（準備中）</button>
+        </div>
+        <div class="monthlyAxisPane animIn a2" id="monthlyAxisPanel-sat" data-monthly-axis="sat" role="tabpanel" aria-hidden="false">
+          <div class="axisCard tone-sat ${getScoreTone(satisfactionScore)} score--${getScoreState(satisfactionScore)}">
+            <div class="axisLabel">家計納得度スコア</div>
+            <div class="axisSub">心理・行動</div>
+            ${donutHTML(satisfactionScore, { size:"xl", stateColor:getScoreToneColor(satisfactionScore, "sat") })}
+            <div class="small muted" style="line-height:1.7;">お金の使い方にどれだけ納得できているかを、主観納得度・価値観との一致・後悔の少なさ・幸福実感からまとめて見える化した指標です。</div>
+          </div>
+          <div class="sectionCard tone-sat">
+            <div class="sectionHead">
+              <div><div class="sectionName">家計納得度スコア 内訳</div><div class="sectionHint">心理・行動の内訳</div></div>
+              <div class="sectionScore">${satisfactionScore}/100</div>
+            </div>
+            <div>
+              <div class="metricBlock ${getScoreTone(subjectiveScore)}">
+                <div class="metricLabel">${emojiHTML("😊","mini")} 主観納得度スコア</div>
+                <div class="small muted">使ったお金に気持ちが前向きかを見る</div>
+                <div class="small" style="margin-bottom:4px;">${subjectiveLabel}</div>
+                <div class="small muted" style="margin-bottom:6px;">平均 ${subjectiveAvgText}</div>
+                <div class="miniBar"><div style="--w:${subjectiveShow}%;"></div></div>
+                <div class="small muted" style="margin-top:10px;">カテゴリ別の主観納得度</div>
+                <button class="ghost toggleBtn" type="button" onclick="toggleSatCategories(this)">カテゴリ別を表示</button>
+                <div class="satCategoryWrap isHidden">
+                  ${categoryScores.map(item=>{
+                    const scoreText = item.score == null ? "—" : `${item.score}/100`;
+                    const barWidth = item.score == null ? 0 : item.score;
+                    const toneClass = getScoreTone(item.score);
+                    const label = withEmoji(item.category, CATEGORY_EMOJI[item.category]);
+                    return `
+                      <div class="metricBlock ${toneClass}" style="margin-top:8px;">
+                        <div class="metricLabel">${label}</div>
+                        <div class="small" style="margin-bottom:6px;">${scoreText}</div>
+                        <div class="miniBar"><div style="--w:${barWidth}%;"></div></div>
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+              </div>
+              <div class="metricBlock ${getScoreTone(valueAlignScore)}" style="margin-top:8px;">
+                <div class="metricLabel">${emojiHTML("🎯","mini")} 価値観整合スコア</div>
+                <div class="small muted">大切にしたいことへお金を回せたか</div>
+                <div class="small" style="margin-bottom:4px;">${valueAlignScore==null?"—":`${valueAlignScore}/100`}</div>
+                <div class="small muted" style="margin-bottom:6px;">配分 ${valueRatioText} / TOP3 ${valueTop3Html}</div>
+                <div class="miniBar"><div style="--w:${valueAlignScore==null?0:valueAlignScore}%;"></div></div>
+              </div>
+              <div class="metricBlock ${getScoreTone(regretScore)}" style="margin-top:8px;">
+                <div class="metricLabel">${emojiHTML("🌀","mini")} 後悔率スコア</div>
+                <div class="small muted">後悔の少ない支出ができているか</div>
+                <div class="small" style="margin-bottom:4px;">${regretScore==null?"—":`${regretScore}/100`}</div>
+                <div class="small muted" style="margin-bottom:6px;">後悔率 ${rr}</div>
+                <div class="miniBar"><div style="--w:${regretScore==null?0:regretScore}%;"></div></div>
+              </div>
+              <div class="metricBlock ${getScoreTone(happinessScore)}" style="margin-top:8px;">
+                <div class="metricLabel">${emojiHTML("🌈","mini")} 幸福効率</div>
+                <div class="small muted">使ったお金が幸福につながっているか</div>
+                <div class="small" style="margin-bottom:4px;">${happinessScore==null?"—":`${happinessScore}/100`}</div>
+                <div class="small muted" style="margin-bottom:6px;">効率 ${happinessRateText} / 可処分所得 ${disposableIncomeText}</div>
+                <div class="miniBar"><div style="--w:${happinessScore==null?0:happinessScore}%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="monthlyAxisPane animIn a2" id="monthlyAxisPanel-stable" data-monthly-axis="stable" role="tabpanel" aria-hidden="true" style="display:none;">
+          <div class="axisCard tone-stable axis-stable ${getScoreTone(stabilityScore)} score--${getScoreState(stabilityScore)}">
+            <div class="axisLabel">家計安定度スコア</div>
+            <div class="axisSub">バランス・比較</div>
+            ${donutHTML(stabilityScore, { size:"xl", stateColor:getScoreToneColor(stabilityScore, "stable") })}
+            <div class="small muted" style="line-height:1.7;">家計の土台がどれだけ安定しているかを、収支バランスと公的指標との比較からまとめて見える化した指標です。</div>
+          </div>
+          <div class="sectionCard tone-stable">
+            <div class="sectionHead">
+              <div><div class="sectionName">家計安定度スコア 内訳</div><div class="sectionHint">いまの位置を確認</div></div>
+              <div class="sectionScore">${stabilityScore}/100</div>
+            </div>
+            <div>
+              <div class="benchPositionSummary">${stabilityPositionSummary}</div>
+              <div class="benchLegend">
+                <span class="benchLegendPill blue">目安に近い</span>
+                <span class="benchLegendPill yellow">やや差がある</span>
+                <span class="benchLegendPill red">差が大きい</span>
+              </div>
+              ${benchmarkIntroHtml}
+              ${targetBudget ? benchmarkTop3Html : ""}
+              ${targetBudget ? `<details class="benchCard benchMoreWrap" style="margin-top:10px;"><summary><div class="benchTop"><div class="benchTitle">その他の指標</div></div></summary><div class="benchDetail">${benchmarkOthersHtml}</div></details>` : ""}
+            </div>
+          </div>
+        </div>
+        <div class="monthlyDetailPane animIn a3" id="monthlyDetail-map" data-detail="map" role="tabpanel" aria-hidden="true" style="display:none;">
+          ${renderHappinessScatterContent({
+            youX: stabilityScore,
+            youY: satisfactionScore,
+            avgX: APP_AVG_PLACEHOLDER.monthly.spendControl,
+            avgY: APP_AVG_PLACEHOLDER.monthly.satisfactionEfficiency,
+            xMid:70,
+            yMid:70,
+            guideLineText:"安定した家計と納得したお金の使い方ができているほど右上に遷移します"
+          })}
+        </div>
+        <div class="monthlyDetailPane animIn a3" id="monthlyDetail-compare" data-detail="compare" role="tabpanel" aria-hidden="true" style="display:none;">
+          <div class="sectionCard">
+            <div class="sectionHead">
+              <div><div class="sectionName">比較機能（準備中）</div><div class="sectionHint">近い属性のユーザーと比較できる予定です</div></div>
+              <div class="sectionScore"><span class="benchSource custom">準備中</span></div>
+            </div>
+            <div class="comparePreviewGrid">
+              <div class="comparePreviewCard">
+                <div class="comparePreviewLabel">表示予定</div>
+                <div class="comparePreviewValue">近い属性の中での現在地</div>
+                <div class="small muted">年齢帯や世帯人数などをもとに比較予定です</div>
+              </div>
+              <div class="comparePreviewCard">
+                <div class="comparePreviewLabel">表示予定</div>
+                <div class="comparePreviewValue">平均との差や傾向の違い</div>
+                <div class="small muted">細かな表示内容はデータが揃い次第調整します</div>
+              </div>
+            </div>
+            <div class="small muted" style="margin-top:8px;">今は準備中です。比較対象の精度が出せるだけデータが集まり次第、順次公開します。</div>
+          </div>
+        </div>
+        <div class="monthlyDetailPane animIn a3 breakdownPane">
+          <div class="sectionCard">
+            <div class="sectionHead">
+              <div><div class="sectionName">金額内訳（円）</div><div class="sectionHint">月次の内訳</div></div>
+              <div class="sectionScore"></div>
+            </div>
+            <div class="bar" style="justify-content:space-between;"><div>手取り</div><div style="font-weight:1100;">${income.toLocaleString("ja-JP")}</div></div>
+            <div class="bar" style="justify-content:space-between;"><div>貯蓄</div><div style="font-weight:1100;">${saving.toLocaleString("ja-JP")}</div></div>
+            <div class="bar" style="justify-content:space-between;"><div>固定費</div><div style="font-weight:1100;">${fixedSum.toLocaleString("ja-JP")}</div></div>
+            <div class="bar" style="justify-content:space-between;"><div>変動費</div><div style="font-weight:1100;">${varSpend.toLocaleString("ja-JP")}</div></div>
+            <div class="bar" style="justify-content:space-between;"><div>可処分所得</div><div style="font-weight:1100;">${disposableIncomeText}</div></div>
+          </div>
+        </div>
+      </div>
+  `;
 
   const html = `
     <div class="resultWrap monthlyResult monthlyStoryMode">
       <div class="summaryCard animIn a1 monthlyStoryShell">
         <div class="summaryTitle">マンスリーサマリー：${escapeHtml(m)}</div>
         <div class="summaryLead">${escapeHtml(summaryMonthly)}</div>
-        <div class="monthlyStoryExperience" data-wrap-carousel aria-label="今月のストーリー">
+        <div class="monthlyStoryExperience" id="monthlyStoryFlow" data-wrap-carousel aria-label="今月のストーリー">
           <div class="monthlyStoryProgress">
             <span>今月のふり返り</span>
             <span>${escapeHtml(m)}</span>
@@ -5638,6 +5844,7 @@ function buildMonthlyResult(){
                 <div class="monthlyStoryBadge">あなたは今月こんな感じでした</div>
                 <div class="monthlyStoryMonth">${escapeHtml(m)}</div>
                 <div class="monthlyStoryMascot">${homeAvatarHTML(monthlyCharacter.category, monthlyCharacter.tier, monthlyMood)}</div>
+                ${heroStatsHtml}
                 <div class="monthlyWrapBig">${escapeHtml(monthlyStory.moneyStyle)}</div>
                 <div class="monthlyWrapText">${escapeHtml(monthlyStory.overview)}</div>
                 <div class="monthlyWrapMeta">${escapeHtml(monthlyCharacter.name)} が出ているのは、この月のお金の使い方の傾向が強く出ていたからです。</div>
@@ -5646,12 +5853,14 @@ function buildMonthlyResult(){
                 <div class="monthlyStoryBadge">いちばん大きかった支出</div>
                 <div class="monthlyWrapBig">${escapeHtml(topMonthlyCategory?.category || "集計中")}</div>
                 <div class="monthlyWrapText">${escapeHtml(monthlyStory.topSpendLine)}</div>
+                <div class="monthlyStoryBars">${topStoryBarsHtml}</div>
                 <div class="monthlyWrapMeta">${escapeHtml(monthlyStory.changeLine)}</div>
               </section>
               <section class="monthlyWrapCard monthlyStoryPage is-good">
                 <div class="monthlyStoryBadge">満足につながった支出</div>
                 <div class="monthlyWrapBig">残していい出費</div>
                 <div class="monthlyWrapText">${escapeHtml(monthlyStory.keepLine)}</div>
+                ${positiveStatsHtml}
                 <div class="monthlyStoryList">
                   ${monthlyStory.goodPoints.map(text=> `<div class="monthlyStoryBullet">${escapeHtml(text)}</div>`).join("")}
                 </div>
@@ -5660,6 +5869,7 @@ function buildMonthlyResult(){
                 <div class="monthlyStoryBadge">じわじわ効いたポイント</div>
                 <div class="monthlyWrapBig">見直し候補</div>
                 <div class="monthlyWrapText">${escapeHtml(monthlyStory.riskLine)}</div>
+                ${riskStatsHtml}
                 <div class="monthlyStoryList">
                   ${monthlyStory.riskPoints.map(text=> `<div class="monthlyStoryBullet">${escapeHtml(text)}</div>`).join("")}
                 </div>
@@ -5669,14 +5879,15 @@ function buildMonthlyResult(){
                 <div class="monthlyWrapBig">${escapeHtml(monthlyStory.actionLine)}</div>
                 <div class="monthlyWrapText">${escapeHtml(monthlyStory.nextAction)}</div>
                 <div class="monthlyStoryEnd">
-                  <button class="dark monthlyStoryReportBtn" type="button" onclick="openMonthlyStoryReport('${escapeHtml(m)}')">レポートで詳しく見る</button>
-                  <div class="monthlyWrapMeta">細かい数値や内訳はレポート画面で確認できます。</div>
+                  <button class="dark monthlyStoryReportBtn" type="button" onclick="openMonthlyStoryReport()">マンスリーレポートで詳しく見る</button>
+                  <div class="monthlyWrapMeta">ここから先は、これまでの月次レポート画面で細かく確認できます。</div>
                 </div>
               </section>
             </div>
           </div>
           <div class="monthlyWrapDots monthlyStoryDots" aria-label="今月のストーリーページ送り"></div>
         </div>
+        <div id="monthlyStoryDetail" style="display:none;">${detailHtml}</div>
       </div>
     </div>
   `;
