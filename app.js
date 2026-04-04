@@ -3752,6 +3752,25 @@ function switchReportMode(mode){
 }
 window.switchReportMode = switchReportMode;
 
+function shiftReportScope(delta){
+  const step = Number(delta || 0);
+  if(!step) return;
+  if(REPORT_MODE === "annual"){
+    const yearEl = $("reportYear");
+    if(!yearEl) return;
+    const base = Number(yearEl.value || new Date().getFullYear());
+    yearEl.value = String(base + step);
+  }else{
+    const monthEl = $("reportMonth");
+    if(!monthEl) return;
+    const current = monthEl.value || ym(new Date());
+    monthEl.value = shiftYm(current, step);
+  }
+  closeReportCategoryDetail();
+  renderMonthlyReport();
+}
+window.shiftReportScope = shiftReportScope;
+
 function switchReportVisualSlide(index){
   REPORT_VISUAL_SLIDE = clamp(Number(index || 0), 0, 1);
   const track = $("reportVisualTrack");
@@ -4026,6 +4045,15 @@ function renderMonthlyReport(){
   const scopeLabel = scopeMode === "annual" ? `${scopeKey}年` : scopeKey;
   const { total } = buildReportItemsForScope(scopeMode, scopeKey);
   const assets = getReportScopeSavings(scopeMode, scopeKey);
+  const scopeDate = scopeMode === "annual"
+    ? `${scopeKey}年1月〜12月`
+    : (()=> {
+        const [year, month] = scopeKey.split("-").map(Number);
+        const lastDay = new Date(year, month, 0).getDate();
+        return `${month}/1〜${month}/${lastDay}`;
+      })();
+  $("reportScopeDisplay") && ($("reportScopeDisplay").textContent = scopeMode === "annual" ? `${scopeKey}年` : `${Number(scopeKey.slice(0,4))}年${Number(scopeKey.slice(5,7))}月`);
+  $("reportScopeSub") && ($("reportScopeSub").textContent = scopeDate);
   $("reportScopeSpendLabel") && ($("reportScopeSpendLabel").textContent = scopeMode === "annual" ? "年間の支出" : "月間の支出");
   $("reportScopeAssetLabel") && ($("reportScopeAssetLabel").textContent = scopeMode === "annual" ? "年間の資産形成" : "月間の資産形成");
   $("reportQuickSpendTotal") && ($("reportQuickSpendTotal").textContent = `${fmtYen(Math.round(total))}円`);

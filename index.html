@@ -466,13 +466,19 @@
         <button class="reportModeBtn active" type="button" data-report-mode="monthly" onclick="switchReportMode('monthly')">月間レポート</button>
         <button class="reportModeBtn" type="button" data-report-mode="annual" onclick="switchReportMode('annual')">年間レポート</button>
       </div>
-      <div class="bar reportHeader reportHeaderTop" style="margin-top:12px;">
-        <label class="small reportMonthLabel" id="reportMonthControl">対象月
-          <input type="month" id="reportMonth">
-        </label>
-        <label class="small reportMonthLabel" id="reportYearControl" hidden>対象年
-          <input type="number" id="reportYear" min="2020" max="2100" step="1" placeholder="2026">
-        </label>
+      <div class="reportScopePicker" style="margin-top:12px;">
+        <button class="reportScopeArrow" type="button" aria-label="前へ" onclick="shiftReportScope(-1)">‹</button>
+        <div class="reportScopeDisplayWrap">
+          <div class="reportScopeDisplay" id="reportScopeDisplay">—</div>
+          <div class="reportScopeSub" id="reportScopeSub">—</div>
+          <label class="reportScopeInputProxy" id="reportMonthControl" aria-label="対象月を選択">
+            <input type="month" id="reportMonth">
+          </label>
+          <label class="reportScopeInputProxy" id="reportYearControl" hidden aria-label="対象年を選択">
+            <input type="number" id="reportYear" min="2020" max="2100" step="1" placeholder="2026">
+          </label>
+        </div>
+        <button class="reportScopeArrow" type="button" aria-label="次へ" onclick="shiftReportScope(1)">›</button>
       </div>
 
       <div class="reportQuickGrid reportSummaryGrid" style="margin-top:12px;">
