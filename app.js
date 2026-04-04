@@ -3778,6 +3778,15 @@ function switchReportVisualSlide(index){
   document.querySelectorAll(".reportVisualDot").forEach(btn=>{
     btn.classList.toggle("active", Number(btn.dataset.reportSlide || 0) === REPORT_VISUAL_SLIDE);
   });
+  document.querySelectorAll(".reportVisualActions .ghost").forEach((btn, idx)=>{
+    const active = idx === REPORT_VISUAL_SLIDE;
+    btn.classList.toggle("active", active);
+    if(active){
+      btn.setAttribute("aria-current", "true");
+    }else{
+      btn.removeAttribute("aria-current");
+    }
+  });
 }
 window.switchReportVisualSlide = switchReportVisualSlide;
 
@@ -4305,9 +4314,12 @@ function renderReportGrowthLog(monthStr, areaId = "reportGrowthLog", options = {
   const modeLabel = mode === "cumulative" ? "累計" : "その月";
 
   area.innerHTML = `
-    <div class="dailyTrendLegend" style="margin-bottom:8px;">
-      <span><i class="dailyTrendSwatch cum"></i>${escapeHtml(modeLabel)}${escapeHtml(label)} ${fmtYen(Math.round(latest))}円</span>
-      <span><i class="dailyTrendSwatch prevcum"></i>前月差 ${escapeHtml(diffText)}</span>
+    <div class="reportTrendTopbar">
+      <div class="reportTrendModeSwitch reportTrendModeSwitchInline">
+        <button class="reportTrendModeBtn ${metric !== "asset" ? "active" : ""}" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
+        <button class="reportTrendModeBtn ${metric === "asset" ? "active" : ""}" type="button" data-report-metric="asset" onclick="setReportVisualMetric('asset')">資産推移</button>
+      </div>
+      <div class="dailyTrendDelta ${diff > 0 ? "up" : (diff < 0 ? "down" : "")}">前月差 ${escapeHtml(diffText)}</div>
     </div>
     <div class="dailyTrendChartBox">
       <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(modeLabel)}${escapeHtml(label)}の月次推移">
@@ -4431,12 +4443,14 @@ function renderSpendTrendChart(monthStr, category = "all", areaId = "reportSpend
   };
 
   area.innerHTML = `
-    <div class="dailyTrendLegend" style="margin-bottom:8px;">
-      <span><i class="dailyTrendSwatch cum"></i>当月累計 ${fmtYen(Math.round(cumLatest))}円</span>
-      <span><i class="dailyTrendSwatch prevcum"></i>先月累計 ${fmtYen(Math.round(prevCumLatest))}円</span>
-    </div>
-    <div class="dailyTrendDelta ${cumDelta > 0 ? "up" : (cumDelta < 0 ? "down" : "")}">
-      先月同日比 ${deltaSign}${fmtYen(Math.round(cumDelta))}円
+    <div class="reportTrendTopbar">
+      <div class="reportTrendModeSwitch reportTrendModeSwitchInline">
+        <button class="reportTrendModeBtn active" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
+        <button class="reportTrendModeBtn" type="button" data-report-metric="asset" onclick="setReportVisualMetric('asset')">資産推移</button>
+      </div>
+      <div class="dailyTrendDelta ${cumDelta > 0 ? "up" : (cumDelta < 0 ? "down" : "")}">
+        先月同日比 ${deltaSign}${fmtYen(Math.round(cumDelta))}円
+      </div>
     </div>
     <div class="dailyTrendChartBox">
       <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="1ヶ月の累計支出推移">

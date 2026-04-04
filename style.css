@@ -728,14 +728,24 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   flex-wrap:wrap;
 }
 .reportVisualActions .ghost{
-  min-height:32px;
-  padding:6px 14px;
-  border-radius:999px;
+  min-height:28px;
+  padding:2px 2px 6px;
+  border-radius:0;
   font-size:11px;
   font-weight:900;
-  border:1px solid rgba(114,72,57,.10);
-  background:rgba(255,241,226,.7);
+  border:none;
+  background:transparent;
   color:#7d5341;
+  box-shadow:none;
+}
+.reportVisualActions .ghost:first-child{
+  margin-right:12px;
+}
+.reportVisualActions .ghost[aria-current="true"],
+.reportVisualActions .ghost.active{
+  color:var(--report-ink);
+  text-decoration:underline;
+  text-underline-offset:4px;
 }
 .reportTrendModeSwitch{
   margin:0 auto 10px;
@@ -758,6 +768,17 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:var(--report-muted);
   font-size:11px;
   font-weight:900;
+}
+.reportTrendTopbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+}
+.reportTrendModeSwitchInline{
+  margin:0;
+  justify-content:flex-start;
 }
 .reportTrendModeBtn + .reportTrendModeBtn{
   border-left:1px solid rgba(114,72,57,.10);
@@ -1790,13 +1811,19 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .reportVisualActions .ghost{
     flex:1 1 calc(50% - 4px);
     min-height:28px;
-    padding:4px 8px;
+    padding:2px 2px 4px;
     font-size:10px;
+  }
+  .reportVisualActions .ghost:first-child{
+    margin-right:8px;
   }
   .reportTrendModeBtn{
     min-height:28px;
-    padding:4px 10px;
+    padding:4px 9px;
     font-size:10px;
+  }
+  .reportTrendTopbar{
+    align-items:flex-start;
   }
   .reportQuickValue{
     font-size:11px;
