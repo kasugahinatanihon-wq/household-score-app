@@ -1414,7 +1414,7 @@ function applyHouseholdRowsToLocal(rows){
     const month = String(r.month || "").slice(0, 7);
     if(!month) continue;
     if(!fixedMap[month]){
-      fixedMap[month] = { housingYen:0, utilityYen:0, netYen:0, subYen:0, mortgagePrincipalYen:0 };
+      fixedMap[month] = { housingYen:0, utilityYen:0, netYen:0, subYen:0, mortgagePrincipalYen:0, recurringInvestYen:0 };
       incomeMap[month] = 0;
       savingMap[month] = { saving:0, invest:0 };
     }
@@ -1937,7 +1937,7 @@ async function syncMonthlySettingsToSupabase(monthStr){
     month,
     income_yen: Number(incomeAll[monthStr] || 0),
     saving_yen: Number(saving.saving || 0),
-    invest_yen: Number(saving.invest || 0),
+    invest_yen: Number(saving.invest || 0) + Number(fixed.recurringInvestYen || 0),
     housing_yen: Number(fixed.housingYen || 0),
     utility_yen: Number(fixed.utilityYen || 0),
     net_yen: Number(fixed.netYen || 0),
@@ -2267,13 +2267,16 @@ function saveSavingMap(map){ saveJSON(LS_SAVING, map); }
 function getSavingRawForMonth(m){ return loadSavingMap()[m] || null; }
 function getSavingForMonth(m){
   const raw = getSavingRawForMonth(m);
+  const fixed = loadJSON(LS_FIXED, {})[m] || {};
+  const recurringInvest = Number(fixed.recurringInvestYen || 0);
   const investFromTx = getMonthlyInvestTxTotal(m);
-  if(!raw && investFromTx <= 0) return null;
+  if(!raw && investFromTx <= 0 && recurringInvest <= 0) return null;
   return {
     saving: Number(raw?.saving || 0),
-    invest: Number(raw?.invest || 0) + investFromTx,
+    invest: Number(raw?.invest || 0) + recurringInvest + investFromTx,
     investManual: Number(raw?.invest || 0),
-    investFromTx
+    investFromTx,
+    recurringInvest
   };
 }
 function setSavingForMonth(m, saving, invest){
@@ -2305,12 +2308,13 @@ function loadMonthlySettings(m){
   const incomeAll = loadIncomeMap();
   const prev = prevMonthStr(m);
 
-  const fixed = fixedAll[m] || (prev ? fixedAll[prev] : null) || { housingYen:0, utilityYen:0, netYen:0, subYen:0, mortgagePrincipalYen:0 };
+  const fixed = fixedAll[m] || (prev ? fixedAll[prev] : null) || { housingYen:0, utilityYen:0, netYen:0, subYen:0, mortgagePrincipalYen:0, recurringInvestYen:0 };
   $("housingYen") && ($("housingYen").value = fixed.housingYen ? String(fixed.housingYen) : "");
   $("utilityYen") && ($("utilityYen").value = fixed.utilityYen ? String(fixed.utilityYen) : "");
   $("netYen") && ($("netYen").value = fixed.netYen ? String(fixed.netYen) : "");
   $("subYen") && ($("subYen").value = fixed.subYen ? String(fixed.subYen) : "");
   $("mortgagePrincipalYen") && ($("mortgagePrincipalYen").value = fixed.mortgagePrincipalYen ? String(fixed.mortgagePrincipalYen) : "");
+  $("recurringInvestYen") && ($("recurringInvestYen").value = fixed.recurringInvestYen ? String(fixed.recurringInvestYen) : "");
 
   const income = incomeAll[m] ?? (prev ? incomeAll[prev] : null);
   $("incomeYen") && ($("incomeYen").value = income ? String(income) : "");
@@ -2334,6 +2338,7 @@ function saveMonthlySettings(m){
     netYen: getVal("netYen", base.netYen),
     subYen: getVal("subYen", base.subYen),
     mortgagePrincipalYen: getVal("mortgagePrincipalYen", base.mortgagePrincipalYen),
+    recurringInvestYen: getVal("recurringInvestYen", base.recurringInvestYen),
   };
   saveJSON(LS_FIXED, fixedAll);
 
@@ -2355,8 +2360,12 @@ function setEntryStep(step){
   entryStep = step;
   const backBtn = $("entryBackBtn");
   const btn = $("entryPrimaryBtn");
+  const selectedCategory = normalizeCategoryName($("entryCategoryHidden")?.value);
   if(backBtn) backBtn.style.display = (step === "category") ? "none" : "";
-  if(btn) btn.textContent = (step === "quality") ? "保存" : "次へ";
+  if(btn){
+    const shouldSave = step === "quality" || (step === "amount" && selectedCategory === INVEST_CATEGORY);
+    btn.textContent = shouldSave ? "保存" : "次へ";
+  }
 }
 
 function showEntryStep(step){
@@ -2396,6 +2405,8 @@ window.closeModal = closeModal;
 function syncReportMonthDefault(){
   const el = $("reportMonth");
   if(el && !el.value) el.value = ym(new Date());
+  const yearEl = $("reportYear");
+  if(yearEl && !yearEl.value) yearEl.value = String(new Date().getFullYear());
 }
 
 function updateScreenHeader(name){
@@ -2752,6 +2763,11 @@ function handleEntryPrimary(){
     const amt = Number($("entryAmount").value || 0);
     if(!(amt > 0)){
       toast("支出を入力してね");
+      return;
+    }
+    if(normalizeCategoryName($("entryCategoryHidden")?.value) === INVEST_CATEGORY){
+      const savedRow = saveEntry();
+      if(savedRow) afterEntrySaved(savedRow);
       return;
     }
 
@@ -3715,219 +3731,339 @@ function getHomeReaction(){
 let HOME_CHARACTER_GUIDE = null;
 
 const ENABLE_GROWTH_LOG = true;
-let REPORT_TAB = "overview";
-function syncReportTopCategoryUI(){
-  const wrap = $("reportCategoryTopWrap");
-  const topSelect = $("reportCategoryTop");
-  if(!wrap || !topSelect) return;
-  const show = REPORT_TAB === "trend" || REPORT_TAB === "compare";
-  wrap.hidden = !show;
-  if(!show) return;
-  const src = REPORT_TAB === "trend" ? $("reportTrendCategory") : $("reportCompareCategory");
-  topSelect.value = src?.value || "all";
-}
-function onReportTopCategoryChange(value){
-  const v = value || "all";
-  if(REPORT_TAB === "trend" && $("reportTrendCategory")) $("reportTrendCategory").value = v;
-  if(REPORT_TAB === "compare" && $("reportCompareCategory")) $("reportCompareCategory").value = v;
-  renderMonthlyReport();
-}
-window.onReportTopCategoryChange = onReportTopCategoryChange;
-function switchReportTab(tab){
-  if(tab === "growth" && !ENABLE_GROWTH_LOG){
-    tab = "overview";
-  }
-  const exists = !!document.querySelector(`.reportPane#reportPane-${tab}`);
-  REPORT_TAB = exists ? tab : "overview";
-  document.querySelectorAll(".reportTabBtn").forEach(btn=>{
-    btn.classList.toggle("active", btn.dataset.reportTab === REPORT_TAB);
-  });
-  document.querySelectorAll(".reportPane").forEach(pane=>{
-    pane.classList.toggle("active", pane.id === `reportPane-${REPORT_TAB}`);
-  });
-  syncReportTopCategoryUI();
-}
+let REPORT_MODE = "monthly";
+let REPORT_VISUAL_SLIDE = 0;
+let REPORT_VISUAL_METRIC = "spend";
+let REPORT_CATEGORY_DETAIL = "";
+function switchReportTab(){ /* legacy no-op */ }
 window.switchReportTab = switchReportTab;
 
-function renderMonthlyReport(){
-  syncReportTopCategoryUI();
-  const m = $("reportMonth")?.value || ym(new Date());
-  const trendCategory = $("reportTrendCategory")?.value || "all";
-  const compareCategory = $("reportCompareCategory")?.value || "all";
-  const donut = $("reportDonut");
-  const legend = $("reportLegend");
-  const totalEl = $("reportTotal");
-  const quickTotal = $("reportQuickTotal");
-  const quickMoM = $("reportQuickMoM");
-  const quickMoMHint = $("reportQuickMoMHint");
-  const quickTopCat = $("reportQuickTopCat");
-  const quickInsight = $("reportQuickInsight");
-  const quickBigMemo = $("reportQuickBigMemo");
-  const drill = $("reportCategoryDrill");
-  renderSpendTrendChart(m, trendCategory);
-  renderMonthlyCompareChart(m, compareCategory);
-  renderReportGrowthLog(m);
-  if(!donut || !legend || !totalEl) return;
+function switchReportMode(mode){
+  REPORT_MODE = mode === "annual" ? "annual" : "monthly";
+  document.querySelectorAll(".reportModeBtn").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.reportMode === REPORT_MODE);
+  });
+  const monthWrap = $("reportMonthControl");
+  const yearWrap = $("reportYearControl");
+  if(monthWrap) monthWrap.hidden = REPORT_MODE !== "monthly";
+  if(yearWrap) yearWrap.hidden = REPORT_MODE !== "annual";
+  closeReportCategoryDetail();
+  renderMonthlyReport();
+}
+window.switchReportMode = switchReportMode;
 
-  const { items, total } = buildMonthlyReportItems(m);
-  const cutoffDay = getReportCutoffDay(m);
-  const sameDay = buildMonthlyReportItemsToDay(m, cutoffDay);
-  const prevMonth = shiftYm(m, -1);
-  const prevSameDay = buildMonthlyReportItemsToDay(prevMonth, cutoffDay);
-  const momDiff = sameDay.total - prevSameDay.total;
-  const momPct = prevSameDay.total > 0 ? Math.round((momDiff / prevSameDay.total) * 100) : null;
-  const sameDayItems = sameDay.items;
-  const variableItems = items.filter(item=> !FIXED_CATEGORIES.has(item.label));
-  const topCat = variableItems[0]?.label || items[0]?.label || "未設定";
-  const topCatAmount = variableItems[0]?.amount || items[0]?.amount || 0;
-  const topCatShare = total > 0 ? Math.round((topCatAmount / total) * 100) : 0;
-  const sameDayVariableItems = sameDayItems.filter(item=> !FIXED_CATEGORIES.has(item.label));
-  const prevSameVariableItems = prevSameDay.items.filter(item=> !FIXED_CATEGORIES.has(item.label));
-  const momHintText = sameDay.total === 0
-    ? "まずは1件記録して比較を始める"
-    : momDiff > 0
-      ? "先月同日より増加。上位カテゴリを確認"
-      : momDiff < 0
-        ? "先月同日より減少。このペースを維持"
-        : "先月同日と同水準";
-  const largestSingle = getLargestSinglePurchase(m, total);
+function switchReportVisualSlide(index){
+  REPORT_VISUAL_SLIDE = clamp(Number(index || 0), 0, 1);
+  const track = $("reportVisualTrack");
+  if(track) track.style.transform = `translate3d(${-REPORT_VISUAL_SLIDE * 100}%, 0, 0)`;
+  document.querySelectorAll(".reportVisualDot").forEach(btn=>{
+    btn.classList.toggle("active", Number(btn.dataset.reportSlide || 0) === REPORT_VISUAL_SLIDE);
+  });
+}
+window.switchReportVisualSlide = switchReportVisualSlide;
 
-  if(quickTotal) quickTotal.textContent = `${fmtYen(Math.round(total))}円`;
-  if(quickMoM){
-    quickMoM.classList.remove("is-up", "is-down", "is-flat", "is-nodata");
-    if(prevSameDay.total > 0){
-      const dir = momDiff > 0 ? "▲ " : momDiff < 0 ? "▼ " : "■ ";
-      quickMoM.textContent = `${dir}${momDiff > 0 ? "+" : ""}${fmtYen(Math.round(momDiff))}円 (${momPct > 0 ? "+" : ""}${momPct}%)`;
-      if(momDiff > 0){
-        quickMoM.classList.add("is-up");
-      }else if(momDiff < 0){
-        quickMoM.classList.add("is-down");
-      }else{
-        quickMoM.classList.add("is-flat");
-      }
-    }else{
-      quickMoM.textContent = "比較データなし";
-      quickMoM.classList.add("is-nodata");
-    }
-  }
-  if(quickMoMHint) quickMoMHint.textContent = momHintText;
-  if(quickTopCat){
-    if(topCat === "未設定" || total <= 0){
-      quickTopCat.textContent = "未設定";
-    }else{
-      quickTopCat.textContent = `${topCat} ${fmtYen(Math.round(topCatAmount))}円 (${topCatShare}%)`;
-    }
-  }
-  if(quickInsight){
-    if(largestSingle){
-      quickInsight.textContent = `${fmtYen(Math.round(largestSingle.amount))}円 (${largestSingle.share}%)`;
-    }else{
-      quickInsight.textContent = "記録待ち";
-    }
-  }
-  if(quickBigMemo){
-    if(largestSingle){
-      const memoText = largestSingle.memo ? escapeHtml(largestSingle.memo) : "メモなし";
-      quickBigMemo.innerHTML = `${escapeHtml(largestSingle.category)} / ${memoText}`;
-    }else{
-      quickBigMemo.textContent = "カテゴリ・メモなし";
-    }
-  }
-  totalEl.textContent = total > 0 ? `合計 ${Math.round(total).toLocaleString("ja-JP")}円` : "—";
+function toggleReportVisualMetric(){
+  REPORT_VISUAL_METRIC = REPORT_VISUAL_METRIC === "spend" ? "asset" : "spend";
+  renderMonthlyReport();
+  switchReportVisualSlide(1);
+}
+window.toggleReportVisualMetric = toggleReportVisualMetric;
 
-  if(total <= 0){
-    donut.style.background = "conic-gradient(#f3dfd2 0 100%)";
-    donut.innerHTML = "";
-    donut.classList.remove("is-anim");
-    legend.innerHTML = `<div class="small muted">データがありません</div>`;
-    if(drill) drill.innerHTML = `<div class="small muted">データがありません</div>`;
-    switchReportTab(REPORT_TAB);
+function openReportCategoryDetail(category){
+  REPORT_CATEGORY_DETAIL = category || "";
+  $("reportMainPanel") && ($("reportMainPanel").style.display = "none");
+  $("reportCategoryDetailPanel") && ($("reportCategoryDetailPanel").style.display = "");
+  renderMonthlyReport();
+}
+window.openReportCategoryDetail = openReportCategoryDetail;
+
+function closeReportCategoryDetail(){
+  REPORT_CATEGORY_DETAIL = "";
+  $("reportMainPanel") && ($("reportMainPanel").style.display = "");
+  $("reportCategoryDetailPanel") && ($("reportCategoryDetailPanel").style.display = "none");
+}
+window.closeReportCategoryDetail = closeReportCategoryDetail;
+
+function getReportScopeKey(){
+  if(REPORT_MODE === "annual"){
+    const year = String($("reportYear")?.value || new Date().getFullYear()).trim();
+    return /^\d{4}$/.test(year) ? year : String(new Date().getFullYear());
+  }
+  const month = $("reportMonth")?.value || ym(new Date());
+  return month;
+}
+
+function getMonthsForYear(year){
+  return Array.from({ length:12 }, (_, idx)=> `${year}-${pad2(idx + 1)}`);
+}
+
+function buildAnnualReportItems(year){
+  const sums = {};
+  const months = getMonthsForYear(year);
+  const tx = loadTx().filter(t=> (t.date || "").startsWith(`${year}-`));
+  tx.forEach(t=>{
+    sums[t.category] = (sums[t.category] || 0) + Number(t.amount || 0);
+  });
+  const fixedAll = loadJSON(LS_FIXED, {});
+  months.forEach(month=>{
+    const fixed = fixedAll[month] || {};
+    const fixedMap = {
+      "住居費": Number(fixed.housingYen || 0),
+      "光熱費": Number(fixed.utilityYen || 0),
+      "通信費": Number(fixed.netYen || 0),
+      "サブスク": Number(fixed.subYen || 0),
+    };
+    Object.entries(fixedMap).forEach(([label, amount])=>{
+      if(amount > 0) sums[label] = (sums[label] || 0) + amount;
+    });
+  });
+  const items = Object.entries(sums)
+    .map(([label, amount])=> ({ label, amount:Number(amount || 0) }))
+    .filter(item=> item.amount > 0)
+    .sort((a,b)=>{
+      const aFixed = FIXED_CATEGORIES.has(a.label);
+      const bFixed = FIXED_CATEGORIES.has(b.label);
+      if(aFixed !== bFixed) return aFixed ? 1 : -1;
+      return b.amount - a.amount;
+    });
+  return { items, total: items.reduce((sum, item)=> sum + item.amount, 0) };
+}
+
+function buildReportItemsForScope(mode, scopeKey){
+  return mode === "annual" ? buildAnnualReportItems(scopeKey) : buildMonthlyReportItems(scopeKey);
+}
+
+function getReportScopeSavings(mode, scopeKey){
+  if(mode === "annual"){
+    return getMonthsForYear(scopeKey).reduce((acc, month)=>{
+      const saved = getSavingForMonth(month) || { saving:0, invest:0 };
+      acc.saving += Number(saved.saving || 0);
+      acc.invest += Number(saved.invest || 0);
+      return acc;
+    }, { saving:0, invest:0 });
+  }
+  const saved = getSavingForMonth(scopeKey) || { saving:0, invest:0 };
+  return { saving:Number(saved.saving || 0), invest:Number(saved.invest || 0) };
+}
+
+function getScopeCategoryAmount(mode, scopeKey, category){
+  const { items, total } = buildReportItemsForScope(mode, scopeKey);
+  if(!category || category === "all") return total;
+  return Number(items.find(item=> item.label === category)?.amount || 0);
+}
+
+function getScopeCategoryRows(mode, scopeKey, category){
+  if(mode === "annual"){
+    return getMonthsForYear(scopeKey).map(month=> ({
+      label: `${Number(month.slice(5,7))}月`,
+      amount: getScopeCategoryAmount("monthly", month, category)
+    }));
+  }
+  const rows = loadTx()
+    .filter(t=> t.date && t.date.startsWith(scopeKey) && t.category === category)
+    .sort((a,b)=> (b.date || "").localeCompare(a.date || "") || Number(b.amount || 0) - Number(a.amount || 0));
+  return rows.map(row=> ({
+    label: String(row.date || "").slice(5),
+    amount: Number(row.amount || 0),
+    memo: String(row.memo || "").trim()
+  }));
+}
+
+function renderCompareBarsInto(areaId, rows, currentLabel = "", emptyText = "データがありません"){
+  const area = $(areaId);
+  if(!area) return;
+  if(!rows.length || rows.every(row=> Number(row.amount || 0) <= 0)){
+    area.innerHTML = `<div class="small muted" style="padding:8px 0;">${escapeHtml(emptyText)}</div>`;
     return;
   }
-
-  let start = 0;
-  const segments = items.map((item, idx)=>{
-    const startPct = start;
-    const pct = total > 0 ? (item.amount / total) * 100 : 0;
-    const color = REPORT_COLORS[idx % REPORT_COLORS.length];
-    const end = start + pct;
-    const seg = `${color} ${startPct.toFixed(2)}% ${end.toFixed(2)}%`;
-    start = end;
-    return { ...item, pct, color, seg, startPct, endPct:end };
-  });
-  const buildDonutGradient = (focusLabel = "")=>{
-    const segStr = segments.map(s=>{
-      const color = focusLabel && s.label !== focusLabel ? "#d1d5db" : s.color;
-      return `${color} ${s.startPct.toFixed(2)}% ${s.endPct.toFixed(2)}%`;
-    }).join(",");
-    return `conic-gradient(${segStr})`;
-  };
-  donut.style.background = buildDonutGradient("");
-  const labelMinPct = 7;
-  const labelRadiusPct = 34;
-  const labelHTML = segments
-    .filter(s=> s.pct >= labelMinPct)
-    .map(s=>{
-      const mid = (s.startPct + s.endPct) / 2;
-      const rad = (mid / 100) * Math.PI * 2 - (Math.PI / 2);
-      const x = 50 + Math.cos(rad) * labelRadiusPct;
-      const y = 50 + Math.sin(rad) * labelRadiusPct;
-      return `<span class="reportDonutLabel" data-label="${escapeHtml(s.label)}" style="left:${x}%; top:${y}%;">${escapeHtml(s.label)} ${Math.round(s.pct)}%</span>`;
-    }).join("");
-  donut.innerHTML = labelHTML;
-  donut.classList.remove("is-anim");
-  void donut.offsetWidth;
-  donut.classList.add("is-anim");
-
-  legend.innerHTML = segments.map(item=>{
-    const pctText = `${Math.round(item.pct)}%`;
-    const amtText = `${Math.round(item.amount).toLocaleString("ja-JP")}円`;
+  const maxTotal = Math.max(...rows.map(r=> Number(r.amount || 0)), 1);
+  area.innerHTML = rows.map(row=>{
+    const width = Math.round((Number(row.amount || 0) / maxTotal) * 100);
+    const isCurrent = row.label === currentLabel;
     return `
-      <div class="reportLegendItem" data-label="${escapeHtml(item.label)}">
-        <button class="reportLegendMain" type="button" data-label="${escapeHtml(item.label)}">
-          <div class="reportLegendKey"><span class="reportLegendDot" style="background:${item.color};"></span>${escapeHtml(item.label)}</div>
-          <div class="reportLegendMeta">${pctText} / ${amtText}</div>
-        </button>
+      <div class="monthCompareRow ${isCurrent ? "isCurrent" : ""}">
+        <div class="monthCompareLabel">${escapeHtml(row.label)}</div>
+        <div class="monthCompareBar"><div class="monthCompareFill" style="width:${width}%;"></div></div>
+        <div class="monthCompareValue">${fmtYen(Math.round(Number(row.amount || 0)))}円</div>
       </div>
     `;
   }).join("");
-  let activeLabel = "";
-  const syncDonutFocus = ()=>{
-    donut.style.background = buildDonutGradient(activeLabel);
-    legend.querySelectorAll(".reportLegendMain").forEach(el=>{
-      const isActive = el.dataset.label === activeLabel;
-      const isDim = activeLabel && !isActive;
-      el.classList.toggle("is-active", !!isActive);
-      el.classList.toggle("is-dim", !!isDim);
-    });
-    donut.querySelectorAll(".reportDonutLabel").forEach(el=>{
-      const isDim = activeLabel && el.dataset.label !== activeLabel;
-      el.classList.toggle("is-dim", !!isDim);
-    });
-    renderReportCategoryDrill(m, activeLabel, total);
-  };
-  legend.querySelectorAll(".reportLegendMain").forEach(el=>{
-    el.addEventListener("click", ()=>{
-      const label = el.dataset.label || "";
-      activeLabel = (activeLabel === label) ? "" : label;
-      syncDonutFocus();
-      if(activeLabel && drill){
-        drill.scrollIntoView({ behavior:"smooth", block:"nearest" });
-      }
-    });
+}
+
+function renderCategoryDetailBody(areaId, mode, scopeKey, category, totalBase){
+  const area = $(areaId);
+  if(!area) return;
+  if(mode === "annual"){
+    const rows = getScopeCategoryRows(mode, scopeKey, category);
+    const total = rows.reduce((sum, row)=> sum + Number(row.amount || 0), 0);
+    const share = totalBase > 0 ? Math.round((total / totalBase) * 100) : 0;
+    area.innerHTML = `
+      <div class="reportDrillHead">${escapeHtml(category)} の年間詳細 <span>${fmtYen(total)}円 / ${share}%</span></div>
+      <div class="reportDrillList">
+        ${rows.map(row=> `
+          <div class="reportDrillRow">
+            <div>${escapeHtml(row.label)}</div>
+            <div>${fmtYen(Math.round(Number(row.amount || 0)))}円</div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+    return;
+  }
+  const rows = loadTx()
+    .filter(t=> t.date && t.date.startsWith(scopeKey) && t.category === category)
+    .sort((a,b)=> (b.date || "").localeCompare(a.date || "") || Number(b.amount || 0) - Number(a.amount || 0));
+  if(!rows.length){
+    area.innerHTML = `<div class="small muted">このカテゴリの明細はありません</div>`;
+    return;
+  }
+  const total = rows.reduce((sum, row)=> sum + Number(row.amount || 0), 0);
+  const share = totalBase > 0 ? Math.round((total / totalBase) * 100) : 0;
+  area.innerHTML = `
+    <div class="reportDrillHead">${escapeHtml(category)} の明細 <span>${fmtYen(total)}円 / ${share}%</span></div>
+    <div class="reportDrillList">
+      ${rows.map(row=> `
+        <div class="reportDrillRow">
+          <div>${escapeHtml(String(row.date || "").slice(5))}</div>
+          <div>${fmtYen(Math.round(Number(row.amount || 0)))}円${row.memo ? ` / ${escapeHtml(row.memo)}` : ""}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderAnnualTrendChart(areaId, year, metric = "spend"){
+  const area = $(areaId);
+  if(!area) return;
+  const rows = getMonthsForYear(year).map(month=> ({
+    label: `${Number(month.slice(5,7))}月`,
+    value: metric === "asset"
+      ? (Number(getSavingForMonth(month)?.saving || 0) + Number(getSavingForMonth(month)?.invest || 0))
+      : buildMonthlyReportItems(month).total
+  }));
+  const maxValue = Math.max(...rows.map(r=> Number(r.value || 0)), 1);
+  const w = 360;
+  const h = 170;
+  const pad = { left:16, right:10, top:10, bottom:26 };
+  const innerW = w - pad.left - pad.right;
+  const innerH = h - pad.top - pad.bottom;
+  const x = (idx)=> pad.left + ((rows.length <= 1 ? 0 : idx / (rows.length - 1)) * innerW);
+  const y = (val)=> pad.top + (1 - (val / maxValue)) * innerH;
+  const line = rows.map((row, idx)=>`${x(idx)},${y(Number(row.value || 0))}`).join(" ");
+  const areaPath = `M ${x(0)} ${y(Number(rows[0]?.value || 0))} L ${rows.map((row, idx)=>`${x(idx)} ${y(Number(row.value || 0))}`).join(" L ")} L ${x(rows.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
+  area.innerHTML = `
+    <div class="dailyTrendLegend" style="margin-bottom:8px;">
+      <span><i class="dailyTrendSwatch cum"></i>${metric === "asset" ? "資産推移" : "支出推移"} ${escapeHtml(year)}年</span>
+    </div>
+    <div class="dailyTrendChartBox">
+      <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(year)}年の${metric === "asset" ? "資産" : "支出"}推移">
+        <path class="dailyTrendArea" d="${areaPath}"></path>
+        <polyline class="dailyTrendCum" points="${line}"></polyline>
+        ${rows.map((row, idx)=>`<circle class="dailyTrendDot" cx="${x(idx)}" cy="${y(Number(row.value || 0))}" r="${idx === rows.length - 1 ? 4 : 3}"></circle>`).join("")}
+      </svg>
+    </div>
+    <div class="dailyTrendAxis">
+      ${rows.map(row=>`<span>${escapeHtml(row.label)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function renderReportBreakdown(scopeMode, scopeKey){
+  const donut = $("reportDonut");
+  const legend = $("reportLegend");
+  const drill = $("reportCategoryDrill");
+  if(!donut || !legend || !drill) return;
+  const { items, total } = buildReportItemsForScope(scopeMode, scopeKey);
+  if(total <= 0){
+    donut.style.background = "conic-gradient(#f3dfd2 0 100%)";
+    donut.innerHTML = "";
+    legend.innerHTML = `<div class="small muted">データがありません</div>`;
+    drill.innerHTML = `<div class="small muted">カテゴリを選ぶと詳細が見られます</div>`;
+    return;
+  }
+  let start = 0;
+  const segments = items.map((item, idx)=>{
+    const pct = total > 0 ? (item.amount / total) * 100 : 0;
+    const color = REPORT_COLORS[idx % REPORT_COLORS.length];
+    const startPct = start;
+    const endPct = start + pct;
+    start = endPct;
+    return { ...item, pct, color, startPct, endPct };
   });
-  donut.querySelectorAll(".reportDonutLabel").forEach(el=>{
-    el.addEventListener("click", ()=>{
-      const label = el.dataset.label || "";
-      activeLabel = (activeLabel === label) ? "" : label;
-      syncDonutFocus();
-      if(activeLabel && drill){
-        drill.scrollIntoView({ behavior:"smooth", block:"nearest" });
-      }
-    });
+  donut.style.background = `conic-gradient(${segments.map(s=> `${s.color} ${s.startPct.toFixed(2)}% ${s.endPct.toFixed(2)}%`).join(",")})`;
+  donut.innerHTML = segments
+    .filter(s=> s.pct >= 7)
+    .map(s=>{
+      const mid = (s.startPct + s.endPct) / 2;
+      const rad = (mid / 100) * Math.PI * 2 - (Math.PI / 2);
+      const x = 50 + Math.cos(rad) * 34;
+      const y = 50 + Math.sin(rad) * 34;
+      return `<span class="reportDonutLabel" data-label="${escapeHtml(s.label)}" style="left:${x}%; top:${y}%;">${escapeHtml(s.label)} ${Math.round(s.pct)}%</span>`;
+    }).join("");
+  legend.innerHTML = segments.map(item=> `
+    <div class="reportLegendItem" data-label="${escapeHtml(item.label)}">
+      <button class="reportLegendMain" type="button" data-label="${escapeHtml(item.label)}">
+        <div class="reportLegendKey"><span class="reportLegendDot" style="background:${item.color};"></span>${escapeHtml(item.label)}</div>
+        <div class="reportLegendMeta">${Math.round(item.pct)}% / ${fmtYen(Math.round(item.amount))}円</div>
+      </button>
+    </div>
+  `).join("");
+  const first = segments[0];
+  drill.innerHTML = first
+    ? `<div class="reportDrillHead">内訳を確認 <span>${escapeHtml(first.label)} が最多</span></div><div class="small muted" style="margin-top:8px;">カテゴリをタップすると、月次支出比較と詳細明細を開きます。</div>`
+    : `<div class="small muted">カテゴリをタップすると詳細が見られます</div>`;
+  legend.querySelectorAll(".reportLegendMain").forEach(btn=>{
+    btn.addEventListener("click", ()=> openReportCategoryDetail(btn.dataset.label || ""));
   });
-  syncDonutFocus();
-  switchReportTab(REPORT_TAB);
+  donut.querySelectorAll(".reportDonutLabel").forEach(label=>{
+    label.addEventListener("click", ()=> openReportCategoryDetail(label.dataset.label || ""));
+  });
+}
+
+function renderMonthlyReport(){
+  const scopeKey = getReportScopeKey();
+  const scopeMode = REPORT_MODE;
+  const scopeLabel = scopeMode === "annual" ? `${scopeKey}年` : scopeKey;
+  const { total } = buildReportItemsForScope(scopeMode, scopeKey);
+  const assets = getReportScopeSavings(scopeMode, scopeKey);
+  $("reportScopeSpendLabel") && ($("reportScopeSpendLabel").textContent = scopeMode === "annual" ? "年間の支出" : "月間の支出");
+  $("reportScopeAssetLabel") && ($("reportScopeAssetLabel").textContent = scopeMode === "annual" ? "年間の資産形成" : "月間の資産形成");
+  $("reportQuickSpendTotal") && ($("reportQuickSpendTotal").textContent = `${fmtYen(Math.round(total))}円`);
+  $("reportQuickSavingTotal") && ($("reportQuickSavingTotal").textContent = `${fmtYen(Math.round(assets.saving || 0))}円`);
+  $("reportQuickInvestTotal") && ($("reportQuickInvestTotal").textContent = `${fmtYen(Math.round(assets.invest || 0))}円`);
+  $("reportQuickAssetTotal") && ($("reportQuickAssetTotal").textContent = `${fmtYen(Math.round((assets.saving || 0) + (assets.invest || 0)))}円`);
+  $("reportVisualMetricBtn") && ($("reportVisualMetricBtn").textContent = REPORT_VISUAL_METRIC === "spend" ? "資産推移へ" : "支出推移へ");
+  $("reportVisualSectionTitle") && ($("reportVisualSectionTitle").textContent = REPORT_VISUAL_SLIDE === 0 ? `${scopeLabel} の内訳` : `${scopeLabel} の${REPORT_VISUAL_METRIC === "spend" ? "支出推移" : "資産推移"}`);
+  $("reportVisualSectionHint") && ($("reportVisualSectionHint").textContent = REPORT_VISUAL_SLIDE === 0 ? "カテゴリをタップすると詳細へ進みます" : "横に戻すと内訳に戻ります");
+
+  renderReportBreakdown(scopeMode, scopeKey);
+  if(REPORT_VISUAL_METRIC === "spend"){
+    if(scopeMode === "monthly"){
+      renderSpendTrendChart(scopeKey, "all", "reportVisualTrend");
+    }else{
+      renderAnnualTrendChart("reportVisualTrend", scopeKey, "spend");
+    }
+  }else{
+    if(scopeMode === "monthly"){
+      renderReportGrowthLog(scopeKey, "reportVisualTrend", { metric:"total", mode:"monthly" });
+    }else{
+      renderAnnualTrendChart("reportVisualTrend", scopeKey, "asset");
+    }
+  }
+
+  if(REPORT_CATEGORY_DETAIL){
+    $("reportCategoryDetailTitle") && ($("reportCategoryDetailTitle").textContent = `${REPORT_CATEGORY_DETAIL} の詳細`);
+    $("reportCategoryDetailHint") && ($("reportCategoryDetailHint").textContent = scopeMode === "annual" ? `${scopeKey}年の推移と詳細` : `${scopeKey} の推移と詳細`);
+    const compareRows = scopeMode === "annual"
+      ? getScopeCategoryRows("annual", scopeKey, REPORT_CATEGORY_DETAIL)
+      : Array.from({ length:6 }, (_, idx)=> shiftYm(scopeKey, -(5 - idx))).map(month=> ({
+          label: `${Number(month.slice(5,7))}月`,
+          amount: getScopeCategoryAmount("monthly", month, REPORT_CATEGORY_DETAIL)
+        }));
+    renderCompareBarsInto("reportCategoryCompareChart", compareRows, scopeMode === "annual" ? "" : `${Number(scopeKey.slice(5,7))}月`, "比較データがありません");
+    renderCategoryDetailBody("reportCategoryDetailBody", scopeMode, scopeKey, REPORT_CATEGORY_DETAIL, total);
+  }
+  switchReportVisualSlide(REPORT_VISUAL_SLIDE);
 }
 
 function openReportCategoryHistory(monthStr, category){
@@ -4086,11 +4222,11 @@ function getGrowthMetricLabel(metric){
   return "合計";
 }
 
-function renderReportGrowthLog(monthStr){
-  const area = $("reportGrowthLog");
+function renderReportGrowthLog(monthStr, areaId = "reportGrowthLog", options = {}){
+  const area = $(areaId);
   if(!area) return;
-  const metric = $("reportGrowthMetric")?.value || "total";
-  const mode = $("reportGrowthMode")?.value || "monthly";
+  const metric = options.metric || $("reportGrowthMetric")?.value || "total";
+  const mode = options.mode || $("reportGrowthMode")?.value || "monthly";
   const months = [];
   for(let i=5;i>=0;i--) months.push(shiftYm(monthStr, -i));
   const rows = months.map(m=>({
@@ -4152,8 +4288,8 @@ function getMonthlyAmountByCategory(monthStr, category){
   return Number(found?.amount || 0);
 }
 
-function renderSpendTrendChart(monthStr, category = "all"){
-  const area = $("reportSpendTrend");
+function renderSpendTrendChart(monthStr, category = "all", areaId = "reportSpendTrend"){
+  const area = $(areaId);
   if(!area) return;
   const tx = loadTx().filter(t=> t.date && t.date.startsWith(monthStr) && (category === "all" || t.category === category));
   if(!tx.length){
@@ -4273,8 +4409,8 @@ function renderSpendTrendChart(monthStr, category = "all"){
   `;
 }
 
-function renderMonthlyCompareChart(monthStr, category = "all"){
-  const area = $("reportMonthlyCompare");
+function renderMonthlyCompareChart(monthStr, category = "all", areaId = "reportMonthlyCompare"){
+  const area = $(areaId);
   if(!area) return;
   const months = [];
   for(let i=5;i>=0;i--) months.push(shiftYm(monthStr, -i));
@@ -6892,6 +7028,7 @@ function finishSurvey(){
     mortgagePrincipalYen: (prof.housingType === "mortgage")
       ? Number($("surveyMortgagePrincipal")?.value || 0)
       : 0,
+    recurringInvestYen: 0,
   };
   saveJSON(LS_FIXED, fixedAll);
   syncSafely(()=> syncProfileToSupabase());
@@ -7000,7 +7137,10 @@ async function init(){
   $("reportMonth")?.addEventListener("change", ()=>{
     renderMonthlyReport();
   });
-  switchReportTab(REPORT_TAB);
+  $("reportYear")?.addEventListener("change", ()=>{
+    renderMonthlyReport();
+  });
+  switchReportMode(REPORT_MODE);
   $("incomeYen")?.addEventListener("input", ()=>{});
   if($("homePreviewCategory")){
     const current = localStorage.getItem(LS_HOME_PREVIEW_CATEGORY) || "auto";

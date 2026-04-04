@@ -462,122 +462,87 @@
 
   <section class="screen" id="screen-report">
     <div class="box boxSafeBottom">
-      <div class="bar reportHeader" style="justify-content:flex-end; align-items:flex-end;">
-        <label class="small reportMonthLabel">対象月
+      <div class="reportModeSwitch">
+        <button class="reportModeBtn active" type="button" data-report-mode="monthly" onclick="switchReportMode('monthly')">月間レポート</button>
+        <button class="reportModeBtn" type="button" data-report-mode="annual" onclick="switchReportMode('annual')">年間レポート</button>
+      </div>
+      <div class="bar reportHeader reportHeaderTop" style="margin-top:12px;">
+        <label class="small reportMonthLabel" id="reportMonthControl">対象月
           <input type="month" id="reportMonth">
+        </label>
+        <label class="small reportMonthLabel" id="reportYearControl" hidden>対象年
+          <input type="number" id="reportYear" min="2020" max="2100" step="1" placeholder="2026">
         </label>
       </div>
 
-      <div class="reportTabs" style="margin-top:12px;">
-        <button class="reportTabBtn active" data-report-tab="overview" onclick="switchReportTab('overview')">全体</button>
-        <button class="reportTabBtn" data-report-tab="breakdown" onclick="switchReportTab('breakdown')">内訳</button>
-        <button class="reportTabBtn" data-report-tab="trend" onclick="switchReportTab('trend')">支出推移</button>
-        <button class="reportTabBtn" data-report-tab="compare" onclick="switchReportTab('compare')">支出比較</button>
-        <button class="reportTabBtn" data-report-tab="growth" onclick="switchReportTab('growth')">資産推移</button>
-        <button class="reportTabBtn is-comingsoon" type="button" disabled aria-label="新機能予定">新機能予定</button>
-      </div>
-
-      <div class="reportPane active" id="reportPane-overview">
-        <div class="sectionCard" style="margin-top:12px;">
-          <div class="reportQuickGrid reportQuickGridFeatured">
-            <div class="reportQuickItem reportQuickItemHero" data-quick-tone="total">
-              <div class="small muted">💰 今月支出</div>
-              <div class="reportQuickValue" id="reportQuickTotal">—</div>
-            </div>
-            <div class="reportQuickItem" data-quick-tone="diff">
-              <div class="small muted">📊 先月同日比</div>
-              <div class="reportQuickValue" id="reportQuickMoM">—</div>
-              <div class="reportQuickSub" id="reportQuickMoMHint">—</div>
-            </div>
-            <div class="reportQuickItem" data-quick-tone="topcat">
-              <div class="small muted">🏷️ 最多カテゴリ</div>
-              <div class="reportQuickValue" id="reportQuickTopCat">—</div>
-            </div>
-            <div class="reportQuickItem" data-quick-tone="bigbuy">
-              <div class="small muted">🔥 今月の一番大きな買い物</div>
-              <div class="reportQuickValue reportQuickNote" id="reportQuickInsight">—</div>
-              <div class="reportQuickSub" id="reportQuickBigMemo">—</div>
-            </div>
-          </div>
+      <div class="reportQuickGrid reportSummaryGrid" style="margin-top:12px;">
+        <div class="reportQuickItem reportQuickItemHero" data-quick-tone="total">
+          <div class="small muted" id="reportScopeSpendLabel">今月の支出</div>
+          <div class="reportQuickValue" id="reportQuickSpendTotal">—</div>
+        </div>
+        <div class="reportQuickItem" data-quick-tone="save">
+          <div class="small muted">貯蓄</div>
+          <div class="reportQuickValue" id="reportQuickSavingTotal">—</div>
+        </div>
+        <div class="reportQuickItem" data-quick-tone="invest">
+          <div class="small muted">投資</div>
+          <div class="reportQuickValue" id="reportQuickInvestTotal">—</div>
+        </div>
+        <div class="reportQuickItem" data-quick-tone="asset">
+          <div class="small muted" id="reportScopeAssetLabel">今月の資産形成</div>
+          <div class="reportQuickValue" id="reportQuickAssetTotal">—</div>
         </div>
       </div>
 
-      <div class="reportPane" id="reportPane-breakdown">
-        <div class="reportGrid" style="margin-top:12px;">
-          <div class="sectionCard">
-            <div class="sectionHead">
-              <div><div class="sectionName">支出内訳（円）</div><div class="sectionHint">カテゴリ別の合計</div></div>
-              <div class="sectionScore" id="reportTotal">—</div>
-            </div>
-            <div class="reportChartWrap">
-              <div class="reportDonut" id="reportDonut" role="img" aria-label="支出内訳の円グラフ"></div>
-              <div>
-                <div class="reportCategoryDrill" id="reportCategoryDrill"></div>
-                <div class="reportLegend" id="reportLegend"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="reportPane" id="reportPane-trend">
-        <div class="sectionCard" style="margin-top:12px;">
-          <div class="sectionHead sectionHeadTrend">
-            <div><div class="sectionName">支出推移（1ヶ月）</div><div class="sectionHint">月累計の伸びを確認</div></div>
-            <label class="small">カテゴリ
-              <select id="reportTrendCategory" onchange="renderMonthlyReport()">
-                <option value="all">全カテゴリ</option>
-                <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
-                <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
-                <option value="交際費">交際費</option><option value="投資">投資</option><option value="カフェ">カフェ</option><option value="デート">デート</option>
-                <option value="趣味">趣味</option><option value="仕事">仕事</option><option value="交通費">交通費</option>
-                <option value="医療費">医療費</option><option value="教育費">教育費</option>
-              </select>
-            </label>
-          </div>
-          <div id="reportSpendTrend"></div>
-        </div>
-      </div>
-
-      <div class="reportPane" id="reportPane-compare">
-        <div class="sectionCard">
-          <div class="sectionHead" style="margin-top:12px;">
-            <div><div class="sectionName">月次支出比較</div><div class="sectionHint">直近6ヶ月</div></div>
-            <label class="small">カテゴリ
-              <select id="reportCompareCategory" onchange="renderMonthlyReport()">
-                <option value="all">全カテゴリ</option>
-                <option value="食費">食費</option><option value="外食費">外食費</option><option value="コンビニ">コンビニ</option>
-                <option value="日用品">日用品</option><option value="衣服">衣服</option><option value="美容">美容</option>
-                <option value="交際費">交際費</option><option value="投資">投資</option><option value="カフェ">カフェ</option><option value="デート">デート</option>
-                <option value="趣味">趣味</option><option value="仕事">仕事</option><option value="交通費">交通費</option>
-                <option value="医療費">医療費</option><option value="教育費">教育費</option>
-              </select>
-            </label>
-          </div>
-          <div id="reportMonthlyCompare"></div>
-        </div>
-      </div>
-
-      <div class="reportPane" id="reportPane-growth">
+      <div id="reportMainPanel">
         <div class="sectionCard" style="margin-top:12px;">
           <div class="sectionHead">
-            <div><div class="sectionName">資産推移</div><div class="sectionHint">貯蓄・投資・合計を月次/累計で確認</div></div>
-            <div class="reportGrowthControls">
-              <select id="reportGrowthMetric" onchange="renderMonthlyReport()" aria-label="資産推移の項目">
-                <option value="total">合計</option>
-                <option value="saving">貯蓄</option>
-                <option value="invest">投資</option>
-              </select>
-              <select id="reportGrowthMode" onchange="renderMonthlyReport()" aria-label="資産推移の表示切替">
-                <option value="monthly">その月</option>
-                <option value="cumulative">累計</option>
-              </select>
+            <div>
+              <div class="sectionName" id="reportVisualSectionTitle">支出内訳</div>
+              <div class="sectionHint" id="reportVisualSectionHint">横にスライドすると推移グラフが見られます</div>
+            </div>
+            <div class="reportVisualActions">
+              <button class="ghost" type="button" onclick="switchReportVisualSlide(0)">内訳</button>
+              <button class="ghost" type="button" onclick="switchReportVisualSlide(1)">推移</button>
+              <button class="ghost" type="button" id="reportVisualMetricBtn" onclick="toggleReportVisualMetric()">資産推移へ</button>
             </div>
           </div>
-          <div id="reportGrowthLog"></div>
+          <div class="reportVisualViewport">
+            <div class="reportVisualTrack" id="reportVisualTrack">
+              <section class="reportVisualSlide">
+                <div class="reportChartWrap reportChartWrapMain">
+                  <div class="reportDonut" id="reportDonut" role="img" aria-label="支出内訳の円グラフ"></div>
+                  <div>
+                    <div class="reportCategoryDrill" id="reportCategoryDrill"></div>
+                    <div class="reportLegend" id="reportLegend"></div>
+                  </div>
+                </div>
+              </section>
+              <section class="reportVisualSlide">
+                <div id="reportVisualTrend"></div>
+              </section>
+            </div>
+          </div>
+          <div class="reportVisualDots">
+            <button class="reportVisualDot active" type="button" data-report-slide="0" onclick="switchReportVisualSlide(0)" aria-label="内訳を見る"></button>
+            <button class="reportVisualDot" type="button" data-report-slide="1" onclick="switchReportVisualSlide(1)" aria-label="推移を見る"></button>
+          </div>
         </div>
       </div>
 
+      <div id="reportCategoryDetailPanel" style="display:none;">
+        <div class="sectionCard">
+          <div class="sectionHead">
+            <div>
+              <div class="sectionName" id="reportCategoryDetailTitle">カテゴリ詳細</div>
+              <div class="sectionHint" id="reportCategoryDetailHint">月次支出比較と明細</div>
+            </div>
+            <button class="ghost" type="button" onclick="closeReportCategoryDetail()">一覧に戻る</button>
+          </div>
+          <div id="reportCategoryCompareChart" style="margin-top:12px;"></div>
+          <div id="reportCategoryDetailBody" style="margin-top:12px;"></div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -731,6 +696,7 @@
           </div>
           <div class="row" style="margin-top:12px;">
             <label>ローン元本返済<input type="number" id="mortgagePrincipalYen" placeholder="住宅ローン元本"></label>
+            <label>積立投資<input type="number" id="recurringInvestYen" placeholder="NISA・iDeCo など"></label>
           </div>
         </div>
       </details>
