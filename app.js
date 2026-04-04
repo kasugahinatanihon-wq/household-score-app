@@ -3865,6 +3865,28 @@ function getReportScopeSavings(mode, scopeKey){
   return { saving:Number(saved.saving || 0), invest:Number(saved.invest || 0) };
 }
 
+function getReportScopeFixedCost(mode, scopeKey){
+  const pickFixedCost = (month)=>{
+    const fixed = loadJSON(LS_FIXED, {})[month] || {};
+    return (
+      Number(fixed.housingYen || 0) +
+      Number(fixed.utilityYen || 0) +
+      Number(fixed.netYen || 0) +
+      Number(fixed.subYen || 0)
+    );
+  };
+  if(mode === "annual"){
+    return getMonthsForYear(scopeKey).reduce((sum, month)=> sum + pickFixedCost(month), 0);
+  }
+  return pickFixedCost(scopeKey);
+}
+
+function getReportCategoryColor(category, mode, scopeKey){
+  const { items } = buildReportItemsForScope(mode, scopeKey);
+  const idx = items.findIndex(item=> item.label === category);
+  return REPORT_COLORS[(idx >= 0 ? idx : 0) % REPORT_COLORS.length];
+}
+
 function getScopeCategoryAmount(mode, scopeKey, category){
   const { items, total } = buildReportItemsForScope(mode, scopeKey);
   if(!category || category === "all") return total;
@@ -3888,7 +3910,7 @@ function getScopeCategoryRows(mode, scopeKey, category){
   }));
 }
 
-function renderCompareBarsInto(areaId, rows, currentLabel = "", emptyText = "データがありません"){
+function renderCompareBarsInto(areaId, rows, currentLabel = "", emptyText = "データがありません", color = REPORT_COLORS[0]){
   const area = $(areaId);
   if(!area) return;
   if(!rows.length || rows.every(row=> Number(row.amount || 0) <= 0)){
@@ -3902,7 +3924,7 @@ function renderCompareBarsInto(areaId, rows, currentLabel = "", emptyText = "デ
     return `
       <div class="monthCompareRow ${isCurrent ? "isCurrent" : ""}">
         <div class="monthCompareLabel">${escapeHtml(row.label)}</div>
-        <div class="monthCompareBar"><div class="monthCompareFill" style="width:${width}%;"></div></div>
+        <div class="monthCompareBar"><div class="monthCompareFill" style="width:${width}%; background:${escapeHtml(color)};"></div></div>
         <div class="monthCompareValue">${fmtYen(Math.round(Number(row.amount || 0)))}円</div>
       </div>
     `;
@@ -4042,17 +4064,17 @@ function renderMonthlyReport(){
   const scopeLabel = scopeMode === "annual" ? `${scopeKey}年` : scopeKey;
   const { total } = buildReportItemsForScope(scopeMode, scopeKey);
   const assets = getReportScopeSavings(scopeMode, scopeKey);
+  const fixedCost = getReportScopeFixedCost(scopeMode, scopeKey);
   const scopeDate = scopeMode === "annual"
     ? ""
     : "";
   $("reportScopeDisplay") && ($("reportScopeDisplay").textContent = scopeMode === "annual" ? `${scopeKey}年` : `${Number(scopeKey.slice(0,4))}年${Number(scopeKey.slice(5,7))}月`);
   $("reportScopeSub") && ($("reportScopeSub").textContent = scopeDate);
   $("reportScopeSpendLabel") && ($("reportScopeSpendLabel").textContent = "支出");
-  $("reportScopeAssetLabel") && ($("reportScopeAssetLabel").textContent = "資産形成");
   $("reportQuickSpendTotal") && ($("reportQuickSpendTotal").textContent = `${fmtYen(Math.round(total))}円`);
+  $("reportQuickFixedTotal") && ($("reportQuickFixedTotal").textContent = `${fmtYen(Math.round(fixedCost))}円`);
   $("reportQuickSavingTotal") && ($("reportQuickSavingTotal").textContent = `${fmtYen(Math.round(assets.saving || 0))}円`);
   $("reportQuickInvestTotal") && ($("reportQuickInvestTotal").textContent = `${fmtYen(Math.round(assets.invest || 0))}円`);
-  $("reportQuickAssetTotal") && ($("reportQuickAssetTotal").textContent = `${fmtYen(Math.round((assets.saving || 0) + (assets.invest || 0)))}円`);
   document.querySelectorAll(".reportTrendModeBtn").forEach(btn=>{
     btn.classList.toggle("active", btn.dataset.reportMetric === REPORT_VISUAL_METRIC);
   });
@@ -4084,7 +4106,13 @@ function renderMonthlyReport(){
           label: `${Number(month.slice(5,7))}月`,
           amount: getScopeCategoryAmount("monthly", month, REPORT_CATEGORY_DETAIL)
         }));
-    renderCompareBarsInto("reportCategoryCompareChart", compareRows, scopeMode === "annual" ? "" : `${Number(scopeKey.slice(5,7))}月`, "比較データがありません");
+    renderCompareBarsInto(
+      "reportCategoryCompareChart",
+      compareRows,
+      scopeMode === "annual" ? "" : `${Number(scopeKey.slice(5,7))}月`,
+      "比較データがありません",
+      getReportCategoryColor(REPORT_CATEGORY_DETAIL, scopeMode, scopeKey)
+    );
     renderCategoryDetailBody("reportCategoryDetailBody", scopeMode, scopeKey, REPORT_CATEGORY_DETAIL, total);
   }
   switchReportVisualSlide(REPORT_VISUAL_SLIDE);
