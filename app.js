@@ -5129,6 +5129,9 @@ function initMonthlyWrapCarousels(root = document){
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
+    let autoplayTimer = null;
+    const autoplayMs = Number(carousel.dataset.autoplayMs || 0);
+    const shouldAutoplay = autoplayMs > 0;
 
     dots.innerHTML = cards.map((_, i)=> `
       <button
@@ -5157,14 +5160,35 @@ function initMonthlyWrapCarousels(root = document){
       update();
     };
 
+    const stopAutoplay = ()=>{
+      if(!autoplayTimer) return;
+      clearInterval(autoplayTimer);
+      autoplayTimer = null;
+      carousel.dataset.autoplay = "stopped";
+    };
+
+    const startAutoplay = ()=>{
+      if(!shouldAutoplay || autoplayTimer) return;
+      carousel.dataset.autoplay = "playing";
+      autoplayTimer = setInterval(()=>{
+        if(index >= cards.length - 1){
+          stopAutoplay();
+          return;
+        }
+        moveTo(index + 1);
+      }, autoplayMs);
+    };
+
     dots.addEventListener("click", (event)=>{
       const button = event.target.closest(".monthlyWrapDot");
       if(!button) return;
+      stopAutoplay();
       moveTo(Number(button.dataset.index || 0));
     });
 
     track.addEventListener("touchstart", (event)=>{
       if(!event.touches.length) return;
+      stopAutoplay();
       isDragging = true;
       startX = event.touches[0].clientX;
       currentX = startX;
@@ -5192,6 +5216,7 @@ function initMonthlyWrapCarousels(root = document){
 
     carousel.dataset.ready = "true";
     update();
+    startAutoplay();
   });
 }
 window.initMonthlyWrapCarousels = initMonthlyWrapCarousels;
@@ -5832,7 +5857,7 @@ function buildMonthlyResult(){
       <div class="summaryCard animIn a1 monthlyStoryShell">
         <div class="summaryTitle">マンスリーサマリー：${escapeHtml(m)}</div>
         <div class="summaryLead">${escapeHtml(summaryMonthly)}</div>
-        <div class="monthlyStoryExperience" id="monthlyStoryFlow" data-wrap-carousel aria-label="今月のストーリー">
+        <div class="monthlyStoryExperience" id="monthlyStoryFlow" data-wrap-carousel data-autoplay-ms="2600" aria-label="今月のストーリー">
           <div class="monthlyStoryProgress">
             <span>今月のふり返り</span>
             <span>${escapeHtml(m)}</span>
