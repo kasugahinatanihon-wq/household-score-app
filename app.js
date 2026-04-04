@@ -3991,13 +3991,13 @@ function renderReportBreakdown(scopeMode, scopeKey){
   const donut = $("reportDonut");
   const legend = $("reportLegend");
   const drill = $("reportCategoryDrill");
-  if(!donut || !legend || !drill) return;
+  if(!donut || !legend) return;
   const { items, total } = buildReportItemsForScope(scopeMode, scopeKey);
   if(total <= 0){
     donut.style.background = "conic-gradient(#f3dfd2 0 100%)";
     donut.innerHTML = "";
     legend.innerHTML = `<div class="small muted">データがありません</div>`;
-    drill.innerHTML = `<div class="small muted">カテゴリを選ぶと詳細が見られます</div>`;
+    if(drill) drill.innerHTML = "";
     return;
   }
   let start = 0;
@@ -4027,10 +4027,7 @@ function renderReportBreakdown(scopeMode, scopeKey){
       </button>
     </div>
   `).join("");
-  const first = segments[0];
-  drill.innerHTML = first
-    ? `<div class="reportDrillHead">内訳を確認 <span>${escapeHtml(first.label)} が最多</span></div><div class="small muted" style="margin-top:8px;">カテゴリをタップすると、月次支出比較と詳細明細を開きます。</div>`
-    : `<div class="small muted">カテゴリをタップすると詳細が見られます</div>`;
+  if(drill) drill.innerHTML = "";
   legend.querySelectorAll(".reportLegendMain").forEach(btn=>{
     btn.addEventListener("click", ()=> openReportCategoryDetail(btn.dataset.label || ""));
   });
@@ -4073,6 +4070,9 @@ function renderMonthlyReport(){
     }else{
       renderAnnualTrendChart("reportVisualTrend", scopeKey, "asset");
     }
+  }
+  if($("reportVisualTrend") && !$("reportVisualTrend").innerHTML.trim()){
+    $("reportVisualTrend").innerHTML = `<div class="small muted" style="padding:16px 0; text-align:center;">表示できる推移データがありません</div>`;
   }
 
   if(REPORT_CATEGORY_DETAIL){
