@@ -4046,16 +4046,12 @@ function renderMonthlyReport(){
   const { total } = buildReportItemsForScope(scopeMode, scopeKey);
   const assets = getReportScopeSavings(scopeMode, scopeKey);
   const scopeDate = scopeMode === "annual"
-    ? `${scopeKey}年1月〜12月`
-    : (()=> {
-        const [year, month] = scopeKey.split("-").map(Number);
-        const lastDay = new Date(year, month, 0).getDate();
-        return `${month}/1〜${month}/${lastDay}`;
-      })();
+    ? ""
+    : "";
   $("reportScopeDisplay") && ($("reportScopeDisplay").textContent = scopeMode === "annual" ? `${scopeKey}年` : `${Number(scopeKey.slice(0,4))}年${Number(scopeKey.slice(5,7))}月`);
   $("reportScopeSub") && ($("reportScopeSub").textContent = scopeDate);
-  $("reportScopeSpendLabel") && ($("reportScopeSpendLabel").textContent = scopeMode === "annual" ? "年間の支出" : "月間の支出");
-  $("reportScopeAssetLabel") && ($("reportScopeAssetLabel").textContent = scopeMode === "annual" ? "年間の資産形成" : "月間の資産形成");
+  $("reportScopeSpendLabel") && ($("reportScopeSpendLabel").textContent = "支出");
+  $("reportScopeAssetLabel") && ($("reportScopeAssetLabel").textContent = "資産形成");
   $("reportQuickSpendTotal") && ($("reportQuickSpendTotal").textContent = `${fmtYen(Math.round(total))}円`);
   $("reportQuickSavingTotal") && ($("reportQuickSavingTotal").textContent = `${fmtYen(Math.round(assets.saving || 0))}円`);
   $("reportQuickInvestTotal") && ($("reportQuickInvestTotal").textContent = `${fmtYen(Math.round(assets.invest || 0))}円`);
