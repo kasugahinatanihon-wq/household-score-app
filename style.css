@@ -1690,7 +1690,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .dailyCompareGrid{ grid-template-columns:1fr; }
   .reportQuickGrid{ grid-template-columns:1fr; }
   .reportQuickItemHero{ grid-column:span 1; }
-  .reportSummaryGrid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .reportQuickGrid.reportSummaryGrid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
   .comparePreviewGrid{ grid-template-columns:1fr; }
 }
 @media (max-width:720px){
@@ -1742,7 +1742,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .reportScopeDisplay{
     font-size:16px;
   }
-  .reportSummaryGrid{
+  .reportQuickGrid.reportSummaryGrid{
     grid-template-columns:repeat(2, minmax(0,1fr));
   }
   .reportVisualActions .ghost{
