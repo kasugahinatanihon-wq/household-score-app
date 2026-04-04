@@ -627,6 +627,137 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:var(--muted);
   line-height:1.4;
 }
+.reportModeSwitch{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:8px;
+  padding:6px;
+  border:1px solid var(--primary-18);
+  border-radius:16px;
+  background:rgba(255,249,243,.96);
+  box-shadow:0 10px 24px rgba(114,72,57,.08);
+}
+.reportModeBtn{
+  min-height:42px;
+  padding:10px 12px;
+  border:1px solid transparent;
+  border-radius:12px;
+  background:transparent;
+  color:var(--report-muted);
+  font-size:13px;
+  font-weight:900;
+  transition:background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.reportModeBtn:active{
+  transform:scale(.98);
+}
+.reportModeBtn.active{
+  color:var(--report-ink);
+  background:linear-gradient(180deg, #ffffff 0%, #fff1e2 100%);
+  border-color:var(--primary-25);
+  box-shadow:0 8px 18px rgba(114,72,57,.12);
+}
+.reportHeaderTop{
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:10px;
+}
+.reportHeaderTop .reportMonthLabel{
+  display:grid;
+  gap:6px;
+  font-weight:900;
+  color:var(--report-muted);
+}
+.reportHeaderTop .reportMonthLabel input{
+  width:min(144px, 100%);
+  min-width:0;
+  height:38px;
+  padding:0 12px;
+  border-radius:12px;
+  border:1px solid var(--primary-18);
+  background:#fffdf9;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+  color:var(--ink);
+  font-size:13px;
+  font-weight:800;
+}
+.reportSummaryGrid{
+  grid-template-columns:repeat(4, minmax(0,1fr));
+}
+.reportVisualActions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.reportVisualActions .ghost{
+  min-height:34px;
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
+.reportVisualViewport{
+  overflow:hidden;
+  margin-top:12px;
+}
+.reportVisualTrack{
+  display:flex;
+  width:200%;
+  transform:translate3d(0, 0, 0);
+  transition:transform .34s cubic-bezier(.22, 1, .36, 1);
+  will-change:transform;
+}
+.reportVisualSlide{
+  width:50%;
+  flex:0 0 50%;
+  min-width:0;
+}
+.reportChartWrapMain{
+  align-items:flex-start;
+}
+.reportVisualSlide #reportVisualTrend{
+  min-height:280px;
+}
+.reportVisualDots{
+  margin-top:14px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+}
+.reportVisualDot{
+  width:10px;
+  height:10px;
+  padding:0;
+  border:none;
+  border-radius:999px;
+  background:rgba(143,75,47,.18);
+  transition:transform .18s ease, background .18s ease, width .18s ease;
+}
+.reportVisualDot.active{
+  width:28px;
+  background:linear-gradient(90deg, var(--primary), var(--accent));
+}
+.reportCategoryDetailPanel .sectionCard{
+  margin-top:12px;
+}
+.reportCategoryDetailPanel #reportCategoryCompareChart,
+#reportCategoryDetailPanel #reportCategoryCompareChart{
+  padding:12px 14px;
+  border:1px solid var(--primary-18);
+  border-radius:16px;
+  background:linear-gradient(180deg, #fffdfa 0%, #fff4e9 100%);
+}
+#reportCategoryDetailBody{
+  padding:14px;
+  border:1px solid var(--primary-18);
+  border-radius:16px;
+  background:#fff;
+}
+.reportCategoryDrill .small.muted{
+  line-height:1.55;
+}
 .reportTabs{
   position:sticky;
   top:8px;
@@ -1447,6 +1578,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .dailyCompareGrid{ grid-template-columns:1fr; }
   .reportQuickGrid{ grid-template-columns:1fr; }
   .reportQuickItemHero{ grid-column:span 1; }
+  .reportSummaryGrid{ grid-template-columns:repeat(2, minmax(0,1fr)); }
   .comparePreviewGrid{ grid-template-columns:1fr; }
 }
 @media (max-width:720px){
@@ -1456,6 +1588,24 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     align-items:flex-end !important;
     gap:8px;
     flex-wrap:nowrap;
+  }
+  .reportHeaderTop{
+    flex-wrap:wrap;
+    align-items:flex-start !important;
+  }
+  .reportHeaderTop .reportMonthLabel{
+    flex:1 1 132px;
+  }
+  .reportHeaderTop .reportMonthLabel input{
+    width:100%;
+  }
+  .reportVisualActions{
+    width:100%;
+    justify-content:flex-start;
+  }
+  .reportVisualActions .ghost{
+    flex:1 1 calc(33.333% - 6px);
+    min-width:0;
   }
   .reportMonthLabel input{
     padding:0 8px;
@@ -1477,6 +1627,19 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
 }
 @media (max-width:560px){
+  .reportModeBtn{
+    min-height:40px;
+    font-size:12px;
+  }
+  .reportSummaryGrid{
+    grid-template-columns:1fr;
+  }
+  .reportVisualActions .ghost{
+    flex:1 1 calc(50% - 4px);
+  }
+  .reportVisualSlide #reportVisualTrend{
+    min-height:240px;
+  }
   .weeklyHeroArt{
     display:flex;
     align-items:center;
