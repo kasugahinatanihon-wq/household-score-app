@@ -726,17 +726,38 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   justify-content:center;
   gap:8px;
   flex-wrap:wrap;
-  margin-top:8px;
 }
 .reportVisualActions .ghost{
   min-height:32px;
-  padding:6px 12px;
+  padding:6px 14px;
   border-radius:999px;
   font-size:11px;
   font-weight:900;
   border-color:var(--primary-18);
   background:rgba(255,241,226,.7);
   color:#7d5341;
+}
+.reportTrendModeSwitch{
+  margin-bottom:10px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.reportTrendModeBtn{
+  min-height:30px;
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid var(--primary-18);
+  background:#fff;
+  color:var(--report-muted);
+  font-size:11px;
+  font-weight:900;
+}
+.reportTrendModeBtn.active{
+  background:linear-gradient(180deg, #ffffff 0%, #fff1e2 100%);
+  color:var(--report-ink);
+  border-color:var(--primary-25);
 }
 .reportVisualViewport{
   overflow:hidden;
@@ -826,12 +847,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     linear-gradient(180deg, #ffffff 0%, #fff9f3 100%);
 }
 #reportMainPanel .sectionHead{
-  display:block;
-  text-align:center;
-}
-#reportMainPanel .sectionHint{
-  margin-top:4px;
-  color:var(--report-muted);
+  display:flex;
+  justify-content:center;
+  margin-bottom:0;
 }
 .reportDonut{
   width:230px;
@@ -1750,15 +1768,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     border-radius:16px;
   }
   #reportMainPanel .sectionHead{
-    margin-bottom:4px;
-  }
-  #reportMainPanel .sectionName{
-    font-size:14px;
-    line-height:1.2;
-  }
-  #reportMainPanel .sectionHint{
-    font-size:11px;
-    line-height:1.25;
+    margin-bottom:0;
   }
   .reportScopePicker{
     grid-template-columns:34px minmax(0,1fr) 34px;
@@ -1794,12 +1804,17 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     padding:4px 8px;
     font-size:10px;
   }
+  .reportTrendModeBtn{
+    min-height:28px;
+    padding:4px 10px;
+    font-size:10px;
+  }
   .reportQuickValue{
     font-size:11px;
   }
   .reportDonut{
-    width:164px;
-    height:164px;
+    width:200px;
+    height:200px;
   }
   .reportVisualViewport{
     margin-top:8px;

@@ -3781,12 +3781,12 @@ function switchReportVisualSlide(index){
 }
 window.switchReportVisualSlide = switchReportVisualSlide;
 
-function toggleReportVisualMetric(){
-  REPORT_VISUAL_METRIC = REPORT_VISUAL_METRIC === "spend" ? "asset" : "spend";
+function setReportVisualMetric(metric){
+  REPORT_VISUAL_METRIC = metric === "asset" ? "asset" : "spend";
   renderMonthlyReport();
   switchReportVisualSlide(1);
 }
-window.toggleReportVisualMetric = toggleReportVisualMetric;
+window.setReportVisualMetric = setReportVisualMetric;
 
 function openReportCategoryDetail(category){
   REPORT_CATEGORY_DETAIL = category || "";
@@ -4056,9 +4056,9 @@ function renderMonthlyReport(){
   $("reportQuickSavingTotal") && ($("reportQuickSavingTotal").textContent = `${fmtYen(Math.round(assets.saving || 0))}円`);
   $("reportQuickInvestTotal") && ($("reportQuickInvestTotal").textContent = `${fmtYen(Math.round(assets.invest || 0))}円`);
   $("reportQuickAssetTotal") && ($("reportQuickAssetTotal").textContent = `${fmtYen(Math.round((assets.saving || 0) + (assets.invest || 0)))}円`);
-  $("reportVisualMetricBtn") && ($("reportVisualMetricBtn").textContent = REPORT_VISUAL_METRIC === "spend" ? "資産推移へ" : "支出推移へ");
-  $("reportVisualSectionTitle") && ($("reportVisualSectionTitle").textContent = REPORT_VISUAL_SLIDE === 0 ? `${scopeLabel} の内訳` : `${scopeLabel} の${REPORT_VISUAL_METRIC === "spend" ? "支出推移" : "資産推移"}`);
-  $("reportVisualSectionHint") && ($("reportVisualSectionHint").textContent = REPORT_VISUAL_SLIDE === 0 ? "カテゴリをタップすると詳細へ進みます" : "横に戻すと内訳に戻ります");
+  document.querySelectorAll(".reportTrendModeBtn").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.reportMetric === REPORT_VISUAL_METRIC);
+  });
 
   renderReportBreakdown(scopeMode, scopeKey);
   if(REPORT_VISUAL_METRIC === "spend"){

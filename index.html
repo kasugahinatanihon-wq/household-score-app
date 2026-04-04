@@ -503,14 +503,9 @@
       <div id="reportMainPanel">
         <div class="sectionCard" style="margin-top:12px;">
           <div class="sectionHead">
-            <div>
-              <div class="sectionName" id="reportVisualSectionTitle">支出内訳</div>
-              <div class="sectionHint" id="reportVisualSectionHint">横にスライドすると推移グラフが見られます</div>
-            </div>
             <div class="reportVisualActions">
               <button class="ghost" type="button" onclick="switchReportVisualSlide(0)">内訳</button>
-              <button class="ghost" type="button" onclick="switchReportVisualSlide(1)">推移</button>
-              <button class="ghost" type="button" id="reportVisualMetricBtn" onclick="toggleReportVisualMetric()">資産推移へ</button>
+              <button class="ghost" type="button" onclick="switchReportVisualSlide(1)">遷移</button>
             </div>
           </div>
           <div class="reportVisualViewport">
@@ -525,6 +520,10 @@
                 </div>
               </section>
               <section class="reportVisualSlide">
+                <div class="reportTrendModeSwitch">
+                  <button class="reportTrendModeBtn active" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
+                  <button class="reportTrendModeBtn" type="button" data-report-metric="asset" onclick="setReportVisualMetric('asset')">資産推移</button>
+                </div>
                 <div id="reportVisualTrend"></div>
               </section>
             </div>
