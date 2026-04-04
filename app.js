@@ -31,11 +31,13 @@ const LS_EVOLUTION = "evolution_stage_category";
 const SAT_SCALE_VERSION = 2;
 const SIGNUP_EMAIL_COOLDOWN_MS = 60 * 1000;
 const CUSTOM_VALUE_OPTION = "__custom__";
+const LEGACY_GIFT_CATEGORY = "プレゼント";
+const INVEST_CATEGORY = "投資";
 
 const CATEGORIES = [
   "食費","外食費","コンビニ",
   "日用品","衣服","美容",
-  "交際費","プレゼント","カフェ","デート",
+  "交際費","投資","カフェ","デート",
   "趣味","仕事","交通費",
   "医療費","教育費"
 ];
@@ -71,7 +73,7 @@ const CATEGORY_EMOJI = {
   "衣服":"👕",
   "美容":"💄",
   "交際費":"🤝",
-  "プレゼント":"🎁",
+  "投資":"📈",
   "医療費":"🩺",
   "教育費":"📚",
   "交通費":"🚌",
@@ -181,7 +183,7 @@ const CATEGORY_TONE_KEY = {
   "衣服":"style",
   "美容":"style",
   "交際費":"social",
-  "プレゼント":"social",
+  "投資":"learn",
   "デート":"social",
   "医療費":"care",
   "教育費":"learn",
@@ -195,7 +197,7 @@ const CATEGORY_LINEAGE_KEY = {
   "衣服":"selfcare",
   "美容":"selfcare",
   "交際費":"social",
-  "プレゼント":"social",
+  "投資":"learning",
   "デート":"social",
   "教育費":"learning",
   "趣味":"learning",
@@ -370,6 +372,17 @@ function niceMax(value){
   const n = value / pow;
   const step = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
   return step * pow;
+}
+
+function normalizeCategoryName(category){
+  const value = String(category || "").trim();
+  return value === LEGACY_GIFT_CATEGORY ? INVEST_CATEGORY : value;
+}
+
+function getMonthlyInvestTxTotal(monthStr){
+  return loadTx()
+    .filter(t=> t.date && t.date.startsWith(monthStr) && normalizeCategoryName(t.category) === INVEST_CATEGORY)
+    .reduce((sum, row)=> sum + Number(row.amount || 0), 0);
 }
 
 function renderHappinessScatterContent({ youX, youY, avgX, avgY, xMid=50, yMid=70, guideLineText }){
@@ -632,8 +645,8 @@ function inferMonthlyMoneyStyle(stats){
   const cat = top.category;
   if(["デート","外食費","趣味","カフェ"].includes(cat)) return "体験重視タイプ";
   if(["日用品","医療費","交通費"].includes(cat)) return "生活安定タイプ";
-  if(["教育費","美容","仕事","衣服"].includes(cat)) return "自己投資タイプ";
-  if(["交際費","プレゼント"].includes(cat)) return "人間関係重視タイプ";
+  if(["教育費","美容","仕事","衣服", INVEST_CATEGORY].includes(cat)) return "自己投資タイプ";
+  if(["交際費"].includes(cat)) return "人間関係重視タイプ";
   if(["コンビニ"].includes(cat)) return "日常消費が漏れやすいタイプ";
   return `${cat}重視タイプ`;
 }
@@ -752,7 +765,7 @@ function buildMonthlyReviewStory({
     regretScore: calcRegretMetrics(tx).score,
     happinessScore,
     varRate: income > 0 ? (varSpend / income) : null,
-    savingRate: income > 0 ? ((Number(loadSavingMap()[monthStr]?.saving || 0) + Number(loadSavingMap()[monthStr]?.invest || 0)) / income) : null,
+    savingRate: income > 0 ? ((Number(getSavingForMonth(monthStr)?.saving || 0) + Number(getSavingForMonth(monthStr)?.invest || 0)) / income) : null,
     fixedRate: income > 0 ? (fixedSum / income) : null
   });
 
@@ -2241,12 +2254,28 @@ function calcHabitScore(daysWithEntry, totalDays){
   }
   return clamp(Math.round((daysWithEntry / totalDays) * 100), 0, 100);
 }
-function loadTx(){ return loadJSON(LS_TX, []); }
+function loadTx(){
+  return loadJSON(LS_TX, []).map(row=> ({
+    ...row,
+    category: normalizeCategoryName(row.category)
+  }));
+}
 function saveTx(list){ saveJSON(LS_TX, list); }
 
 function loadSavingMap(){ return loadJSON(LS_SAVING, {}); }
 function saveSavingMap(map){ saveJSON(LS_SAVING, map); }
-function getSavingForMonth(m){ return loadSavingMap()[m] || null; }
+function getSavingRawForMonth(m){ return loadSavingMap()[m] || null; }
+function getSavingForMonth(m){
+  const raw = getSavingRawForMonth(m);
+  const investFromTx = getMonthlyInvestTxTotal(m);
+  if(!raw && investFromTx <= 0) return null;
+  return {
+    saving: Number(raw?.saving || 0),
+    invest: Number(raw?.invest || 0) + investFromTx,
+    investManual: Number(raw?.invest || 0),
+    investFromTx
+  };
+}
 function setSavingForMonth(m, saving, invest){
   const map = loadSavingMap();
   map[m] = { saving:Number(saving||0), invest:Number(invest||0) };
@@ -2317,9 +2346,9 @@ function saveMonthlySettings(m){
 
 let CAL_ANCHOR = monthStart(new Date());
 let SELECTED_DATE = ymd(new Date());
-let entryStep = "category"; // category -> amount -> satisfaction -> memo
+let entryStep = "category"; // category -> amount -> quality
 
-const ENTRY_STEPS = ["category","amount","quality","memo"];
+const ENTRY_STEPS = ["category","amount","quality"];
 let PENDING_MONTHLY = false;
 
 function setEntryStep(step){
@@ -2327,7 +2356,7 @@ function setEntryStep(step){
   const backBtn = $("entryBackBtn");
   const btn = $("entryPrimaryBtn");
   if(backBtn) backBtn.style.display = (step === "category") ? "none" : "";
-  if(btn) btn.textContent = (step === "memo") ? "保存" : "次へ";
+  if(btn) btn.textContent = (step === "quality") ? "保存" : "次へ";
 }
 
 function showEntryStep(step){
@@ -2536,7 +2565,7 @@ function buildCatCards(){
     衣服: `<path d="M9 5h6l2 3-2.2 1.1L16 19H8l1.2-9.9L7 8z"/><path d="M10 12h4"/><path d="M11 15h2"/>`,
     美容: `<rect x="9" y="4" width="6" height="3.5" rx="1"/><path d="M10 7.5h4v8.5a2 2 0 0 1-4 0z"/><path d="M10 16h4"/><path d="M10 19h4"/>`,
     交際費: `<rect x="4" y="6" width="8" height="6" rx="2"/><path d="M8 12l-2 2v-2"/><rect x="12" y="10" width="8" height="6" rx="2"/><path d="M16 16l2 2v-2"/>`,
-    プレゼント: `<rect x="4.5" y="9" width="15" height="10" rx="2"/><path d="M12 9v10"/><path d="M4.5 13h15"/><path d="M12 9c0-2-1.1-3-2.7-3-1.2 0-2.1.8-2.1 1.9 0 1.3 1 2.1 2.5 2.1H12z"/><path d="M12 9c0-2 1.1-3 2.7-3 1.2 0 2.1.8 2.1 1.9 0 1.3-1 2.1-2.5 2.1H12z"/>`,
+    投資: `<path d="M5 17l4-4 3 3 6-7"/><path d="M14 9h4v4"/><path d="M5 5v14h14"/>`,
     医療費: `<circle cx="12" cy="12" r="7"/><path d="M12 9v6M9 12h6"/>`,
     教育費: `<path d="M4 7h7a2 2 0 0 1 2 2v10H6a2 2 0 0 0-2 2z"/><path d="M20 7h-7a2 2 0 0 0-2 2v10h7a2 2 0 0 1 2 2z"/>`,
     交通費: `<rect x="6" y="4" width="12" height="12" rx="2"/><path d="M6 9h12"/><circle cx="9" cy="16" r="1.5"/><circle cx="15" cy="16" r="1.5"/>`,
@@ -2727,11 +2756,6 @@ function handleEntryPrimary(){
     }
 
     showEntryStep("quality");
-    return;
-  }
-
-  if(entryStep === "quality"){
-    showEntryStep("memo");
     return;
   }
 
@@ -3337,7 +3361,7 @@ function getTopCategory(txList){
 }
 
 function getPetSpeciesByCategory(category){
-  const catSet = new Set(["食費","外食費","衣服","美容","カフェ","デート","趣味","プレゼント"]);
+  const catSet = new Set(["食費","外食費","衣服","美容","カフェ","デート","趣味", INVEST_CATEGORY]);
   return catSet.has(String(category || "")) ? "cat" : "dog";
 }
 function getPetEmojiByMood(species, mood){
@@ -3548,7 +3572,7 @@ function getHomeBaseNameByCategory(category){
     "衣服":"スタイルメーカー",
     "美容":"ビューティーチューナー",
     "交際費":"コネクトキャプテン",
-    "プレゼント":"ギフトコーディネーター",
+    "投資":"アセットビルダー",
     "医療費":"ヘルスガーディアン",
     "教育費":"ラーニングブースター",
     "交通費":"ムーブマネージャー",
@@ -3576,7 +3600,7 @@ function getHomeCharacterName(category, tier){
     "衣服": { great:"着回しマエストロ", good:"スタイルメーカー", bad:"迷走クローゼッター", verybad:"浪費ランウェイ", analyzing:"スタイルメーカー（分析中）" },
     "美容": { great:"艶肌プランナー", good:"ビューティーチューナー", bad:"焦りケアジャンキー", verybad:"コスメストーム", analyzing:"ビューティーチューナー（分析中）" },
     "交際費": { great:"絆マネージャー", good:"コネクトキャプテン", bad:"見栄フォロワー", verybad:"付き合いヘラクレス", analyzing:"コネクトキャプテン（分析中）" },
-    "プレゼント": { great:"贈り物コンシェルジュ", good:"ギフトコーディネーター", bad:"勢いギフター", verybad:"爆買いサンタ", analyzing:"ギフトコーディネーター（分析中）" },
+    "投資": { great:"アセットアーキテクト", good:"アセットビルダー", bad:"迷いインベスター", verybad:"暴走トレーダー", analyzing:"アセットビルダー（分析中）" },
     "医療費": { great:"ケアバランサー", good:"ヘルスガーディアン", bad:"後回しヒーラー", verybad:"不調レスキュー常連", analyzing:"ヘルスガーディアン（分析中）" },
     "教育費": { great:"投資インストラクター", good:"ラーニングブースター", bad:"散財スカラー", verybad:"教材コレクター暴走", analyzing:"ラーニングブースター（分析中）" },
     "交通費": { great:"移動ルート名匠", good:"ムーブマネージャー", bad:"寄り道トラベラー", verybad:"タクシードラゴン", analyzing:"ムーブマネージャー（分析中）" },
@@ -3604,7 +3628,7 @@ function getHomeCategoryKey(category){
     "衣服":"fashion",
     "美容":"beauty",
     "交際費":"social",
-    "プレゼント":"gift",
+    "投資":"invest",
     "医療費":"medical",
     "教育費":"education",
     "交通費":"transport",
@@ -4043,10 +4067,13 @@ function getGrowthMetricValue(monthStr, metric){
 
 function getGrowthMetricSeriesValue(monthStr, metric, mode){
   if(mode !== "cumulative") return getGrowthMetricValue(monthStr, metric);
-  const savingMap = loadSavingMap();
-  const months = Object.keys(savingMap).filter(Boolean).sort();
+  const months = new Set(Object.keys(loadSavingMap()).filter(Boolean));
+  loadTx().forEach(row=>{
+    const ymKey = String(row.date || "").slice(0, 7);
+    if(ymKey) months.add(ymKey);
+  });
   let total = 0;
-  months.forEach(key=>{
+  Array.from(months).sort().forEach(key=>{
     if(key > monthStr) return;
     total += getGrowthMetricValue(key, metric);
   });
@@ -4871,11 +4898,11 @@ function buildHomeCharacterGuide(category, tier, share){
       bad:"場の空気に合わせる力が強いキャラクターです。人のために動ける反面、見栄や惰性が混ざると疲れやすくなります。",
       verybad:"関係を切らしたくない気持ちが強く出ているキャラクターです。断れなさや見栄が重なると、支出も気持ちも消耗しやすいタイプです。"
     },
-    "プレゼント": {
-      great:"相手を思って選ぶ力が高いキャラクターです。気持ちと金額のバランスがよく、贈ること自体を価値に変えられています。",
-      good:"喜んでもらうことに素直なキャラクターです。人のためにお金を使う満足感を、比較的きれいに形にできています。",
-      bad:"気持ちが乗ると一気に贈りたくなるキャラクターです。優しさは強いので、勢いを整えられるともっと魅力が出ます。",
-      verybad:"喜ばせたい気持ちが暴走しやすいキャラクターです。想いの強さは魅力ですが、金額まで大きくしすぎると苦しくなりやすいタイプです。"
+    "投資": {
+      great:"未来に向けた資産形成を落ち着いて続けられるキャラクターです。短期の揺れに飲まれず、納得しながら積み上げる力があります。",
+      good:"将来への備えを前向きに続けられるキャラクターです。背伸びしすぎず、自分に合う形で投資を続けられています。",
+      bad:"増やしたい気持ちは強いけれど、情報や雰囲気に揺れやすいキャラクターです。軸が定まるほど投資が安定しやすくなります。",
+      verybad:"一発で変えたい気持ちが強く出やすいキャラクターです。期待が先走ると判断が荒くなりやすいので、落ち着いた積み上げが鍵になります。"
     },
     "医療費": {
       great:"安心を守る判断ができるキャラクターです。必要なケアを後回しにせず、自分や家族の状態を丁寧に支えられています。",
@@ -5106,6 +5133,9 @@ function setMonthlyStoryStage(stage = "story"){
   const detail = $("monthlyStoryDetail");
   if(story) story.style.display = stage === "story" ? "" : "none";
   if(detail) detail.style.display = stage === "detail" ? "" : "none";
+  if(story && typeof story._setAutoplayEnabled === "function"){
+    story._setAutoplayEnabled(stage === "story");
+  }
   const body = modal.querySelector(".modalBody");
   if(body) body.scrollTop = 0;
 }
@@ -5162,33 +5192,44 @@ function initMonthlyWrapCarousels(root = document){
 
     const stopAutoplay = ()=>{
       if(!autoplayTimer) return;
-      clearInterval(autoplayTimer);
+      clearTimeout(autoplayTimer);
       autoplayTimer = null;
       carousel.dataset.autoplay = "stopped";
     };
 
-    const startAutoplay = ()=>{
-      if(!shouldAutoplay || autoplayTimer) return;
+    const queueAutoplay = ()=>{
+      if(!shouldAutoplay || autoplayTimer || carousel.dataset.autoplayDisabled === "true") return;
       carousel.dataset.autoplay = "playing";
-      autoplayTimer = setInterval(()=>{
+      autoplayTimer = setTimeout(()=>{
+        autoplayTimer = null;
         if(index >= cards.length - 1){
           stopAutoplay();
           return;
         }
         moveTo(index + 1);
+        queueAutoplay();
       }, autoplayMs);
+    };
+
+    const setAutoplayEnabled = (enabled)=>{
+      carousel.dataset.autoplayDisabled = enabled ? "false" : "true";
+      if(enabled){
+        queueAutoplay();
+      }else{
+        stopAutoplay();
+      }
     };
 
     dots.addEventListener("click", (event)=>{
       const button = event.target.closest(".monthlyWrapDot");
       if(!button) return;
-      stopAutoplay();
+      setAutoplayEnabled(false);
       moveTo(Number(button.dataset.index || 0));
     });
 
     track.addEventListener("touchstart", (event)=>{
       if(!event.touches.length) return;
-      stopAutoplay();
+      setAutoplayEnabled(false);
       isDragging = true;
       startX = event.touches[0].clientX;
       currentX = startX;
@@ -5215,8 +5256,9 @@ function initMonthlyWrapCarousels(root = document){
     });
 
     carousel.dataset.ready = "true";
+    carousel._setAutoplayEnabled = setAutoplayEnabled;
     update();
-    startAutoplay();
+    requestAnimationFrame(()=> setAutoplayEnabled(true));
   });
 }
 window.initMonthlyWrapCarousels = initMonthlyWrapCarousels;
@@ -5314,7 +5356,7 @@ function refreshSavingLabel(){
 
 function openSavingModal(opts = {}){
   const m = opts.month || $("scoreMonth")?.value || ym(new Date());
-  const saved = getSavingForMonth(m);
+  const saved = getSavingRawForMonth(m);
   $("savingMonth") && ($("savingMonth").value = m);
   $("savingInput") && ($("savingInput").value = saved ? String(saved.saving||0) : "");
   $("investInput") && ($("investInput").value = saved ? String(saved.invest||0) : "");
