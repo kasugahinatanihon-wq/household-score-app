@@ -3774,7 +3774,7 @@ window.shiftReportScope = shiftReportScope;
 function switchReportVisualSlide(index){
   REPORT_VISUAL_SLIDE = clamp(Number(index || 0), 0, 1);
   const track = $("reportVisualTrack");
-  if(track) track.style.transform = `translate3d(${-REPORT_VISUAL_SLIDE * 100}%, 0, 0)`;
+  if(track) track.style.transform = `translate3d(${-REPORT_VISUAL_SLIDE * 50}%, 0, 0)`;
   document.querySelectorAll(".reportVisualDot").forEach(btn=>{
     btn.classList.toggle("active", Number(btn.dataset.reportSlide || 0) === REPORT_VISUAL_SLIDE);
   });

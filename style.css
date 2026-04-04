@@ -549,9 +549,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   --report-line:var(--border);
 }
 #screen-report .sectionCard{
-  border:none;
-  background:transparent;
-  box-shadow:none;
+  border:1px solid rgba(114,72,57,.08);
+  background:rgba(255,251,247,.72);
+  box-shadow:0 8px 20px rgba(114,72,57,.06);
 }
 .reportHeader{
   flex-wrap:wrap;
@@ -672,21 +672,21 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   height:34px;
   padding:0;
   border-radius:10px;
-  border:none;
-  background:transparent;
+  border:1px solid rgba(114,72,57,.10);
+  background:rgba(255,255,255,.78);
   color:#8f4b2f;
   font-size:20px;
   line-height:1;
-  box-shadow:none;
+  box-shadow:0 6px 14px rgba(114,72,57,.05);
 }
 .reportScopeDisplayWrap{
   position:relative;
   min-width:0;
   padding:6px 10px;
   border-radius:12px;
-  border:none;
+  border:1px solid rgba(114,72,57,.10);
   background:rgba(255,241,226,.58);
-  box-shadow:none;
+  box-shadow:0 6px 14px rgba(114,72,57,.04);
   text-align:center;
 }
 .reportScopeDisplay{
@@ -733,7 +733,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:999px;
   font-size:11px;
   font-weight:900;
-  border:none;
+  border:1px solid rgba(114,72,57,.10);
   background:rgba(255,241,226,.7);
   color:#7d5341;
 }
@@ -748,7 +748,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   min-height:30px;
   padding:6px 12px;
   border-radius:999px;
-  border:none;
+  border:1px solid rgba(114,72,57,.10);
   background:rgba(255,241,226,.55);
   color:var(--report-muted);
   font-size:11px;
@@ -803,9 +803,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .reportQuickItem{
   padding:8px 10px;
-  border:none;
+  border:1px solid rgba(114,72,57,.08);
   background:rgba(255,245,238,.72);
-  box-shadow:none;
+  box-shadow:0 6px 14px rgba(114,72,57,.04);
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -839,7 +839,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .reportMainCardBlue,
 #reportMainPanel .sectionCard{
-  background:transparent;
+  border:1px solid rgba(114,72,57,.08);
+  background:rgba(255,252,249,.72);
 }
 #reportMainPanel .sectionHead{
   display:flex;
@@ -861,9 +862,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   gap:8px;
 }
 .reportLegendItem{
-  border:none;
+  border:1px solid rgba(114,72,57,.08);
   background:rgba(255,247,240,.72);
-  box-shadow:none;
+  box-shadow:0 4px 10px rgba(114,72,57,.03);
 }
 .reportLegendMeta{
   color:var(--muted);
@@ -874,13 +875,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .reportCategoryDetailPanel #reportCategoryCompareChart,
 #reportCategoryDetailPanel #reportCategoryCompareChart{
   padding:12px 14px;
-  border:none;
+  border:1px solid rgba(114,72,57,.08);
   border-radius:16px;
   background:rgba(255,247,240,.72);
 }
 #reportCategoryDetailBody{
   padding:14px;
-  border:none;
+  border:1px solid rgba(114,72,57,.08);
   border-radius:16px;
   background:rgba(255,250,245,.78);
 }
