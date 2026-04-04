@@ -724,8 +724,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:8px;
-  flex-wrap:wrap;
+  gap:18px;
+  flex-wrap:nowrap;
 }
 .reportVisualActions .ghost{
   min-height:28px;
@@ -737,9 +737,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:transparent;
   color:#7d5341;
   box-shadow:none;
-}
-.reportVisualActions .ghost:first-child{
-  margin-right:12px;
 }
 .reportVisualActions .ghost[aria-current="true"],
 .reportVisualActions .ghost.active{
@@ -772,13 +769,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .reportTrendTopbar{
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:flex-end;
   gap:8px;
   margin-bottom:8px;
 }
 .reportTrendModeSwitchInline{
   margin:0;
-  justify-content:flex-start;
+  justify-content:flex-end;
 }
 .reportTrendModeBtn + .reportTrendModeBtn{
   border-left:1px solid rgba(114,72,57,.10);
@@ -865,6 +862,21 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   line-height:1;
   text-align:right;
   white-space:nowrap;
+}
+.reportQuickValue.is-good{ color:#4f7f61; }
+.reportQuickValue.is-warn{ color:#9a6b36; }
+.reportQuickValue.is-bad{ color:#b91c1c; }
+.reportQuickItem.is-good{
+  background:rgba(239,248,240,.88);
+  border-color:rgba(95,143,116,.18);
+}
+.reportQuickItem.is-warn{
+  background:rgba(255,246,232,.88);
+  border-color:rgba(191,128,58,.16);
+}
+.reportQuickItem.is-bad{
+  background:rgba(255,239,239,.88);
+  border-color:rgba(185,28,28,.14);
 }
 .reportMainCardBlue,
 #reportMainPanel .sectionCard{
@@ -1748,10 +1760,12 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .reportVisualActions{
     width:100%;
     justify-content:center;
+    gap:16px;
+    flex-wrap:nowrap;
   }
   .reportVisualActions .ghost{
-    flex:1 1 calc(33.333% - 6px);
-    min-width:0;
+    flex:0 0 auto;
+    min-width:auto;
   }
   .reportCategoryLabel select{ width:136px; }
   .monthlyAxisTabs{
@@ -1809,13 +1823,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     line-height:1.15;
   }
   .reportVisualActions .ghost{
-    flex:1 1 calc(50% - 4px);
+    flex:0 0 auto;
     min-height:28px;
     padding:2px 2px 4px;
     font-size:10px;
-  }
-  .reportVisualActions .ghost:first-child{
-    margin-right:8px;
   }
   .reportTrendModeBtn{
     min-height:28px;
@@ -1823,7 +1834,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:10px;
   }
   .reportTrendTopbar{
-    align-items:flex-start;
+    align-items:center;
+    justify-content:flex-end;
   }
   .reportQuickValue{
     font-size:11px;

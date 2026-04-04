@@ -3890,6 +3890,53 @@ function getReportScopeFixedCost(mode, scopeKey){
   return pickFixedCost(scopeKey);
 }
 
+function getReportScopeIncome(mode, scopeKey){
+  const incomeMap = loadIncomeMap();
+  if(mode === "annual"){
+    return getMonthsForYear(scopeKey).reduce((sum, month)=> sum + Number(incomeMap[month] || 0), 0);
+  }
+  return Number(incomeMap[scopeKey] || 0);
+}
+
+function getReportHealthStatus(kind, value, income){
+  if(!(income > 0)) return "neutral";
+  const ratio = Number(value || 0) / income;
+  if(kind === "spend"){
+    if(ratio > 0.9) return "bad";
+    if(ratio > 0.7) return "warn";
+    return "good";
+  }
+  if(kind === "fixed"){
+    if(ratio > 0.5) return "bad";
+    if(ratio > 0.35) return "warn";
+    return "good";
+  }
+  if(kind === "saving"){
+    if(ratio >= 0.2) return "good";
+    if(ratio >= 0.1) return "warn";
+    return "bad";
+  }
+  if(kind === "invest"){
+    if(ratio >= 0.1) return "good";
+    if(ratio >= 0.03) return "warn";
+    return "bad";
+  }
+  return "neutral";
+}
+
+function applyReportQuickStatus(elId, status){
+  const valueEl = $(elId);
+  const itemEl = valueEl?.closest(".reportQuickItem");
+  if(valueEl){
+    valueEl.classList.remove("is-good", "is-warn", "is-bad", "is-neutral");
+    valueEl.classList.add(`is-${status}`);
+  }
+  if(itemEl){
+    itemEl.classList.remove("is-good", "is-warn", "is-bad", "is-neutral");
+    itemEl.classList.add(`is-${status}`);
+  }
+}
+
 function getReportCategoryColor(category, mode, scopeKey){
   const { items } = buildReportItemsForScope(mode, scopeKey);
   const idx = items.findIndex(item=> item.label === category);
@@ -4002,8 +4049,11 @@ function renderAnnualTrendChart(areaId, year, metric = "spend"){
   const line = rows.map((row, idx)=>`${x(idx)},${y(Number(row.value || 0))}`).join(" ");
   const areaPath = `M ${x(0)} ${y(Number(rows[0]?.value || 0))} L ${rows.map((row, idx)=>`${x(idx)} ${y(Number(row.value || 0))}`).join(" L ")} L ${x(rows.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
   area.innerHTML = `
-    <div class="dailyTrendLegend" style="margin-bottom:8px;">
-      <span><i class="dailyTrendSwatch cum"></i>${metric === "asset" ? "資産推移" : "支出推移"} ${escapeHtml(year)}年</span>
+    <div class="reportTrendTopbar">
+      <div class="reportTrendModeSwitch reportTrendModeSwitchInline">
+        <button class="reportTrendModeBtn ${metric !== "asset" ? "active" : ""}" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
+        <button class="reportTrendModeBtn ${metric === "asset" ? "active" : ""}" type="button" data-report-metric="asset" onclick="setReportVisualMetric('asset')">資産推移</button>
+      </div>
     </div>
     <div class="dailyTrendChartBox">
       <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(year)}年の${metric === "asset" ? "資産" : "支出"}推移">
@@ -4074,6 +4124,7 @@ function renderMonthlyReport(){
   const { total } = buildReportItemsForScope(scopeMode, scopeKey);
   const assets = getReportScopeSavings(scopeMode, scopeKey);
   const fixedCost = getReportScopeFixedCost(scopeMode, scopeKey);
+  const income = getReportScopeIncome(scopeMode, scopeKey);
   const scopeDate = scopeMode === "annual"
     ? ""
     : "";
@@ -4084,6 +4135,10 @@ function renderMonthlyReport(){
   $("reportQuickFixedTotal") && ($("reportQuickFixedTotal").textContent = `${fmtYen(Math.round(fixedCost))}円`);
   $("reportQuickSavingTotal") && ($("reportQuickSavingTotal").textContent = `${fmtYen(Math.round(assets.saving || 0))}円`);
   $("reportQuickInvestTotal") && ($("reportQuickInvestTotal").textContent = `${fmtYen(Math.round(assets.invest || 0))}円`);
+  applyReportQuickStatus("reportQuickSpendTotal", getReportHealthStatus("spend", total, income));
+  applyReportQuickStatus("reportQuickFixedTotal", getReportHealthStatus("fixed", fixedCost, income));
+  applyReportQuickStatus("reportQuickSavingTotal", getReportHealthStatus("saving", Number(assets.saving || 0), income));
+  applyReportQuickStatus("reportQuickInvestTotal", getReportHealthStatus("invest", Number(assets.invest || 0), income));
   document.querySelectorAll(".reportTrendModeBtn").forEach(btn=>{
     btn.classList.toggle("active", btn.dataset.reportMetric === REPORT_VISUAL_METRIC);
   });
