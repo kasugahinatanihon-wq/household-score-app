@@ -3778,7 +3778,6 @@ function switchReportVisualSlide(index){
   document.querySelectorAll(".reportVisualDot").forEach(btn=>{
     btn.classList.toggle("active", Number(btn.dataset.reportSlide || 0) === REPORT_VISUAL_SLIDE);
   });
-  $("reportMetricActions") && ($("reportMetricActions").hidden = REPORT_VISUAL_SLIDE !== 1);
   document.querySelectorAll(".reportVisualActions [data-report-view]").forEach((btn)=>{
     const active = Number(btn.dataset.reportView || 0) === REPORT_VISUAL_SLIDE;
     btn.classList.toggle("active", active);
@@ -4050,6 +4049,12 @@ function renderAnnualTrendChart(areaId, year, metric = "spend"){
   const line = rows.map((row, idx)=>`${x(idx)},${y(Number(row.value || 0))}`).join(" ");
   const areaPath = `M ${x(0)} ${y(Number(rows[0]?.value || 0))} L ${rows.map((row, idx)=>`${x(idx)} ${y(Number(row.value || 0))}`).join(" L ")} L ${x(rows.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
   area.innerHTML = `
+    <div class="reportTrendTopbar">
+      <div class="reportMetricActions">
+        <button class="ghost ${metric !== "asset" ? "active" : ""}" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
+        <button class="ghost ${metric === "asset" ? "active" : ""}" type="button" data-report-metric="asset" onclick="setReportVisualMetric('asset')">資産推移</button>
+      </div>
+    </div>
     <div class="dailyTrendChartBox">
       <svg class="dailyTrendSvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(year)}年の${metric === "asset" ? "資産" : "支出"}推移">
         <path class="dailyTrendArea" d="${areaPath}"></path>
@@ -4134,15 +4139,6 @@ function renderMonthlyReport(){
   applyReportQuickStatus("reportQuickFixedTotal", getReportHealthStatus("fixed", fixedCost, income));
   applyReportQuickStatus("reportQuickSavingTotal", getReportHealthStatus("saving", Number(assets.saving || 0), income));
   applyReportQuickStatus("reportQuickInvestTotal", getReportHealthStatus("invest", Number(assets.invest || 0), income));
-  document.querySelectorAll(".reportMetricActions [data-report-metric]").forEach(btn=>{
-    const active = btn.dataset.reportMetric === REPORT_VISUAL_METRIC;
-    btn.classList.toggle("active", active);
-    if(active){
-      btn.setAttribute("aria-current", "true");
-    }else{
-      btn.removeAttribute("aria-current");
-    }
-  });
 
   renderReportBreakdown(scopeMode, scopeKey);
   if(REPORT_VISUAL_METRIC === "spend"){
@@ -4371,6 +4367,10 @@ function renderReportGrowthLog(monthStr, areaId = "reportGrowthLog", options = {
 
   area.innerHTML = `
     <div class="reportTrendTopbar">
+      <div class="reportMetricActions">
+        <button class="ghost ${metric !== "asset" ? "active" : ""}" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
+        <button class="ghost ${metric === "asset" ? "active" : ""}" type="button" data-report-metric="asset" onclick="setReportVisualMetric('asset')">資産推移</button>
+      </div>
       <div class="dailyTrendDelta ${diff > 0 ? "up" : (diff < 0 ? "down" : "")}">前月差 ${escapeHtml(diffText)}</div>
     </div>
     <div class="dailyTrendChartBox">
@@ -4496,6 +4496,10 @@ function renderSpendTrendChart(monthStr, category = "all", areaId = "reportSpend
 
   area.innerHTML = `
     <div class="reportTrendTopbar">
+      <div class="reportMetricActions">
+        <button class="ghost active" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
+        <button class="ghost" type="button" data-report-metric="asset" onclick="setReportVisualMetric('asset')">資産推移</button>
+      </div>
       <div class="dailyTrendDelta ${cumDelta > 0 ? "up" : (cumDelta < 0 ? "down" : "")}">
         先月同日比 ${deltaSign}${fmtYen(Math.round(cumDelta))}円
       </div>

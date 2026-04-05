@@ -723,9 +723,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .reportControlBar{
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:flex-start;
   gap:10px;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
 }
 .reportVisualActions{
   display:flex;
@@ -733,18 +733,19 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   justify-content:center;
   gap:0;
   flex-wrap:nowrap;
-  width:fit-content;
-  margin:0 auto;
+  width:100%;
+  margin:0;
   border:1px solid rgba(114,72,57,.10);
   border-radius:12px;
   background:rgba(255,248,242,.88);
   overflow:hidden;
 }
 .reportVisualActions .ghost{
-  min-height:34px;
-  padding:6px 16px;
+  flex:1 1 50%;
+  min-height:42px;
+  padding:8px 16px;
   border-radius:0;
-  font-size:12px;
+  font-size:13px;
   font-weight:900;
   border:none;
   background:transparent;
@@ -776,13 +777,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:none !important;
 }
 .reportMetricActions .ghost{
-  min-height:34px;
-  padding:7px 16px;
+  min-height:32px;
+  padding:6px 12px;
   border:none;
   border-radius:0;
   background:transparent;
   color:var(--report-muted);
-  font-size:12px;
+  font-size:11px;
   font-weight:900;
 }
 .reportMetricActions .ghost + .ghost{
@@ -1763,7 +1764,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 @media (max-width:720px){
   #screen-list .box,
   #screen-report .box{
-    min-height:calc(100dvh - 132px);
+    height:calc(100dvh - 132px);
     display:flex;
     flex-direction:column;
     overflow:hidden;
@@ -1781,11 +1782,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     flex-wrap:nowrap;
   }
   .reportVisualActions .ghost{
-    flex:0 0 auto;
-    min-width:auto;
+    flex:1 1 50%;
+    min-width:0;
   }
   .reportControlBar{
-    justify-content:space-between;
+    justify-content:flex-start;
   }
   #screen-list #listArea,
   #screen-report #reportMainPanel,
@@ -1810,7 +1811,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   #screen-list .box.boxSafeBottom,
   #screen-report .box.boxSafeBottom{
-    min-height:calc(100dvh - 120px);
+    height:calc(100dvh - 120px);
   }
   #screen-report .box.boxSafeBottom{
     padding-top:6px;
@@ -1853,18 +1854,18 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   .reportControlBar{
     gap:8px;
-    justify-content:space-between;
+    justify-content:flex-start;
   }
   .reportVisualActions .ghost{
-    flex:0 0 auto;
-    min-height:32px;
-    padding:5px 14px;
-    font-size:11px;
-  }
-  .reportMetricActions .ghost{
+    flex:1 1 50%;
     min-height:32px;
     padding:5px 12px;
     font-size:11px;
+  }
+  .reportMetricActions .ghost{
+    min-height:30px;
+    padding:4px 10px;
+    font-size:10px;
   }
   .reportTrendTopbar{
     align-items:center;
