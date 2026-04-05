@@ -4158,14 +4158,14 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   overflow:hidden;
   transition:transform .2s ease, background-color .2s ease, width .2s ease;
 }
-.monthlyWrapDot::after{
-  content:"";
+.monthlyWrapDotFill{
   position:absolute;
   inset:0;
   transform:scaleX(0);
   transform-origin:left center;
   background:rgba(255,255,255,.5);
   border-radius:inherit;
+  opacity:0;
 }
 .monthlyWrapDot.active{
   width:22px;
@@ -4174,7 +4174,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 #monthlyStoryFlow[data-autoplay="playing"] .monthlyWrapDot.active{
   animation:none;
 }
-#monthlyStoryFlow[data-autoplay="playing"] .monthlyWrapDot.active::after{
+#monthlyStoryFlow[data-autoplay="playing"] .monthlyWrapDot.active .monthlyWrapDotFill{
   animation:storyDotFill var(--story-progress-ms, 8000ms) linear forwards;
 }
 .monthlyWrapCard.is-hero{

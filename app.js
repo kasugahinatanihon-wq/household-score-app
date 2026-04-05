@@ -5436,7 +5436,7 @@ function initMonthlyWrapCarousels(root = document){
         type="button"
         class="monthlyWrapDot${i === 0 ? " active" : ""}"
         aria-label="${i + 1}枚目へ"
-        data-index="${i}"></button>
+        data-index="${i}"><span class="monthlyWrapDotFill" aria-hidden="true"></span></button>
     `).join("");
 
     const dotButtons = Array.from(dots.querySelectorAll(".monthlyWrapDot"));
