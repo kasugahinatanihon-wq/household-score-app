@@ -5428,6 +5428,7 @@ function initMonthlyWrapCarousels(root = document){
     let startX = 0;
     let currentX = 0;
     let isDragging = false;
+    let touchMoved = false;
     let autoplayTimer = null;
     const autoplayMs = Number(carousel.dataset.autoplayMs || 0);
     const shouldAutoplay = autoplayMs > 0;
@@ -5554,8 +5555,8 @@ function initMonthlyWrapCarousels(root = document){
 
     track.addEventListener("touchstart", (event)=>{
       if(!event.touches.length) return;
-      setAutoplayEnabled(false);
       isDragging = true;
+       touchMoved = false;
       startX = event.touches[0].clientX;
       currentX = startX;
     }, { passive: true });
@@ -5563,21 +5564,40 @@ function initMonthlyWrapCarousels(root = document){
     track.addEventListener("touchmove", (event)=>{
       if(!isDragging || !event.touches.length) return;
       currentX = event.touches[0].clientX;
+      if(Math.abs(currentX - startX) > 8) touchMoved = true;
     }, { passive: true });
 
     track.addEventListener("touchend", ()=>{
       if(!isDragging) return;
       const deltaX = currentX - startX;
       if(deltaX <= -48){
+        setAutoplayEnabled(false);
         moveTo(index + 1);
       }else if(deltaX >= 48){
+        setAutoplayEnabled(false);
         moveTo(index - 1);
-      }else{
-        update();
       }
       isDragging = false;
+      touchMoved = false;
       startX = 0;
       currentX = 0;
+    });
+
+    track.addEventListener("click", (event)=>{
+      if(touchMoved) return;
+      const interactive = event.target.closest("button, a, input, select, textarea, label, summary");
+      if(interactive) return;
+      const rect = track.getBoundingClientRect();
+      const tapX = event.clientX - rect.left;
+      const isLeft = tapX < rect.width * 0.4;
+      const isRight = tapX > rect.width * 0.6;
+      if(!isLeft && !isRight) return;
+      setAutoplayEnabled(false);
+      if(isLeft){
+        moveTo(index - 1);
+      }else{
+        moveTo(index + 1);
+      }
     });
 
     carousel.dataset.ready = "true";
