@@ -439,7 +439,7 @@
   </section>
 
   <section class="screen" id="screen-list">
-    <div class="box">
+    <div class="box boxSafeBottom">
       <div class="calendarBox" id="calendarBox" style="margin-top:2px;">
         <div class="calHeader">
           <span class="pill" id="calMonthPill" style="font-size:14px; padding:6px 12px;">----</span>
@@ -452,10 +452,6 @@
         <div class="calGrid" id="calGrid"></div>
       </div>
       <p style="text-align:center; margin-top:10px; font-size:12px; color:#888;">日付タップで入力 / 長押しで履歴</p>
-      <div class="bar" style="margin-top:12px; justify-content:flex-end;">
-        <button class="dark" style="font-size:12px; padding:8px 12px; margin-right:8px;" onclick="completeMonthFromCalendar()">月の入力完了</button>
-         <button class="danger" style="font-size:12px; padding:8px 12px;" onclick="clearMonthTx()">月データ削除</button>
-      </div>
       <div id="listArea" style="margin-top:16px;"></div>
     </div>
   </section>

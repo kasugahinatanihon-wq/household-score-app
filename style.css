@@ -763,6 +763,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .reportMetricActions{
   display:flex;
   align-items:center;
+  justify-content:flex-start;
   gap:0;
   flex-wrap:nowrap;
   width:fit-content;
@@ -770,6 +771,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:12px;
   background:rgba(255,247,240,.82);
   overflow:hidden;
+}
+.reportMetricActions[hidden]{
+  display:none !important;
 }
 .reportMetricActions .ghost{
   min-height:34px;
@@ -1757,6 +1761,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .comparePreviewGrid{ grid-template-columns:1fr; }
 }
 @media (max-width:720px){
+  #screen-list .box,
+  #screen-report .box{
+    min-height:calc(100dvh - 132px);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
   .reportHeader{
     flex-direction:row;
     justify-content:space-between;
@@ -1776,6 +1787,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .reportControlBar{
     justify-content:space-between;
   }
+  #screen-list #listArea,
+  #screen-report #reportMainPanel,
+  #screen-report #reportCategoryDetailPanel{
+    min-height:0;
+  }
   .reportCategoryLabel select{ width:136px; }
   .monthlyAxisTabs{
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -1791,6 +1807,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 @media (max-width:560px){
   .reportModeBtn{
     font-size:12px;
+  }
+  #screen-list .box.boxSafeBottom,
+  #screen-report .box.boxSafeBottom{
+    min-height:calc(100dvh - 120px);
   }
   #screen-report .box.boxSafeBottom{
     padding-top:6px;
@@ -1833,6 +1853,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   .reportControlBar{
     gap:8px;
+    justify-content:space-between;
   }
   .reportVisualActions .ghost{
     flex:0 0 auto;
@@ -1841,9 +1862,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:11px;
   }
   .reportMetricActions .ghost{
-    min-height:30px;
-    padding:4px 10px;
-    font-size:10px;
+    min-height:32px;
+    padding:5px 12px;
+    font-size:11px;
   }
   .reportTrendTopbar{
     align-items:center;
