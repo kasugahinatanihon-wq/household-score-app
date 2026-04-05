@@ -1791,36 +1791,19 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   #screen-report #reportMainPanel,
   #screen-report #reportCategoryDetailPanel{
     flex:1 1 auto;
-    overflow:hidden;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
   }
   #screen-report #reportMainPanel .sectionCard,
   #screen-report #reportCategoryDetailPanel .sectionCard{
-    height:100%;
-    display:flex;
-    flex-direction:column;
-    min-height:0;
-  }
-  #screen-report .reportVisualViewport{
-    flex:1 1 auto;
-    min-height:0;
-  }
-  #screen-report .reportVisualTrack,
-  #screen-report .reportVisualSlide{
-    height:100%;
-  }
-  #screen-report .reportChartWrapMain{
-    height:100%;
-    min-height:0;
+    height:auto;
+    min-height:auto;
   }
   #screen-report .reportLegend{
-    flex:1 1 auto;
-    min-height:0;
     overflow:auto;
     -webkit-overflow-scrolling:touch;
   }
   #screen-report #reportVisualTrend{
-    height:100%;
-    min-height:0;
     overflow:auto;
     -webkit-overflow-scrolling:touch;
   }
@@ -1876,6 +1859,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     margin-top:8px;
     padding:10px;
     border-radius:16px;
+  }
+  #screen-report #reportMainPanel{
+    padding-bottom:8px;
   }
   #reportMainPanel .sectionHead{
     margin-bottom:0;
@@ -1948,7 +1934,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   .reportLegend{
     gap:6px;
-    max-height:168px;
+    max-height:none;
   }
   .reportLegendItem{
     padding:6px 8px;
