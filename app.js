@@ -5420,6 +5420,7 @@ function initMonthlyWrapCarousels(root = document){
     if(carousel.dataset.ready === "true") return;
     const track = carousel.querySelector(".monthlyWrapTrack");
     const dots = carousel.querySelector(".monthlyWrapDots");
+    const progressFill = carousel.querySelector(".monthlyStoryProgressFill");
     const cards = Array.from(carousel.querySelectorAll(".monthlyWrapCard"));
     if(!track || !dots || !cards.length) return;
 
@@ -5443,6 +5444,10 @@ function initMonthlyWrapCarousels(root = document){
     const dotFills = dotButtons.map(dot=> dot.querySelector(".monthlyWrapDotFill")).filter(Boolean);
 
     const resetProgress = ()=>{
+      if(progressFill){
+        progressFill.style.transition = "none";
+        progressFill.style.width = "0%";
+      }
       dotFills.forEach(fill=>{
         fill.style.transition = "none";
         fill.style.transform = "scaleX(0)";
@@ -5452,8 +5457,18 @@ function initMonthlyWrapCarousels(root = document){
 
     const startProgress = ()=>{
       const activeFill = dotButtons[index]?.querySelector(".monthlyWrapDotFill");
+      if(progressFill){
+        progressFill.style.transition = "none";
+        progressFill.style.width = "0%";
+      }
       if(!activeFill || !shouldAutoplay || carousel.dataset.autoplayDisabled === "true") return;
       resetProgress();
+      if(progressFill){
+        requestAnimationFrame(()=>{
+          progressFill.style.transition = `width ${autoplayMs}ms linear`;
+          progressFill.style.width = "100%";
+        });
+      }
       activeFill.style.opacity = "0.95";
       requestAnimationFrame(()=>{
         activeFill.style.transition = `transform ${autoplayMs}ms linear`;
@@ -6198,6 +6213,9 @@ function buildMonthlyResult(){
           <div class="monthlyStoryProgress">
             <span>今月のふり返り</span>
             <span>${escapeHtml(m)}</span>
+          </div>
+          <div class="monthlyStoryProgressBar" aria-hidden="true">
+            <span class="monthlyStoryProgressFill"></span>
           </div>
           <div class="monthlyWrapViewport monthlyStoryViewport">
             <div class="monthlyWrapTrack monthlyStoryTrack">
