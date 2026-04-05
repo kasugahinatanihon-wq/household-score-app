@@ -794,12 +794,41 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:linear-gradient(180deg, #ffffff 0%, #fff1e2 100%);
   color:var(--report-ink);
 }
+.reportMetricActions .ghost[data-report-metric="spend"].active,
+.reportMetricActions .ghost[data-report-metric="spend"][aria-current="true"]{
+  background:linear-gradient(180deg, #fff3e8 0%, #ffe2cb 100%);
+  color:#8f4b2f;
+}
+.reportMetricActions .ghost[data-report-metric="asset"].active,
+.reportMetricActions .ghost[data-report-metric="asset"][aria-current="true"]{
+  background:linear-gradient(180deg, #edf8f4 0%, #d5f2e7 100%);
+  color:#246a57;
+  box-shadow:inset 0 0 0 1px rgba(52,140,110,.18);
+}
 .reportTrendTopbar{
   display:flex;
   align-items:center;
   justify-content:flex-start;
   gap:8px;
   margin-bottom:6px;
+}
+.reportTrendPane.is-asset .dailyTrendArea{
+  fill:rgba(95, 176, 144, .16);
+}
+.reportTrendPane.is-asset .dailyTrendCum,
+.reportTrendPane.is-asset .dailyTrendMain{
+  stroke:#2f9d7d;
+}
+.reportTrendPane.is-asset .dailyTrendDot{
+  fill:#2f9d7d;
+  stroke:#f4fbf8;
+}
+.reportTrendPane.is-asset .dailyTrendSwatch.main,
+.reportTrendPane.is-asset .dailyTrendSwatch.cum{
+  background:#2f9d7d;
+}
+.reportTrendPane.is-asset .dailyTrendDelta{
+  color:#246a57;
 }
 .reportVisualViewport{
   overflow:hidden;
@@ -4119,20 +4148,34 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   gap:8px;
 }
 .monthlyWrapDot{
+  position:relative;
   width:8px;
   height:8px;
   padding:0;
   border:none;
   border-radius:999px;
   background:rgba(143,75,47,.22);
+  overflow:hidden;
   transition:transform .2s ease, background-color .2s ease, width .2s ease;
+}
+.monthlyWrapDot::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:scaleX(0);
+  transform-origin:left center;
+  background:rgba(255,255,255,.5);
+  border-radius:inherit;
 }
 .monthlyWrapDot.active{
   width:22px;
   background:#d6784b;
 }
 #monthlyStoryFlow[data-autoplay="playing"] .monthlyWrapDot.active{
-  animation:storyDotProgress 8s linear;
+  animation:none;
+}
+#monthlyStoryFlow[data-autoplay="playing"] .monthlyWrapDot.active::after{
+  animation:storyDotFill var(--story-progress-ms, 8000ms) linear forwards;
 }
 .monthlyWrapCard.is-hero{
   background:linear-gradient(145deg, rgba(255,243,233,.98), rgba(255,255,255,.96));
@@ -4359,9 +4402,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   0%{ opacity:0; transform:translateY(18px); }
   100%{ opacity:1; transform:translateY(0); }
 }
-@keyframes storyDotProgress{
-  0%{ box-shadow:inset -22px 0 0 rgba(255,255,255,.32); }
-  100%{ box-shadow:inset 0 0 0 rgba(255,255,255,0); }
+@keyframes storyDotFill{
+  0%{ transform:scaleX(0); opacity:.35; }
+  100%{ transform:scaleX(1); opacity:.95; }
 }
 .summaryRight{ display:flex; align-items:center; justify-content:center; }
 .axisGrid{

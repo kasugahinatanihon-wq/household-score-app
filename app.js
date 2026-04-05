@@ -4052,7 +4052,9 @@ function renderAnnualTrendChart(areaId, year, metric = "spend"){
   const y = (val)=> pad.top + (1 - (val / maxValue)) * innerH;
   const line = rows.map((row, idx)=>`${x(idx)},${y(Number(row.value || 0))}`).join(" ");
   const areaPath = `M ${x(0)} ${y(Number(rows[0]?.value || 0))} L ${rows.map((row, idx)=>`${x(idx)} ${y(Number(row.value || 0))}`).join(" L ")} L ${x(rows.length - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`;
+  const trendClass = metric === "asset" ? "reportTrendPane is-asset" : "reportTrendPane is-spend";
   area.innerHTML = `
+    <div class="${trendClass}">
     <div class="reportTrendTopbar">
       <div class="reportMetricActions">
         <button class="ghost ${metric !== "asset" ? "active" : ""}" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
@@ -4068,6 +4070,7 @@ function renderAnnualTrendChart(areaId, year, metric = "spend"){
     </div>
     <div class="dailyTrendAxis">
       ${rows.map(row=>`<span>${escapeHtml(row.label)}</span>`).join("")}
+    </div>
     </div>
   `;
 }
@@ -4369,8 +4372,10 @@ function renderReportGrowthLog(monthStr, areaId = "reportGrowthLog", options = {
   const diffText = `${diff > 0 ? "+" : ""}${fmtYen(Math.round(diff))}円`;
   const label = getGrowthMetricLabel(metric);
   const modeLabel = mode === "cumulative" ? "累計" : "その月";
+  const trendClass = "reportTrendPane is-asset";
 
   area.innerHTML = `
+    <div class="${trendClass}">
     <div class="reportTrendTopbar">
       <div class="reportMetricActions">
         <button class="ghost ${metric !== "asset" ? "active" : ""}" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
@@ -4393,6 +4398,7 @@ function renderReportGrowthLog(monthStr, areaId = "reportGrowthLog", options = {
       ${rows.map(row=>`<span>${Number(row.month.slice(5,7))}月</span>`).join("")}
     </div>
     <div class="small muted" style="margin-top:6px;">${escapeHtml(label)}の入力はホームからいつでも変更できます</div>
+    </div>
   `;
 }
 
@@ -4498,8 +4504,10 @@ function renderSpendTrendChart(monthStr, category = "all", areaId = "reportSpend
     }
     return `${fmtYen(n)}`;
   };
+  const trendClass = "reportTrendPane is-spend";
 
   area.innerHTML = `
+    <div class="${trendClass}">
     <div class="reportTrendTopbar">
       <div class="reportMetricActions">
         <button class="ghost active" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
@@ -4529,6 +4537,7 @@ function renderSpendTrendChart(monthStr, category = "all", areaId = "reportSpend
       ${ticks.map(d=>`<span>${d}日</span>`).join("")}
     </div>
     <div class="small muted" style="margin-top:6px;">${escapeHtml(category === "all" ? "今月" : category)}の最大支出日: ${maxDay}日（${fmtYen(Math.round(maxDaySpend))}円）</div>
+    </div>
   `;
 }
 
@@ -5431,6 +5440,7 @@ function initMonthlyWrapCarousels(root = document){
     `).join("");
 
     const dotButtons = Array.from(dots.querySelectorAll(".monthlyWrapDot"));
+    dots.style.setProperty("--story-progress-ms", `${autoplayMs || 8000}ms`);
 
     const update = ()=>{
       track.style.transform = `translate3d(${-index * 100}%, 0, 0)`;
