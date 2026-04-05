@@ -5440,7 +5440,26 @@ function initMonthlyWrapCarousels(root = document){
     `).join("");
 
     const dotButtons = Array.from(dots.querySelectorAll(".monthlyWrapDot"));
-    dots.style.setProperty("--story-progress-ms", `${autoplayMs || 8000}ms`);
+    const dotFills = dotButtons.map(dot=> dot.querySelector(".monthlyWrapDotFill")).filter(Boolean);
+
+    const resetProgress = ()=>{
+      dotFills.forEach(fill=>{
+        fill.style.transition = "none";
+        fill.style.transform = "scaleX(0)";
+        fill.style.opacity = "0";
+      });
+    };
+
+    const startProgress = ()=>{
+      const activeFill = dotButtons[index]?.querySelector(".monthlyWrapDotFill");
+      if(!activeFill || !shouldAutoplay || carousel.dataset.autoplayDisabled === "true") return;
+      resetProgress();
+      activeFill.style.opacity = "0.95";
+      requestAnimationFrame(()=>{
+        activeFill.style.transition = `transform ${autoplayMs}ms linear`;
+        activeFill.style.transform = "scaleX(1)";
+      });
+    };
 
     const update = ()=>{
       track.style.transform = `translate3d(${-index * 100}%, 0, 0)`;
@@ -5452,6 +5471,11 @@ function initMonthlyWrapCarousels(root = document){
         dot.setAttribute("aria-current", i === index ? "true" : "false");
       });
       carousel.dataset.index = String(index);
+      if(carousel.dataset.autoplay === "playing"){
+        startProgress();
+      }else{
+        resetProgress();
+      }
     };
 
     const moveTo = (nextIndex)=>{
@@ -5464,11 +5488,13 @@ function initMonthlyWrapCarousels(root = document){
       clearTimeout(autoplayTimer);
       autoplayTimer = null;
       carousel.dataset.autoplay = "stopped";
+      resetProgress();
     };
 
     const queueAutoplay = ()=>{
       if(!shouldAutoplay || autoplayTimer || carousel.dataset.autoplayDisabled === "true") return;
       carousel.dataset.autoplay = "playing";
+      startProgress();
       autoplayTimer = setTimeout(()=>{
         autoplayTimer = null;
         if(index >= cards.length - 1){
