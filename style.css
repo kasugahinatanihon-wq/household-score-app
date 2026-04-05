@@ -1764,72 +1764,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .comparePreviewGrid{ grid-template-columns:1fr; }
 }
 @media (max-width:720px){
-  #screen-list .box,
-  #screen-report .box{
-    height:calc(100dvh - 132px);
-    overflow:hidden !important;
-  }
-  #screen-list .box{
-    display:flex;
-    flex-direction:column;
-  }
-  #screen-report .box{
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
-  }
-  #screen-list .calendarBox{
-    flex:0 0 auto;
-  }
-  #screen-list #listArea{
-    flex:1 1 auto;
-    min-height:0;
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
-    padding-bottom:8px;
-  }
   #screen-list .box.boxSafeBottom,
   #screen-report .box.boxSafeBottom{
     padding-bottom:calc(10px + var(--navSpace));
-  }
-  #screen-list{
-    overflow:hidden;
-  }
-  #screen-report{
-    overflow:hidden;
-  }
-  #screen-report .reportControlBar{
-    flex:0 0 auto;
-  }
-  #screen-report #reportMainPanel,
-  #screen-report #reportCategoryDetailPanel{
-    flex:1 1 auto;
-    min-height:0;
-    overflow:hidden;
-  }
-  #screen-report #reportMainPanel .sectionCard,
-  #screen-report #reportCategoryDetailPanel .sectionCard{
-    height:100%;
-    min-height:0;
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-  }
-  #screen-report .reportVisualViewport{
-    flex:1 1 auto;
-    min-height:0;
-  }
-  #screen-report .reportVisualTrack,
-  #screen-report .reportVisualSlide{
-    height:100%;
-  }
-  #screen-report .reportChartWrapMain{
-    height:100%;
-    min-height:0;
-  }
-  #screen-report #reportVisualTrend{
-    min-height:0;
-    overflow:hidden;
   }
   .reportHeader{
     flex-direction:row;
@@ -1868,12 +1805,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   #screen-list .box.boxSafeBottom,
   #screen-report .box.boxSafeBottom{
-    height:calc(100dvh - 120px);
     padding-bottom:calc(8px + var(--navSpace));
-    overflow:hidden !important;
-  }
-  #screen-report .box.boxSafeBottom{
-    overflow:hidden;
   }
   #screen-report .box.boxSafeBottom{
     padding-top:6px;
