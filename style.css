@@ -1769,6 +1769,61 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     flex-direction:column;
     overflow:hidden;
   }
+  #screen-list .box.boxSafeBottom,
+  #screen-report .box.boxSafeBottom{
+    padding-bottom:calc(10px + var(--navSpace));
+  }
+  #screen-list{
+    overflow:hidden;
+  }
+  #screen-list #listArea{
+    flex:1 1 auto;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:8px;
+  }
+  #screen-report{
+    overflow:hidden;
+  }
+  #screen-report .box{
+    gap:8px;
+  }
+  #screen-report #reportMainPanel,
+  #screen-report #reportCategoryDetailPanel{
+    flex:1 1 auto;
+    overflow:hidden;
+  }
+  #screen-report #reportMainPanel .sectionCard,
+  #screen-report #reportCategoryDetailPanel .sectionCard{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  #screen-report .reportVisualViewport{
+    flex:1 1 auto;
+    min-height:0;
+  }
+  #screen-report .reportVisualTrack,
+  #screen-report .reportVisualSlide{
+    height:100%;
+  }
+  #screen-report .reportChartWrapMain{
+    height:100%;
+    min-height:0;
+  }
+  #screen-report .reportLegend{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  #screen-report #reportVisualTrend{
+    height:100%;
+    min-height:0;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
   .reportHeader{
     flex-direction:row;
     justify-content:space-between;
@@ -1812,6 +1867,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   #screen-list .box.boxSafeBottom,
   #screen-report .box.boxSafeBottom{
     height:calc(100dvh - 120px);
+    padding-bottom:calc(8px + var(--navSpace));
   }
   #screen-report .box.boxSafeBottom{
     padding-top:6px;
@@ -1883,7 +1939,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     margin-top:8px;
   }
   .reportVisualDots{
-    margin-top:8px;
+    margin-top:6px;
+    padding-bottom:2px;
   }
   .reportCategoryDrill{
     padding:8px;
@@ -1905,7 +1962,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:11px;
   }
   .reportVisualSlide #reportVisualTrend{
-    min-height:300px;
+    min-height:0;
   }
   .reportVisualSlide #reportVisualTrend .dailyTrendSvg{
     height:236px;
