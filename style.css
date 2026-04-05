@@ -3287,7 +3287,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:none;
 }
 #resultModal.is-story-mode .modalBody{
-  overflow:hidden;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
 }
 #resultModal.is-story-mode[data-story-stage="detail"] .modalBody{
   overflow:auto;
@@ -3864,7 +3865,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   min-height:calc(100vh - var(--safeBottom));
   min-height:calc(100svh - var(--safeBottom));
   min-height:calc(100dvh - var(--safeBottom));
-  padding:82px 18px 28px;
+  padding:82px 18px calc(44px + var(--safeBottom));
   background:transparent !important;
   border:none !important;
   box-shadow:none !important;
@@ -4374,7 +4375,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     padding:14px 14px 10px;
   }
   .monthlyStoryShell{
-    padding:74px 14px 24px;
+    min-height:auto;
+    padding:74px 14px calc(88px + var(--safeBottom));
   }
   .monthlyWrapCard{
     min-height:164px;
@@ -4384,9 +4386,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:21px;
   }
   .monthlyStoryTrack{
-    min-height:calc(100vh - 206px - var(--safeBottom));
-    min-height:calc(100svh - 206px - var(--safeBottom));
-    min-height:calc(100dvh - 206px - var(--safeBottom));
+    min-height:calc(100vh - 250px - var(--safeBottom));
+    min-height:calc(100svh - 250px - var(--safeBottom));
+    min-height:calc(100dvh - 250px - var(--safeBottom));
   }
   .monthlyStoryStatGrid,
   .monthlyStoryMiniStats{
