@@ -6156,7 +6156,7 @@ function buildMonthlyResult(){
       <div class="summaryCard animIn a1 monthlyStoryShell">
         <div class="summaryTitle">マンスリーサマリー：${escapeHtml(m)}</div>
         <div class="summaryLead">${escapeHtml(summaryMonthly)}</div>
-        <div class="monthlyStoryExperience" id="monthlyStoryFlow" data-wrap-carousel data-autoplay-ms="2600" aria-label="今月のストーリー">
+        <div class="monthlyStoryExperience" id="monthlyStoryFlow" data-wrap-carousel data-autoplay-ms="8000" aria-label="今月のストーリー">
           <div class="monthlyStoryProgress">
             <span>今月のふり返り</span>
             <span>${escapeHtml(m)}</span>

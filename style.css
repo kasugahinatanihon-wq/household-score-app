@@ -724,25 +724,33 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:22px;
+  gap:0;
   flex-wrap:nowrap;
+  width:fit-content;
+  margin:0 auto;
+  border:1px solid rgba(114,72,57,.10);
+  border-radius:12px;
+  background:rgba(255,248,242,.88);
+  overflow:hidden;
 }
 .reportVisualActions .ghost{
   min-height:34px;
-  padding:6px 10px;
-  border-radius:10px;
+  padding:6px 16px;
+  border-radius:0;
   font-size:12px;
   font-weight:900;
-  border:1px solid rgba(114,72,57,.10);
-  background:rgba(255,248,242,.9);
+  border:none;
+  background:transparent;
   color:#7d5341;
-  box-shadow:0 4px 10px rgba(114,72,57,.04);
+  box-shadow:none;
+}
+.reportVisualActions .ghost + .ghost{
+  border-left:1px solid rgba(114,72,57,.10);
 }
 .reportVisualActions .ghost[aria-current="true"],
 .reportVisualActions .ghost.active{
   color:var(--report-ink);
   background:linear-gradient(180deg, #ffffff 0%, #fff1e2 100%);
-  border-color:rgba(114,72,57,.14);
   text-decoration:none;
 }
 .reportTrendModeSwitch{
@@ -772,11 +780,12 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:center;
   justify-content:flex-end;
   gap:8px;
-  margin-bottom:10px;
+  margin-bottom:6px;
 }
 .reportTrendModeSwitchInline{
   margin:0;
   justify-content:flex-end;
+  opacity:.86;
 }
 .reportTrendModeBtn + .reportTrendModeBtn{
   border-left:1px solid rgba(114,72,57,.10);
@@ -807,7 +816,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:flex-start;
 }
 .reportVisualSlide #reportVisualTrend{
-  min-height:280px;
+  min-height:320px;
+}
+.reportVisualSlide #reportVisualTrend .dailyTrendSvg{
+  width:100%;
+  height:220px;
 }
 .reportVisualDots{
   margin-top:14px;
@@ -890,6 +903,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .reportLegend{
   grid-template-columns:1fr;
   gap:8px;
+  max-height:180px;
+  overflow-y:auto;
+  padding-right:2px;
 }
 .reportLegendItem{
   border:1px solid rgba(114,72,57,.08);
@@ -1749,7 +1765,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .reportVisualActions{
     width:100%;
     justify-content:center;
-    gap:12px;
+    gap:0;
     flex-wrap:nowrap;
   }
   .reportVisualActions .ghost{
@@ -1814,18 +1830,18 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   .reportVisualActions .ghost{
     flex:0 0 auto;
     min-height:32px;
-    padding:5px 10px;
+    padding:5px 14px;
     font-size:11px;
   }
   .reportTrendModeBtn{
-    min-height:32px;
-    padding:5px 12px;
-    font-size:11px;
+    min-height:30px;
+    padding:4px 10px;
+    font-size:10px;
   }
   .reportTrendTopbar{
     align-items:center;
     justify-content:flex-end;
-    margin-bottom:8px;
+    margin-bottom:6px;
   }
   .reportQuickValue{
     font-size:11px;
@@ -1846,6 +1862,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   .reportLegend{
     gap:6px;
+    max-height:168px;
   }
   .reportLegendItem{
     padding:6px 8px;
@@ -1859,7 +1876,10 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:11px;
   }
   .reportVisualSlide #reportVisualTrend{
-    min-height:220px;
+    min-height:300px;
+  }
+  .reportVisualSlide #reportVisualTrend .dailyTrendSvg{
+    height:236px;
   }
   .weeklyHeroArt{
     display:flex;
@@ -3949,7 +3969,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:#d6784b;
 }
 #monthlyStoryFlow[data-autoplay="playing"] .monthlyWrapDot.active{
-  animation:storyDotProgress 2.6s linear;
+  animation:storyDotProgress 8s linear;
 }
 .monthlyWrapCard.is-hero{
   background:linear-gradient(145deg, rgba(255,243,233,.98), rgba(255,255,255,.96));
