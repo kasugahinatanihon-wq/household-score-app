@@ -5592,11 +5592,14 @@ function initMonthlyWrapCarousels(root = document){
       const isLeft = tapX < rect.width * 0.4;
       const isRight = tapX > rect.width * 0.6;
       if(!isLeft && !isRight) return;
-      setAutoplayEnabled(false);
       if(isLeft){
         moveTo(index - 1);
       }else{
         moveTo(index + 1);
+      }
+      if(shouldAutoplay && carousel.dataset.autoplayDisabled !== "true"){
+        stopAutoplay();
+        queueAutoplay();
       }
     });
 
