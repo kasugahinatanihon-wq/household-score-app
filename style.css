@@ -1905,6 +1905,53 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     padding:10px;
     border-radius:16px;
   }
+  #screen-report #reportCategoryDetailPanel .sectionHead{
+    gap:8px;
+    align-items:flex-start;
+  }
+  #screen-report #reportCategoryDetailPanel .sectionHint{
+    font-size:11px;
+  }
+  #screen-report #reportCategoryDetailPanel .sectionHead .ghost{
+    min-height:34px;
+    padding:6px 12px;
+    font-size:11px;
+  }
+  #screen-report #reportCategoryCompareChart{
+    margin-top:10px !important;
+    padding:8px 10px;
+    border-radius:14px;
+  }
+  #screen-report #reportCategoryDetailBody{
+    margin-top:10px !important;
+    padding:10px 12px;
+    border-radius:14px;
+  }
+  .monthCompareRow{
+    grid-template-columns:34px 1fr auto;
+    gap:8px;
+    padding:6px 0;
+  }
+  .monthCompareLabel,
+  .monthCompareValue{
+    font-size:11px;
+  }
+  .monthCompareBar{
+    height:8px;
+  }
+  .reportDrillHead{
+    font-size:11px;
+    gap:6px;
+  }
+  .reportDrillList{
+    margin-top:6px;
+    gap:5px;
+  }
+  .reportDrillRow{
+    grid-template-columns:58px 1fr;
+    gap:6px;
+    font-size:10px;
+  }
   #reportMainPanel .sectionHead{
     margin-bottom:0;
   }

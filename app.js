@@ -4029,6 +4029,10 @@ function renderCategoryDetailBody(areaId, mode, scopeKey, category, totalBase){
   `;
 }
 
+function isCompactReportMobile(){
+  return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(max-width: 560px)").matches;
+}
+
 function renderAnnualTrendChart(areaId, year, metric = "spend"){
   const area = $(areaId);
   if(!area) return;
@@ -4161,9 +4165,10 @@ function renderMonthlyReport(){
   if(REPORT_CATEGORY_DETAIL){
     $("reportCategoryDetailTitle") && ($("reportCategoryDetailTitle").textContent = `${REPORT_CATEGORY_DETAIL} の詳細`);
     $("reportCategoryDetailHint") && ($("reportCategoryDetailHint").textContent = scopeMode === "annual" ? `${scopeKey}年の推移と詳細` : `${scopeKey} の推移と詳細`);
+    const compareSpan = isCompactReportMobile() ? 4 : 6;
     const compareRows = scopeMode === "annual"
       ? getScopeCategoryRows("annual", scopeKey, REPORT_CATEGORY_DETAIL)
-      : Array.from({ length:6 }, (_, idx)=> shiftYm(scopeKey, -(5 - idx))).map(month=> ({
+      : Array.from({ length:compareSpan }, (_, idx)=> shiftYm(scopeKey, -((compareSpan - 1) - idx))).map(month=> ({
           label: `${Number(month.slice(5,7))}月`,
           amount: getScopeCategoryAmount("monthly", month, REPORT_CATEGORY_DETAIL)
         }));
