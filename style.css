@@ -1828,12 +1828,16 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     width:100%;
     flex:1 1 auto;
     min-height:0;
+    overflow:hidden;
   }
   #screen-report .reportLegend{
     width:100%;
     flex:1 1 auto;
+    height:100%;
     min-height:0;
     max-height:none;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
   #screen-report .reportVisualSlide #reportVisualTrend{
     height:100%;
