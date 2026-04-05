@@ -807,6 +807,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .reportVisualTrack{
   display:flex;
+  align-items:flex-start;
   width:200%;
   transform:translate3d(0, 0, 0);
   transition:transform .34s cubic-bezier(.22, 1, .36, 1);
@@ -816,10 +817,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   width:50%;
   flex:0 0 50%;
   min-width:0;
+  align-self:flex-start;
 }
 .reportChartWrapMain{
   grid-template-columns:1fr;
-  gap:18px;
+  gap:10px;
   align-items:flex-start;
 }
 .reportVisualSlide #reportVisualTrend{
@@ -830,7 +832,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   height:220px;
 }
 .reportVisualDots{
-  margin-top:14px;
+  margin-top:8px;
   display:flex;
   justify-content:center;
   gap:8px;
