@@ -3882,20 +3882,33 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   color:#8a736c;
   letter-spacing:.03em;
 }
-.monthlyStoryProgressBar{
+.monthlyStoryProgressBars{
   margin-bottom:12px;
   width:100%;
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(0, 1fr);
+  gap:6px;
+}
+.monthlyStoryProgressSegment{
+  display:block;
   height:6px;
   border-radius:999px;
   background:rgba(143,75,47,.12);
   overflow:hidden;
 }
-.monthlyStoryProgressFill{
+.monthlyStoryProgressSegmentFill{
   display:block;
   width:0%;
   height:100%;
   border-radius:inherit;
   background:linear-gradient(90deg, #f59e7a 0%, #d97745 100%);
+}
+.monthlyStoryProgressSegment.done .monthlyStoryProgressSegmentFill{
+  width:100%;
+}
+.monthlyStoryProgressSegment.active{
+  background:rgba(214,120,75,.18);
 }
 .monthlyWrapCarousel{
   margin-top:12px;

@@ -5420,7 +5420,7 @@ function initMonthlyWrapCarousels(root = document){
     if(carousel.dataset.ready === "true") return;
     const track = carousel.querySelector(".monthlyWrapTrack");
     const dots = carousel.querySelector(".monthlyWrapDots");
-    const progressFill = carousel.querySelector(".monthlyStoryProgressFill");
+    const progressBars = carousel.querySelector(".monthlyStoryProgressBars");
     const cards = Array.from(carousel.querySelectorAll(".monthlyWrapCard"));
     if(!track || !dots || !cards.length) return;
 
@@ -5439,15 +5439,29 @@ function initMonthlyWrapCarousels(root = document){
         aria-label="${i + 1}枚目へ"
         data-index="${i}"><span class="monthlyWrapDotFill" aria-hidden="true"></span></button>
     `).join("");
+    if(progressBars){
+      progressBars.innerHTML = cards.map((_, i)=> `
+        <span class="monthlyStoryProgressSegment${i === 0 ? " active" : ""}" data-index="${i}">
+          <span class="monthlyStoryProgressSegmentFill"></span>
+        </span>
+      `).join("");
+    }
 
     const dotButtons = Array.from(dots.querySelectorAll(".monthlyWrapDot"));
     const dotFills = dotButtons.map(dot=> dot.querySelector(".monthlyWrapDotFill")).filter(Boolean);
+    const progressSegments = progressBars
+      ? Array.from(progressBars.querySelectorAll(".monthlyStoryProgressSegment"))
+      : [];
 
     const resetProgress = ()=>{
-      if(progressFill){
-        progressFill.style.transition = "none";
-        progressFill.style.width = "0%";
-      }
+      progressSegments.forEach((segment, segmentIndex)=>{
+        const fill = segment.querySelector(".monthlyStoryProgressSegmentFill");
+        if(!fill) return;
+        fill.style.transition = "none";
+        fill.style.width = segmentIndex < index ? "100%" : "0%";
+        segment.classList.toggle("active", segmentIndex === index);
+        segment.classList.toggle("done", segmentIndex < index);
+      });
       dotFills.forEach(fill=>{
         fill.style.transition = "none";
         fill.style.transform = "scaleX(0)";
@@ -5457,16 +5471,13 @@ function initMonthlyWrapCarousels(root = document){
 
     const startProgress = ()=>{
       const activeFill = dotButtons[index]?.querySelector(".monthlyWrapDotFill");
-      if(progressFill){
-        progressFill.style.transition = "none";
-        progressFill.style.width = "0%";
-      }
+      const activeSegmentFill = progressSegments[index]?.querySelector(".monthlyStoryProgressSegmentFill");
       if(!activeFill || !shouldAutoplay || carousel.dataset.autoplayDisabled === "true") return;
       resetProgress();
-      if(progressFill){
+      if(activeSegmentFill){
         requestAnimationFrame(()=>{
-          progressFill.style.transition = `width ${autoplayMs}ms linear`;
-          progressFill.style.width = "100%";
+          activeSegmentFill.style.transition = `width ${autoplayMs}ms linear`;
+          activeSegmentFill.style.width = "100%";
         });
       }
       activeFill.style.opacity = "0.95";
@@ -5484,6 +5495,10 @@ function initMonthlyWrapCarousels(root = document){
       dotButtons.forEach((dot, i)=>{
         dot.classList.toggle("active", i === index);
         dot.setAttribute("aria-current", i === index ? "true" : "false");
+      });
+      progressSegments.forEach((segment, i)=>{
+        segment.classList.toggle("active", i === index);
+        segment.classList.toggle("done", i < index);
       });
       carousel.dataset.index = String(index);
       if(carousel.dataset.autoplay === "playing"){
@@ -6214,9 +6229,7 @@ function buildMonthlyResult(){
             <span>今月のふり返り</span>
             <span>${escapeHtml(m)}</span>
           </div>
-          <div class="monthlyStoryProgressBar" aria-hidden="true">
-            <span class="monthlyStoryProgressFill"></span>
-          </div>
+          <div class="monthlyStoryProgressBars" aria-hidden="true"></div>
           <div class="monthlyWrapViewport monthlyStoryViewport">
             <div class="monthlyWrapTrack monthlyStoryTrack">
               <section class="monthlyWrapCard monthlyStoryPage is-hero">
