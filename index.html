@@ -500,14 +500,19 @@
         </div>
       </div>
 
+      <div class="reportControlBar" style="margin-top:12px;">
+        <div class="reportVisualActions">
+          <button class="ghost" type="button" data-report-view="0" onclick="switchReportVisualSlide(0)">内訳</button>
+          <button class="ghost" type="button" data-report-view="1" onclick="switchReportVisualSlide(1)">推移</button>
+        </div>
+        <div class="reportMetricActions" id="reportMetricActions" hidden>
+          <button class="ghost" type="button" data-report-metric="spend" onclick="setReportVisualMetric('spend')">支出推移</button>
+          <button class="ghost" type="button" data-report-metric="asset" onclick="setReportVisualMetric('asset')">資産推移</button>
+        </div>
+      </div>
+
       <div id="reportMainPanel">
         <div class="sectionCard" style="margin-top:12px;">
-          <div class="sectionHead">
-            <div class="reportVisualActions">
-              <button class="ghost" type="button" onclick="switchReportVisualSlide(0)">内訳</button>
-              <button class="ghost" type="button" onclick="switchReportVisualSlide(1)">推移</button>
-            </div>
-          </div>
           <div class="reportVisualViewport">
             <div class="reportVisualTrack" id="reportVisualTrack">
               <section class="reportVisualSlide">

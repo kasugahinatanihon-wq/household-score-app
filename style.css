@@ -720,6 +720,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   grid-template-columns:repeat(4, minmax(0,1fr));
   gap:6px;
 }
+.reportControlBar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
 .reportVisualActions{
   display:flex;
   align-items:center;
@@ -753,10 +760,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:linear-gradient(180deg, #ffffff 0%, #fff1e2 100%);
   text-decoration:none;
 }
-.reportTrendModeSwitch{
-  margin:0 auto 10px;
+.reportMetricActions{
   display:flex;
-  justify-content:center;
+  align-items:center;
   gap:0;
   flex-wrap:nowrap;
   width:fit-content;
@@ -765,7 +771,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background:rgba(255,247,240,.82);
   overflow:hidden;
 }
-.reportTrendModeBtn{
+.reportMetricActions .ghost{
   min-height:34px;
   padding:7px 16px;
   border:none;
@@ -775,24 +781,20 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   font-size:12px;
   font-weight:900;
 }
+.reportMetricActions .ghost + .ghost{
+  border-left:1px solid rgba(114,72,57,.10);
+}
+.reportMetricActions .ghost[aria-current="true"],
+.reportMetricActions .ghost.active{
+  background:linear-gradient(180deg, #ffffff 0%, #fff1e2 100%);
+  color:var(--report-ink);
+}
 .reportTrendTopbar{
   display:flex;
   align-items:center;
   justify-content:flex-end;
   gap:8px;
   margin-bottom:6px;
-}
-.reportTrendModeSwitchInline{
-  margin:0;
-  justify-content:flex-end;
-  opacity:.86;
-}
-.reportTrendModeBtn + .reportTrendModeBtn{
-  border-left:1px solid rgba(114,72,57,.10);
-}
-.reportTrendModeBtn.active{
-  background:linear-gradient(180deg, #ffffff 0%, #fff1e2 100%);
-  color:var(--report-ink);
 }
 .reportVisualViewport{
   overflow:hidden;
@@ -1763,14 +1765,16 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     flex-wrap:nowrap;
   }
   .reportVisualActions{
-    width:100%;
-    justify-content:center;
+    justify-content:flex-start;
     gap:0;
     flex-wrap:nowrap;
   }
   .reportVisualActions .ghost{
     flex:0 0 auto;
     min-width:auto;
+  }
+  .reportControlBar{
+    justify-content:space-between;
   }
   .reportCategoryLabel select{ width:136px; }
   .monthlyAxisTabs{
@@ -1827,13 +1831,16 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     font-size:9px;
     line-height:1.15;
   }
+  .reportControlBar{
+    gap:8px;
+  }
   .reportVisualActions .ghost{
     flex:0 0 auto;
     min-height:32px;
     padding:5px 14px;
     font-size:11px;
   }
-  .reportTrendModeBtn{
+  .reportMetricActions .ghost{
     min-height:30px;
     padding:4px 10px;
     font-size:10px;
