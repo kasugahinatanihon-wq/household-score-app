@@ -1767,8 +1767,15 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   #screen-list .box,
   #screen-report .box{
     height:calc(100dvh - 132px);
+  }
+  #screen-list .box{
     overflow:auto;
     -webkit-overflow-scrolling:touch;
+  }
+  #screen-report .box{
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
   }
   #screen-list .box.boxSafeBottom,
   #screen-report .box.boxSafeBottom{
@@ -1778,6 +1785,15 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     overflow:hidden;
   }
   #screen-report{
+    overflow:hidden;
+  }
+  #screen-report #reportMainPanel,
+  #screen-report #reportCategoryDetailPanel{
+    overflow:hidden;
+  }
+  #screen-report #reportMainPanel .sectionCard,
+  #screen-report #reportCategoryDetailPanel .sectionCard{
+    height:auto;
     overflow:hidden;
   }
   .reportHeader{
@@ -1819,6 +1835,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   #screen-report .box.boxSafeBottom{
     height:calc(100dvh - 120px);
     padding-bottom:calc(8px + var(--navSpace));
+  }
+  #screen-report .box.boxSafeBottom{
+    overflow:hidden;
   }
   #screen-report .box.boxSafeBottom{
     padding-top:6px;
@@ -1899,7 +1918,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   .reportLegend{
     gap:6px;
-    max-height:none;
+    max-height:188px;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
   }
   .reportLegendItem{
     padding:6px 8px;
