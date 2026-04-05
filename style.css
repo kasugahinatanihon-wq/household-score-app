@@ -1765,9 +1765,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   #screen-list .box,
   #screen-report .box{
     height:calc(100dvh - 132px);
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
   }
   #screen-list .box.boxSafeBottom,
   #screen-report .box.boxSafeBottom{
@@ -1776,36 +1775,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   #screen-list{
     overflow:hidden;
   }
-  #screen-list #listArea{
-    flex:1 1 auto;
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
-    padding-bottom:8px;
-  }
   #screen-report{
     overflow:hidden;
-  }
-  #screen-report .box{
-    gap:8px;
-  }
-  #screen-report #reportMainPanel,
-  #screen-report #reportCategoryDetailPanel{
-    flex:1 1 auto;
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-  #screen-report #reportMainPanel .sectionCard,
-  #screen-report #reportCategoryDetailPanel .sectionCard{
-    height:auto;
-    min-height:auto;
-  }
-  #screen-report .reportLegend{
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
-  }
-  #screen-report #reportVisualTrend{
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
   }
   .reportHeader{
     flex-direction:row;
@@ -1825,11 +1796,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   }
   .reportControlBar{
     justify-content:flex-start;
-  }
-  #screen-list #listArea,
-  #screen-report #reportMainPanel,
-  #screen-report #reportCategoryDetailPanel{
-    min-height:0;
   }
   .reportCategoryLabel select{ width:136px; }
   .monthlyAxisTabs{
@@ -1859,9 +1825,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     margin-top:8px;
     padding:10px;
     border-radius:16px;
-  }
-  #screen-report #reportMainPanel{
-    padding-bottom:8px;
   }
   #reportMainPanel .sectionHead{
     margin-bottom:0;
